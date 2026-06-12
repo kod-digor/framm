@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { createAccount } from "@/lib/stalwart/client";
+import { createAccount, isStalwartFailure } from "@/lib/stalwart/client";
 
 export async function createMailboxAction(formData: FormData) {
   const session = await requireOrgAdmin();
@@ -34,11 +34,7 @@ export async function createMailboxAction(formData: FormData) {
     domain.stalwartDomainId ?? domain.id,
     password
   );
-  if (
-    stalwartRes &&
-    typeof stalwartRes === "object" &&
-    ("unavailable" in stalwartRes || "error" in stalwartRes)
-  ) {
+  if (isStalwartFailure(stalwartRes)) {
     redirect("/dashboard/mailboxes?error=stalwart");
   }
 

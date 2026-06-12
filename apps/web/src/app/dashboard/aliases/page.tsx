@@ -2,6 +2,7 @@ import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { createAliasAction } from "@/app/actions/aliases";
 import { CreateAliasForm } from "@/components/aliases/create-alias-form";
+import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
 
@@ -29,6 +30,8 @@ export default async function AliasesPage({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t("title")}</h1>
+
+      <StalwartStatusBanner namespace="aliases" />
 
       {params.created && (
         <p className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">

@@ -6,12 +6,35 @@ type JmapRequest = {
   methodCalls: [string, Record<string, unknown>, string][];
 };
 
+export type StalwartFailure = { unavailable: true } | { error: string };
+export type StalwartStatus = "ok" | "unconfigured" | "unreachable";
+
 function stalwartJmapUrl() {
   const base = (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
   return `${base}/jmap`;
 }
 
-async function jmapCall(methodCalls: JmapRequest["methodCalls"]) {
+export function isStalwartFailure(res: unknown): res is StalwartFailure {
+  return (
+    typeof res === "object" &&
+    res !== null &&
+    ("unavailable" in res || "error" in res)
+  );
+}
+
+export async function getStalwartStatus(): Promise<StalwartStatus> {
+  if (!STALWART_API_KEY || !(process.env.WEBMAIL_URL || STALWART_URL)) {
+    return "unconfigured";
+  }
+
+  const result = await jmapCall([["x:Domain/query", { filter: {} }, "ping"]], 3_000);
+  return isStalwartFailure(result) ? "unreachable" : "ok";
+}
+
+async function jmapCall(
+  methodCalls: JmapRequest["methodCalls"],
+  timeoutMs = 15_000
+) {
   if (!STALWART_API_KEY) {
     return { unavailable: true as const };
   }
@@ -29,7 +52,7 @@ async function jmapCall(methodCalls: JmapRequest["methodCalls"]) {
         Authorization: `Bearer ${STALWART_API_KEY}`,
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (!res.ok) {

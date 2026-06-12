@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { createDomain, deleteDomain as deleteStalwartDomain } from "@/lib/stalwart/client";
+import { createDomain, deleteDomain as deleteStalwartDomain, isStalwartFailure } from "@/lib/stalwart/client";
 import {
   expectedRecords,
   getPlatformMailHost,
@@ -33,15 +33,8 @@ export async function addDomainAction(formData: FormData) {
   const platformHost = getPlatformMailHost();
 
   const stalwartRes = await createDomain(fqdn);
-  if (
-    stalwartRes &&
-    typeof stalwartRes === "object" &&
-    ("unavailable" in stalwartRes || "error" in stalwartRes)
-  ) {
-    redirect("/dashboard/domains?stalwart=error");
-  }
-
-  const stalwartDomainId = extractStalwartDomainId(stalwartRes);
+  const stalwartFailed = isStalwartFailure(stalwartRes);
+  const stalwartDomainId = stalwartFailed ? null : extractStalwartDomainId(stalwartRes);
   const dnsRecords = expectedRecords(fqdn, platformHost);
   const dnsCheck = await verifyDomainDns(fqdn, platformHost);
   const status =
@@ -60,6 +53,11 @@ export async function addDomainAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/domains");
+  if (stalwartFailed) {
+    redirect(
+      `/dashboard/domains?stalwart=sync&domain=${encodeURIComponent(fqdn)}`
+    );
+  }
 }
 
 export async function verifyDomainAction(domainId: string) {

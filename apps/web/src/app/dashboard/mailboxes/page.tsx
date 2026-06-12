@@ -3,6 +3,7 @@ import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { createMailboxAction } from "@/app/actions/mailboxes";
 import { CreateMailboxForm } from "@/components/mailboxes/create-mailbox-form";
+import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
@@ -33,6 +34,8 @@ export default async function MailboxesPage({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t("title")}</h1>
+
+      <StalwartStatusBanner namespace="mailboxes" />
 
       {params.error === "password" && (
         <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

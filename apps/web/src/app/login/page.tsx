@@ -9,10 +9,12 @@ import { getT } from "@/i18n/t";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 }) {
   const t = await getT("auth");
   const params = await searchParams;
+  const callbackUrl =
+    typeof params.callbackUrl === "string" ? params.callbackUrl : "";
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -24,10 +26,13 @@ export default async function LoginPage({
           {params.error === "session" && (
             <p className="mb-4 text-sm text-red-600">{t("sessionExpired")}</p>
           )}
-          {params.error && params.error !== "session" && (
+          {params.error === "invalid" && (
             <p className="mb-4 text-sm text-red-600">{t("invalidCredentials")}</p>
           )}
           <form action={loginAction} className="space-y-4">
+            {callbackUrl ? (
+              <input type="hidden" name="callbackUrl" value={callbackUrl} />
+            ) : null}
             <div>
               <Label htmlFor="email">{t("email")}</Label>
               <Input id="email" name="email" type="email" required />

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { createAlias } from "@/lib/stalwart/client";
+import { createAlias, isStalwartFailure } from "@/lib/stalwart/client";
 
 export async function createAliasAction(formData: FormData) {
   const session = await requireOrgAdmin();
@@ -30,11 +30,7 @@ export async function createAliasAction(formData: FormData) {
   if (existing) redirect("/dashboard/aliases?error=exists");
 
   const stalwartRes = await createAlias(source, destination);
-  if (
-    stalwartRes &&
-    typeof stalwartRes === "object" &&
-    ("unavailable" in stalwartRes || "error" in stalwartRes)
-  ) {
+  if (isStalwartFailure(stalwartRes)) {
     redirect("/dashboard/aliases?error=stalwart");
   }
 

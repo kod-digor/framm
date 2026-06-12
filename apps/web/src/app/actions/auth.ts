@@ -79,6 +79,7 @@ export async function signupAction(formData: FormData) {
 export async function loginAction(formData: FormData) {
   const email = (formData.get("email") as string).toLowerCase().trim();
   const password = formData.get("password") as string;
+  const callbackUrl = (formData.get("callbackUrl") as string | null)?.trim();
 
   const result = await signIn("credentials", {
     email,
@@ -93,9 +94,14 @@ export async function loginAction(formData: FormData) {
     include: { memberships: true },
   });
 
+  const safeCallback =
+    callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")
+      ? callbackUrl
+      : null;
+
   if (user?.role === "BUREAU" && user.memberships.length === 0) {
     redirect("/bureau");
   }
 
-  redirect("/dashboard");
+  redirect(safeCallback ?? "/dashboard");
 }

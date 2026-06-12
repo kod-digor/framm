@@ -120,7 +120,10 @@
     "dnsFound": "Trouvé",
     "dnsNxdomain": "Le domaine n'existe pas dans le DNS public (NXDOMAIN) — vérifiez l'orthographe ou enregistrez-le chez votre registrar.",
     "dnsNone": "Aucun enregistrement",
-    "stalwartError": "Impossible de contacter le serveur mail (Stalwart). Vérifiez STALWART_API_KEY et WEBMAIL_URL dans .env.local, puis relancez bin/framm sync-dev-env."
+    "stalwartError": "Impossible de synchroniser le domaine avec le serveur mail. Le domaine a été enregistré dans Framm.",
+    "stalwartSyncFailed": "Le domaine {domain} a été enregistré dans Framm, mais la synchronisation mail a échoué.",
+    "stalwartUnavailable": "Le serveur mail est indisponible. Vous pouvez gérer vos domaines ici ; la messagerie sera synchronisée dès que Stalwart sera de nouveau accessible.",
+    "stalwartUnconfigured": "Le serveur mail n'est pas configuré (STALWART_API_KEY / WEBMAIL_URL). Les domaines restent utilisables dans Framm."
   },
   "mailboxes": {
     "title": "Vos boîtes mail",
@@ -139,6 +142,8 @@
     "created": "La boîte {address} a été créée.",
     "exists": "Cette adresse e-mail existe déjà.",
     "stalwartError": "Impossible de créer le compte sur le serveur mail. Réessayez plus tard.",
+    "stalwartUnavailable": "Le serveur mail est indisponible. Vos boîtes existantes restent listées ici ; la création reprendra quand Stalwart sera accessible.",
+    "stalwartUnconfigured": "Le serveur mail n'est pas configuré. La création de boîtes mail est suspendue jusqu'à la configuration de Stalwart.",
     "config": "Configuration client",
     "imapServer": "Serveur IMAP",
     "smtpServer": "Serveur SMTP",
@@ -160,7 +165,9 @@
     "noDomain": "Ajoutez et vérifiez un domaine avant de créer une redirection.",
     "created": "La redirection {source} a été créée.",
     "exists": "Cette adresse source existe déjà.",
-    "stalwartError": "Impossible de créer la redirection sur le serveur mail."
+    "stalwartError": "Impossible de créer la redirection sur le serveur mail.",
+    "stalwartUnavailable": "Le serveur mail est indisponible. Vos redirections existantes restent listées ici ; la création reprendra quand Stalwart sera accessible.",
+    "stalwartUnconfigured": "Le serveur mail n'est pas configuré. La création de redirections est suspendue jusqu'à la configuration de Stalwart."
   },
   "usage": {
     "title": "Consommation",

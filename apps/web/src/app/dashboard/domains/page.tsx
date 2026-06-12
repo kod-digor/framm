@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
+import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import {
   expectedRecords,
   getPlatformMailHost,
@@ -36,7 +37,9 @@ export default async function DomainsPage({
   const orgId = getOrgId(session)!;
   const t = await getT("domains");
   const params = await searchParams;
-  const stalwartError = params.stalwart === "error";
+  const stalwartSyncFailed =
+    params.stalwart === "sync" || params.stalwart === "error";
+  const syncDomain = params.domain;
   const verifySuccess = params.verified === "1";
   const verifyPending = params.verified === "0";
   const verifiedDomain = params.domain;
@@ -72,8 +75,16 @@ export default async function DomainsPage({
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t("title")}</h1>
 
-      {stalwartError && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      <StalwartStatusBanner namespace="domains" />
+
+      {stalwartSyncFailed && syncDomain && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {t("stalwartSyncFailed", { domain: syncDomain })}
+        </p>
+      )}
+
+      {stalwartSyncFailed && !syncDomain && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {t("stalwartError")}
         </p>
       )}
