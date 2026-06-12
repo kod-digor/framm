@@ -1,0 +1,44 @@
+apps/web/src/lib/bureau/load-orgs.ts
+  s_7880b9a1224f33::t_b39f04313a6213 88
+  s_7880b9a1224f33::t_2318756b4d0606 19
+apps/web/src/app/actions/bureau.ts
+  s_7880b9a1224f33::t_5d9845b8dd71dc 5,14
+apps/web/src/lib/billing/wallet.ts
+  s_e4f30a7655ad0f::t_43797c07a90b40 1-205
+apps/web/prisma/migrations/20250612170000_wallet/migration.sql
+  s_7880b9a1224f33::t_0a55182af87503 1-29
+apps/web/prisma/schema.prisma
+  s_7880b9a1224f33::t_262c82b314fea5 28-33
+  s_7880b9a1224f33::t_2b8f6d408d72fb 35-51
+  s_7880b9a1224f33::t_ea3e1fc35a89fb 142-157
+apps/web/src/app/bureau/page.tsx
+  s_7880b9a1224f33::t_7e191ae80eca4f 175-179
+  s_7880b9a1224f33::t_1c07fb65d3d894 140
+apps/web/src/worker/index.ts
+  s_7880b9a1224f33::t_b82263baf5647b 33-36,42-45
+  s_7880b9a1224f33::t_db033825d1fabf 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9c854b9093923b020bba5517f3ea4994e8e56ec4",
+  "prompts": {},
+  "sessions": {
+    "s_7880b9a1224f33": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "846e07c8-a5fa-44e9-8b17-704f696bc08b",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_e4f30a7655ad0f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c89ec740-3fb2-4d24-839d-9922a0f66103",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
