@@ -4,7 +4,7 @@ import { approveOrganization, rejectOrganizationForm } from "@/app/actions/burea
 import { OrgStatusBadge } from "@/components/bureau/org-status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatEur, getLatestPricing } from "@/lib/billing/pricing";
+import { formatEur, getLatestPricing, syncPricingIfStale } from "@/lib/billing/pricing";
 import { loadBureauOrganizations, summarizeBureauOrgs } from "@/lib/bureau/load-orgs";
 import { cn, formatBytes } from "@/lib/utils";
 import { getT } from "@/i18n/t";
@@ -35,7 +35,8 @@ export default async function BureauPage({
 }) {
   const params = await searchParams;
   const t = await getT("bureau");
-  const pricing = await getLatestPricing();
+  const latestPricing = await getLatestPricing();
+  const pricing = latestPricing ?? (await syncPricingIfStale());
   const orgs = await loadBureauOrganizations(pricing);
   const summary = summarizeBureauOrgs(orgs);
 

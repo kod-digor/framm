@@ -56,9 +56,14 @@ export async function getLatestPricing(): Promise<PlatformPricing | null> {
   const delegate = getPlatformPricingDelegate();
   if (!delegate) return null;
 
-  return delegate.findFirst({
-    orderBy: { fetchedAt: "desc" },
-  });
+  try {
+    return await delegate.findFirst({
+      orderBy: { fetchedAt: "desc" },
+    });
+  } catch (error) {
+    console.error("PlatformPricing lookup failed:", error);
+    return null;
+  }
 }
 
 export function estimateStorageCostEur(
