@@ -67,26 +67,66 @@ framm_stalwart_api_key_valid() {
   [[ "$code" == "200" ]]
 }
 
+framm_stalwart_admin_account_id() {
+  local query_body account_id
+  framm_stalwart_recovery_auth
+  query_body="$(framm_stalwart_jmap "$RECOVERY_USER" "$RECOVERY_PASS" \
+    '{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:Account/query",{"filter":{}},"q1"]]}' \
+    2>/dev/null || true)"
+  account_id="$(printf '%s' "$query_body" | python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+ids = r["methodResponses"][0][1].get("ids", [])
+print(ids[0] if ids else "")
+' 2>/dev/null || true)"
+  [[ -n "$account_id" ]] || return 1
+  printf '%s' "$account_id"
+}
+
+framm_stalwart_extract_api_secret() {
+  python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+resp = r["methodResponses"][0][1]
+created = resp.get("created", {})
+if created:
+    print(next(iter(created.values())).get("secret", ""))
+' 2>/dev/null || true
+}
+
 framm_stalwart_create_api_key() {
   local body query_body api_secret env_file="/opt/framm/deploy/.generated/env.production"
-  local create_id="framm-$(date +%s)"
+  local create_id="framm-$(date +%s)" admin_account_id
 
   framm_stalwart_recovery_auth
-  echo "Création clé API Stalwart (framm-platform)..."
+  admin_account_id="$(framm_stalwart_admin_account_id)" || {
+    echo "Compte admin Stalwart introuvable (x:Account/query)"
+    return 1
+  }
+
+  echo "Création clé API Stalwart (framm-platform, compte ${admin_account_id})..."
   body="$(cat <<EOF
-{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:ApiKey/set",{"create":{"${create_id}":{"description":"framm-platform","permissions":{"@type":"Inherit"},"allowedIps":{}}}}, "c1"]]}
+{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:ApiKey/set",{"accountId":"${admin_account_id}","create":{"${create_id}":{"description":"framm-platform","permissions":{"@type":"Inherit"},"allowedIps":{}}}}, "c1"]]}
 EOF
 )"
   query_body="$(framm_stalwart_jmap "$RECOVERY_USER" "$RECOVERY_PASS" "$body" 2>/dev/null || true)"
-  api_secret="$(printf '%s' "$query_body" | python3 -c 'import json,sys; r=json.load(sys.stdin); created=r["methodResponses"][0][1].get("created",{}); print(next(iter(created.values())).get("secret","") if created else "")' 2>/dev/null || true)"
+  api_secret="$(printf '%s' "$query_body" | framm_stalwart_extract_api_secret)"
 
   if [[ -z "$api_secret" && -n "${STALWART_ADMIN_PASSWORD:-}" ]]; then
     local admin_user="admin@${PRIMARY_PLATFORM_DOMAIN:?}"
     echo "Tentative création clé API via ${admin_user}..."
     query_body="$(framm_stalwart_jmap "$admin_user" "$STALWART_ADMIN_PASSWORD" "$body" 2>/dev/null || true)"
-    api_secret="$(printf '%s' "$query_body" | python3 -c 'import json,sys; r=json.load(sys.stdin); created=r["methodResponses"][0][1].get("created",{}); print(next(iter(created.values())).get("secret","") if created else "")' 2>/dev/null || true)"
+    api_secret="$(printf '%s' "$query_body" | framm_stalwart_extract_api_secret)"
   fi
-  if [[ -n "$api_secret" && -f "$env_file" ]]; then
+
+  if [[ -z "$api_secret" ]]; then
+    echo "Échec création clé API Stalwart"
+    printf '%s\n' "$query_body" | head -c 500
+    echo
+    return 1
+  fi
+
+  if [[ -f "$env_file" ]]; then
     sed -i "s|^STALWART_API_KEY=.*|STALWART_API_KEY=${api_secret}|" "$env_file"
     export STALWART_API_KEY="$api_secret"
     echo "STALWART_API_KEY mis à jour dans env.production"
@@ -110,7 +150,11 @@ framm_stalwart_ensure_ready() {
     framm_stalwart_run_bootstrap
   fi
 
-  framm_stalwart_ensure_api_key
+  framm_stalwart_ensure_api_key || return 1
+  framm_stalwart_api_key_valid || {
+    echo "Clé API Stalwart invalide après création"
+    return 1
+  }
 
   local code
   code="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/login)"
