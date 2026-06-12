@@ -1,0 +1,58 @@
+terraform/environments/prod/locals.tf
+  s_25db8a5798bb16::t_d886938fd8ebf8 21,23-24
+deploy/scripts/tf-apply.sh
+  s_25db8a5798bb16::t_df3969f6e7674f 29
+terraform/environments/prod/variables.tf
+  s_25db8a5798bb16::t_78899729ee800b 32-37
+deploy/scripts/db-tunnel.sh
+  s_5b2e1553fe4c8a::t_6d5f8896277917 14-25
+k8s/apps/web/kustomization.yaml
+  s_25db8a5798bb16::t_8fc0932d834bfd 14,16
+deploy/scripts/webmail-tunnel.sh
+  s_01107705bf6a0f::t_763b04cd9f1167 1-28
+terraform/environments/prod/rdb.tf
+  s_25db8a5798bb16::t_bbf5c96169cd53 39-45
+  s_25db8a5798bb16::t_946ff0a3e70520 6-8
+terraform/environments/prod/alerting.tf
+  s_25db8a5798bb16::t_29a8186dcfb9ea 73
+  s_25db8a5798bb16::t_5c7473a7eaf08f 7
+  s_25db8a5798bb16::t_d39652e98074ef 17
+  s_25db8a5798bb16::t_049c69e4faff24 25,33
+  s_25db8a5798bb16::t_8517814cdbdce3 56
+  s_25db8a5798bb16::t_d091fda8c13ec3 62
+  s_25db8a5798bb16::t_52db275ea91225 43
+deploy/scripts/k8s-bootstrap.sh
+  s_25db8a5798bb16::t_b58291aed39cc7 34-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e7757c38e5b9121c7301ef8cd26cabbe891b1021",
+  "prompts": {},
+  "sessions": {
+    "s_01107705bf6a0f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d1b20895-eb44-4105-9b9d-8dcdb882bedd",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_25db8a5798bb16": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "124dda10-afbf-4182-a4c5-ca8a87d703be",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_5b2e1553fe4c8a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "79aa792c-8add-4a94-93d6-8bf15d3482db",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
