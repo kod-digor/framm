@@ -27,6 +27,43 @@ export function formatUsageMonthLabel(monthKey: string): string {
   return date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 }
 
+export function getCurrentMonthKey(): string {
+  return monthKeyFromDate(new Date());
+}
+
+export function mergeLivePeakIntoCurrentMonth(
+  history: UsageHistoryRow[],
+  live: Pick<UsageHistoryRow, "storageBytes" | "mailboxCount" | "domainCount">
+): UsageHistoryRow[] {
+  const currentMonthKey = getCurrentMonthKey();
+  const existing = history.find((row) => row.monthKey === currentMonthKey);
+
+  if (existing) {
+    return history.map((row) =>
+      row.monthKey === currentMonthKey
+        ? {
+            ...row,
+            storageBytes:
+              row.storageBytes > live.storageBytes ? row.storageBytes : live.storageBytes,
+            mailboxCount: Math.max(row.mailboxCount, live.mailboxCount),
+            domainCount: Math.max(row.domainCount, live.domainCount),
+          }
+        : row
+    );
+  }
+
+  return [
+    {
+      monthKey: currentMonthKey,
+      recordedAt: new Date(),
+      storageBytes: live.storageBytes,
+      mailboxCount: live.mailboxCount,
+      domainCount: live.domainCount,
+    },
+    ...history,
+  ];
+}
+
 export function groupUsageSnapshotsByMonth(snapshots: UsageSnapshot[]): UsageHistoryRow[] {
   const groups = new Map<string, UsageHistoryRow>();
 
