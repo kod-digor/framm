@@ -156,7 +156,7 @@
   },
   "usage": {
     "title": "Consommation",
-    "storage": "Stockage S3",
+    "storage": "Stockage",
     "mailboxes": "Boîtes mail",
     "domains": "Domaines actifs",
     "billingTitle": "Estimation mensuelle",
