@@ -1,0 +1,22 @@
+apps/web/src/components/bureau/org-list.tsx
+  s_e3df8424571423::t_ecf03bc5c6cb58 10-11,69,73,78-86,110-114,120,149-158,161-203
+  s_e3df8424571423::t_37141cb61b0a8f 1-9,12-68,70-72,74-77,87-109,115-119,121-148,159-160,204-208
+apps/web/src/app/bureau/page.tsx
+  s_e3df8424571423::t_02428e65996234 3,8,45-61,64,69,74,107,113,133,137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "ee27155ed2d104cf07a1988c20dce718d9cd26f0",
+  "prompts": {},
+  "sessions": {
+    "s_e3df8424571423": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "22e60c8d-ae1a-42c7-840a-67767347cdfb",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
