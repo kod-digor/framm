@@ -1,11 +1,62 @@
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { fetchScalewayObjectStoragePricing } from "@/lib/billing/scaleway-pricing";
+import type { PlatformPricing } from "@prisma/client";
 
 const PRICING_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const FALLBACK_EUR_PER_GB_MONTH = 0.01606;
 
-export async function getLatestPricing() {
-  return prisma.platformPricing.findFirst({
+type PlatformPricingDelegate = {
+  findFirst: (args: {
+    orderBy: { fetchedAt: "desc" };
+  }) => Promise<PlatformPricing | null>;
+  create: (args: {
+    data: {
+      sku: string;
+      region: string;
+      storageEurPerGbHour: number;
+      storageEurPerGbMonth: number;
+      source: string;
+    };
+  }) => Promise<PlatformPricing>;
+};
+
+function getPlatformPricingDelegate(): PlatformPricingDelegate | null {
+  const client = getPrisma();
+  const delegate = (client as unknown as Record<string, unknown>).platformPricing;
+
+  if (
+    typeof delegate !== "object" ||
+    delegate === null ||
+    typeof (delegate as { findFirst?: unknown }).findFirst !== "function" ||
+    typeof (delegate as { create?: unknown }).create !== "function"
+  ) {
+    console.error(
+      "Prisma platformPricing delegate unavailable — run `pnpm prisma:generate` and restart dev if needed"
+    );
+    return null;
+  }
+
+  return delegate as PlatformPricingDelegate;
+}
+
+function buildFallbackPricing(): PlatformPricing {
+  const region = process.env.S3_REGION ?? "fr-par";
+  return {
+    id: "fallback",
+    sku: `/storage/obj/usage-new-gen-bucket-standard/${region}`,
+    region,
+    storageEurPerGbHour: FALLBACK_EUR_PER_GB_MONTH / 730,
+    storageEurPerGbMonth: FALLBACK_EUR_PER_GB_MONTH,
+    source: "fallback_documented",
+    fetchedAt: new Date(0),
+  };
+}
+
+export async function getLatestPricing(): Promise<PlatformPricing | null> {
+  const delegate = getPlatformPricingDelegate();
+  if (!delegate) return null;
+
+  return delegate.findFirst({
     orderBy: { fetchedAt: "desc" },
   });
 }
@@ -29,8 +80,11 @@ export function formatEur(amount: number) {
 
 async function persistPricing(
   pricing: Awaited<ReturnType<typeof fetchScalewayObjectStoragePricing>>
-) {
-  return prisma.platformPricing.create({
+): Promise<PlatformPricing | null> {
+  const delegate = getPlatformPricingDelegate();
+  if (!delegate) return buildFallbackPricing();
+
+  return delegate.create({
     data: {
       sku: pricing.sku,
       region: pricing.region,
@@ -41,9 +95,12 @@ async function persistPricing(
   });
 }
 
-async function seedFallbackPricing() {
+async function seedFallbackPricing(): Promise<PlatformPricing> {
+  const delegate = getPlatformPricingDelegate();
+  if (!delegate) return buildFallbackPricing();
+
   const region = process.env.S3_REGION ?? "fr-par";
-  return prisma.platformPricing.create({
+  return delegate.create({
     data: {
       sku: `/storage/obj/usage-new-gen-bucket-standard/${region}`,
       region,
@@ -54,7 +111,7 @@ async function seedFallbackPricing() {
   });
 }
 
-export async function syncPricingIfStale() {
+export async function syncPricingIfStale(): Promise<PlatformPricing | null> {
   const latest = await getLatestPricing();
   const stale =
     !latest || Date.now() - latest.fetchedAt.getTime() > PRICING_MAX_AGE_MS;
