@@ -13,6 +13,12 @@ framm_load_env
 DNS_ENABLED="${DNS_ENABLED:-false}"
 APP_BZH_ENABLED="${APP_BZH_ENABLED:-false}"
 
+# Le backend s3 lit les identifiants via les variables AWS_*
+export AWS_ACCESS_KEY_ID="${SCW_ACCESS_KEY}"
+export AWS_SECRET_ACCESS_KEY="${SCW_SECRET_KEY}"
+
+"${ROOT}/deploy/scripts/setup-tf-backend.sh"
+
 cd "$TF_DIR"
 terraform init -input=false
 terraform apply -auto-approve \

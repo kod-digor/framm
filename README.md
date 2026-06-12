@@ -95,7 +95,7 @@ L'infra (Terraform, DNS, HTTPS initial) reste sur `bin/framm bootstrap` en local
 - Prometheus supervise les deux VMs (node-exporter sur App **et** Mail), l'application web et la fraîcheur des backups.
 - Alertes envoyées à l'email défini dans `BUREAU_ADMIN_EMAIL` (ou `ALERT_EMAIL`).
 
-**Important** : Alertmanager a besoin d'un compte SMTP pour envoyer les emails (`ALERT_SMTP_*` dans `.env`, voir `.env.example`). Utilisez un SMTP **externe** à la plateforme (Scaleway TEM, Brevo…) : si la VM mail tombe, l'alerte doit quand même partir. Sans ces variables, les alertes sont visibles dans Grafana mais ne sont notifiées nulle part.
+**Envoi des alertes** : provisionné automatiquement via **Scaleway TEM** (Transactional Email) quand le DNS est géré par Scaleway — domaine validé (SPF/DKIM/DMARC), clé IAM dédiée, le tout injecté dans la config Alertmanager au déploiement. TEM est externe aux VMs : si la VM mail tombe, l'alerte part quand même. Pour utiliser un autre SMTP, renseignez `ALERT_SMTP_*` dans `.env` (prioritaire sur TEM).
 
 ## Sauvegardes & restauration
 
@@ -126,7 +126,16 @@ Le bucket de backups a le **versioning activé** et une rétention de 30 jours. 
 
 ### État Terraform
 
-Configurez le backend S3 (`terraform/backend.tf.example` → `backend.tf`) : un tfstate uniquement local peut être perdu avec la machine qui l'héberge.
+Le tfstate est migré automatiquement vers un bucket S3 versionné (`framm-tfstate-<project>`) au premier `bin/framm bootstrap` : `deploy/scripts/setup-tf-backend.sh` crée le bucket, génère `backend.tf` (non commité) et migre l'état local existant.
+
+## Mises à jour automatisées
+
+Les images Docker sont **épinglées** (Stalwart `v0.16.8`, PostgreSQL 16, Prometheus/Grafana/Loki) et tenues à jour par **Renovate** :
+
+- **Patchs** : PR auto-mergée si la CI est verte, puis déployée automatiquement par le workflow `Deploy` — aucune intervention.
+- **Mineures/majeures** (dont Stalwart, qui touche aux données mail) : PR à valider d'un clic ; le merge déclenche le déploiement.
+
+Prérequis (une fois) : installer la [GitHub App Renovate](https://github.com/apps/renovate) sur le dépôt et activer *Allow auto-merge* dans Settings → General. Les paquets systèmes des VMs (sécurité) sont gérés par `unattended-upgrades`.
 
 ## Licence
 

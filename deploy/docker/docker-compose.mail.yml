@@ -1,6 +1,8 @@
 services:
   stalwart:
-    image: stalwartlabs/stalwart:${STALWART_VERSION:-latest}
+    # Version épinglée — mises à jour automatisées par Renovate (renovate.json) :
+    # patchs auto-mergés et déployés par la CI, mineures/majeures via PR à valider.
+    image: stalwartlabs/stalwart:v0.16.8
     restart: unless-stopped
     env_file:
       - ../.generated/env.production

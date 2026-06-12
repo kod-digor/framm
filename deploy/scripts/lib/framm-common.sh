@@ -156,16 +156,29 @@ framm_rsync_mail() {
     "${FRAMM_ROOT}/deploy/" "root@${MAIL_PUBLIC_IP}:/opt/framm/deploy/"
 }
 
-# Dépose env.production sur les VMs s'il n'y est pas encore (le rsync exclut
-# .generated pour ne pas écraser les valeurs mises à jour côté VM, comme la
-# clé API Stalwart régénérée).
+# Dépose env.production sur les VMs (le rsync exclut .generated pour ne pas
+# écraser les valeurs mises à jour côté VM, comme la clé API Stalwart
+# régénérée). Si le fichier existe déjà sur la VM, seules les clés absentes
+# sont ajoutées — ex: nouvelles variables ALERT_SMTP_*.
 framm_push_env() {
   local env_file="${FRAMM_ROOT}/deploy/.generated/env.production"
   [[ -f "$env_file" ]] || return 0
   local host
   for host in "$APP_PUBLIC_IP" "$MAIL_PUBLIC_IP"; do
-    if ! framm_ssh "$host" "test -f /opt/framm/deploy/.generated/env.production" 2>/dev/null; then
-      framm_ssh "$host" "mkdir -p /opt/framm/deploy/.generated"
+    framm_ssh "$host" "mkdir -p /opt/framm/deploy/.generated"
+    if framm_ssh "$host" "test -f /opt/framm/deploy/.generated/env.production" 2>/dev/null; then
+      scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/tmp/framm-env.new"
+      framm_ssh "$host" bash <<'MERGE'
+set -euo pipefail
+target=/opt/framm/deploy/.generated/env.production
+while IFS= read -r line; do
+  [[ "$line" == *=* ]] || continue
+  key="${line%%=*}"
+  grep -q "^${key}=" "$target" || printf '%s\n' "$line" >> "$target"
+done < /tmp/framm-env.new
+rm -f /tmp/framm-env.new
+MERGE
+    else
       scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/opt/framm/deploy/.generated/env.production"
       echo "env.production déposé sur ${host}"
     fi

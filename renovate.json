@@ -10,6 +10,12 @@
     {
       "matchManagers": ["docker-compose", "dockerfile"],
       "groupName": "framm-docker"
+    },
+    {
+      "description": "Patchs Docker auto-mergés (CI verte requise) puis déployés par le workflow Deploy — mineures/majeures restent en PR à valider",
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "matchUpdateTypes": ["patch", "pin", "digest"],
+      "automerge": true
     }
   ]
 }

@@ -128,11 +128,11 @@ resource "local_file" "env_production" {
     grafana_password     = random_password.grafana_password.result
     grafana_root_url     = local.grafana_url
     alert_email          = var.admin_email
-    alert_smtp_host      = var.alert_smtp_host
-    alert_smtp_port      = var.alert_smtp_port
-    alert_smtp_user      = var.alert_smtp_user
-    alert_smtp_password  = var.alert_smtp_password
-    alert_smtp_from      = var.alert_smtp_from
+    alert_smtp_host      = local.alert_smtp_host
+    alert_smtp_port      = local.alert_smtp_port
+    alert_smtp_user      = local.alert_smtp_user
+    alert_smtp_password  = local.alert_smtp_password
+    alert_smtp_from      = local.alert_smtp_from
     bureau_admin_email   = var.admin_email
     bureau_admin_password = var.admin_password
     primary_domain       = var.primary_platform_domain
