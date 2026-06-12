@@ -1,0 +1,19 @@
+.cursor/rules/prisma-dev-workflow.mdc
+  s_de7a7707ed342e::t_18a528f49e5835 1-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "759fe48de80e66e5d36b97035ed467c3b6bee318",
+  "prompts": {},
+  "sessions": {
+    "s_de7a7707ed342e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f9984c5c-a593-4a65-a326-f0a15e0e3621",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
