@@ -1,0 +1,353 @@
+apps/web/src/app/dashboard/usage/page.tsx
+  s_00ea0b1c8831de::t_4181429ddbc5ee 1-76
+terraform/modules/dns_records/versions.tf
+  s_00ea0b1c8831de::t_8ab3f88a196598 1-7
+terraform/environments/staging/main.tf
+  s_00ea0b1c8831de::t_7a6f3ee64c64f2 6,11,21-30
+  s_00ea0b1c8831de::t_81af1a1b8477d4 1-5,7-10,12-20,31-40
+apps/web/src/app/dashboard/domains/page.tsx
+  s_00ea0b1c8831de::t_415e5f1bbc685c 1-66
+deploy/scripts/setup-tls.sh
+  s_00ea0b1c8831de::t_2653d15a0bf783 24,27
+  s_00ea0b1c8831de::t_bfe46c48ea2b94 1,3-15,17,19,21-23,25-26,28-29,31-33,39-41,47-55
+  s_00ea0b1c8831de::t_59089471b30aeb 20,34-38,42-46
+  s_00ea0b1c8831de::t_29c397abb1435d 2,16,18,30
+apps/web/src/components/ui/card.tsx
+  s_00ea0b1c8831de::t_570a4187b0e8f5 1-23
+apps/web/src/components/ui/label.tsx
+  s_00ea0b1c8831de::t_f9b28d0f194269 1-17
+apps/web/prisma/migrations/20250612000000_init/migration.sql
+  s_00ea0b1c8831de::t_736f6f99b1e338 1-141
+.github/workflows/deploy.yml
+  s_00ea0b1c8831de::t_44a49b0a6f7f8f 1-70
+apps/web/src/lib/utils.ts
+  s_00ea0b1c8831de::t_b84932c1fc0ac2 1-15
+apps/web/src/components/ui/input.tsx
+  s_00ea0b1c8831de::t_e35bf0e12f542b 1-19
+apps/web/src/components/ui/button.tsx
+  s_00ea0b1c8831de::t_e7561ff970b5a6 1-42
+deploy/observability/loki/loki.yml
+  s_00ea0b1c8831de::t_69abc0ccb0693a 1-25
+apps/web/src/app/dashboard/mailboxes/[id]/page.tsx
+  s_00ea0b1c8831de::t_47ed16a87066c0 1-69
+apps/web/src/app/dashboard/layout.tsx
+  s_00ea0b1c8831de::t_4fbf371c0ff1ad 1-13
+deploy/observability/alertmanager/alertmanager.yml
+  s_00ea0b1c8831de::t_ea117ed96ad675 10
+  s_00ea0b1c8831de::t_4b7a6d0d214105 1-9,11
+apps/web/prisma/seed.ts
+  s_00ea0b1c8831de::t_ec8a48a335b7a9 1,13-14,16-31,34-38,43,47
+  s_00ea0b1c8831de::t_880deba888ac17 7-11
+  s_00ea0b1c8831de::t_4c94c62972eda3 2-6,12,15,32-33,39-42,44-46,48-51
+terraform/environments/prod/provider.tf
+  s_00ea0b1c8831de::t_3dcb1edfe404d6 1-5
+terraform/modules/object_storage/versions.tf
+  s_00ea0b1c8831de::t_e386161b4b310a 1-7
+terraform/modules/dns_records/outputs.tf
+  s_00ea0b1c8831de::t_3908b32d6de618 1-3
+apps/web/src/app/layout.tsx
+  s_00ea0b1c8831de::t_8011d49d46c5a3 1-22
+apps/web/prisma/schema.prisma
+  s_00ea0b1c8831de::t_78c8a947a84244 1-119
+deploy/scripts/bootstrap.sh
+  s_00ea0b1c8831de::t_aa4c9985d9d539 19
+  s_00ea0b1c8831de::t_457c8eaad2ae05 1-5,8,27-28,47,56-59,62-64
+  s_00ea0b1c8831de::t_28bd649d08625f 42,45,60-61
+  s_00ea0b1c8831de::t_459b6f68da167b 6-7,9-18,20-26,29-39,41,43-44,46,48-55
+  s_00ea0b1c8831de::t_ece36933df2b97 40
+terraform/environments/prod/main.tf
+  s_00ea0b1c8831de::t_5c61f81de33428 72
+  s_00ea0b1c8831de::t_e135c4d969e42b 88
+  s_00ea0b1c8831de::t_c0cdbd76a63ceb 114-115
+  s_00ea0b1c8831de::t_ab4c2262797094 1-49,52-65,68-71,73-87,89-113,116,118-129
+  s_00ea0b1c8831de::t_868051c793fdb5 66-67
+  s_00ea0b1c8831de::t_d88c6f4972a7f0 50-51
+  s_00ea0b1c8831de::t_b3251c4301db8c 117
+terraform/modules/observability/main.tf
+  s_00ea0b1c8831de::t_dea51802b11af5 1-16,19
+  s_00ea0b1c8831de::t_e432866e73a2e4 17-18
+terraform/modules/dns_records/main.tf
+  s_00ea0b1c8831de::t_32de1010d8c663 1-9
+deploy/observability/prometheus/prometheus.yml
+  s_00ea0b1c8831de::t_fe6ea0d7e5d826 1-25
+terraform/backend.tf.example
+  s_00ea0b1c8831de::t_49ea1483c46ebc 1-14
+deploy/cloud-init/mail.yaml
+  s_00ea0b1c8831de::t_b34c20b3dd4bfa 3
+  s_00ea0b1c8831de::t_fa00f34ef34e48 1-2,4-12,14,18-24,27
+  s_00ea0b1c8831de::t_aee25dca481190 13,15-17,25-26
+terraform/environments/prod/outputs.tf
+  s_00ea0b1c8831de::t_92aa603e4f9fb6 21-40
+  s_00ea0b1c8831de::t_bb509acd5bd1e5 1-20
+terraform/environments/prod/secrets.tf
+  s_00ea0b1c8831de::t_70f4dc4d4a4366 1-19
+apps/web/src/app/actions/domains.ts
+  s_00ea0b1c8831de::t_43fb1cc73ecda5 1-54
+apps/web/src/i18n/t.ts
+  s_00ea0b1c8831de::t_de7c591b70be8a 1-2
+  s_00ea0b1c8831de::t_4debe68a7a789f 3-10
+terraform/environments/staging/provider.tf
+  s_00ea0b1c8831de::t_c9a814860bbc58 1-5
+apps/web/src/app/login/page.tsx
+  s_00ea0b1c8831de::t_5359807d55d786 1-49
+apps/web/src/lib/auth-utils.ts
+  s_00ea0b1c8831de::t_6a183619ea75b4 1-13,19-27
+  s_00ea0b1c8831de::t_b72b7408162197 14-18
+apps/web/src/app/dashboard/aliases/page.tsx
+  s_00ea0b1c8831de::t_946745c4748430 1-55
+apps/web/src/app/dashboard/page.tsx
+  s_00ea0b1c8831de::t_dc877d678fcf77 1-46
+terraform/modules/object_storage/outputs.tf
+  s_00ea0b1c8831de::t_bc4ac2aa9dbca6 1-21
+.gitignore
+  s_00ea0b1c8831de::t_e74f81cd4a68f7 1-27,29-50
+  s_00ea0b1c8831de::t_cca30f615b2cea 28
+apps/web/src/app/api/health/route.ts
+  s_00ea0b1c8831de::t_bab938e9a1dde9 1-5
+terraform/modules/object_storage/main.tf
+  s_00ea0b1c8831de::t_5743fe83d582a3 1-73
+.env.example
+  s_00ea0b1c8831de::t_8ecd87e411a5f9 1,8-11,13-15
+  s_00ea0b1c8831de::t_d47c0a699351b5 6-7,12
+  s_00ea0b1c8831de::t_9f5f0af6bd7705 2-5
+deploy/scripts/update-stack.sh
+  s_00ea0b1c8831de::t_39a60dcf7093c4 31
+  s_00ea0b1c8831de::t_b011f2b5a1ab27 25-27,29,33-34
+  s_00ea0b1c8831de::t_95e2991f99f1c9 8-13
+  s_00ea0b1c8831de::t_d8a9b4ef985987 58-67
+  s_00ea0b1c8831de::t_bf0cafae1cb705 28,30,32
+  s_00ea0b1c8831de::t_5bf8b900aef8b2 5-6,15-21,35-38,44-47
+  s_00ea0b1c8831de::t_63d5ab26a0f17f 1-4,7,14,69-71
+  s_00ea0b1c8831de::t_3620185688e6dd 22-24
+  s_00ea0b1c8831de::t_8a5a6ea4fb3ec3 39-41
+  s_00ea0b1c8831de::t_dce75e8134bec3 42-43,48-55,68
+  s_00ea0b1c8831de::t_0072f5ddacd272 56-57
+terraform/environments/prod/locals.tf
+  s_00ea0b1c8831de::t_d6ce7e5792dc7a 1-10,12-18
+  s_00ea0b1c8831de::t_7d98facbfecc02 11
+terraform/modules/compute_instance/variables.tf
+  s_00ea0b1c8831de::t_d006cfd508ed29 1-45,48
+  s_00ea0b1c8831de::t_46ba7168b55354 46-47
+terraform/environments/prod/variables.tf
+  s_00ea0b1c8831de::t_722d84203b8387 1-19,32-46,52-55
+  s_00ea0b1c8831de::t_a59677a7f0584f 20-31
+  s_00ea0b1c8831de::t_5a176fb431a0fe 47-51
+terraform/environments/prod/security.tf
+  s_00ea0b1c8831de::t_e40a0b1d14b12f 1-19
+README.md
+  s_00ea0b1c8831de::t_1eb2948db1d066 66-67
+  s_00ea0b1c8831de::t_a2c04bf699a4ea 89
+  s_00ea0b1c8831de::t_49136e3df5a5a4 3,5-16,19,21-23,25-27,29,58,80-83,86,90-94,96,99,101
+  s_00ea0b1c8831de::t_b54d53bf44bca5 2,4,97-98,100
+  s_00ea0b1c8831de::t_3fe25727d32911 59-60,62,65,69,77-79,85
+  s_00ea0b1c8831de::t_82c260297ebeba 61,63-64,68,70-76
+  s_00ea0b1c8831de::t_cb6274d5ee04a3 17-18,20,24,28,30-33,35-54,56,84,87-88,95
+  s_00ea0b1c8831de::t_d4eaa2294b98ee 55,57
+  s_00ea0b1c8831de::t_642968c84fe174 34
+deploy/nginx/app-http.conf
+  s_00ea0b1c8831de::t_00c427109f4c24 4,11,23,30
+  s_00ea0b1c8831de::t_e239a6b48d75e6 1-3,5-10,12-22,24-29,31-37
+apps/web/next.config.ts
+  s_00ea0b1c8831de::t_4671cdc0ebc903 1-10
+apps/web/tsconfig.json
+  s_00ea0b1c8831de::t_74c7272e975f34 1-21
+terraform/environments/staging/versions.tf
+  s_00ea0b1c8831de::t_60bf5ff3275b18 1-8
+terraform/environments/prod/versions.tf
+  s_00ea0b1c8831de::t_74da15c1cb9289 1-8
+apps/web/src/proxy.ts
+  s_00ea0b1c8831de::t_2dc0e9772e7028 1-5
+apps/web/src/app/dashboard/mailboxes/page.tsx
+  s_00ea0b1c8831de::t_2da0474440f007 1-76
+deploy/docker/docker-compose.app.yml
+  s_00ea0b1c8831de::t_274f93030f3cb9 26-27
+  s_00ea0b1c8831de::t_23d7bb7864030f 41-42
+  s_00ea0b1c8831de::t_cc0268bc203495 1-25,28-40,43-48
+apps/web/src/lib/storage/s3.ts
+  s_00ea0b1c8831de::t_b2764bd1b9eac2 1-57
+apps/web/src/components/ui/sidebar.tsx
+  s_00ea0b1c8831de::t_b18ebdafba6045 1-33
+deploy/scripts/lib/framm-common.sh
+  s_00ea0b1c8831de::t_e2d3f12b81ea5c 67-75
+  s_00ea0b1c8831de::t_c7a13cf2d69a33 99
+  s_00ea0b1c8831de::t_ff2b3f861055ae 45-49,57-63,65-66,76-94
+  s_00ea0b1c8831de::t_84b128d2c96463 133-137,139-140
+  s_00ea0b1c8831de::t_3d9a65f3dbff49 151-152
+  s_00ea0b1c8831de::t_8659077212c779 1-44,102-118,121,123-125,128-132,138,141-150,153-181
+  s_00ea0b1c8831de::t_f4b2a8248d9dfe 50-56,95-98,100-101
+  s_00ea0b1c8831de::t_cf38cb0166588a 64
+  s_00ea0b1c8831de::t_302912584830f5 119-120,122,126-127
+apps/web/src/lib/auth.ts
+  s_00ea0b1c8831de::t_61b78bb5fc1ad6 84-85,87
+  s_00ea0b1c8831de::t_f5b93e78a4610d 1-83,86,88-94
+apps/web/src/app/actions/aliases.ts
+  s_00ea0b1c8831de::t_1153810a40f3ba 1-23
+apps/web/Dockerfile.worker
+  s_00ea0b1c8831de::t_e8af68a036bd55 1-3,5-8
+  s_00ea0b1c8831de::t_9be3c1b627fdf2 4
+terraform/versions.tf
+  s_00ea0b1c8831de::t_139753c1a79a4d 1-20
+deploy/nginx/app-ssl.conf
+  s_00ea0b1c8831de::t_e74c314769b42e 1-8,11-28,31-54
+  s_00ea0b1c8831de::t_9bf125209ffd25 9-10,29-30
+apps/web/Dockerfile
+  s_00ea0b1c8831de::t_8d9fa8daede7e7 1-21
+deploy/observability/grafana/provisioning/dashboards/default.yml
+  s_00ea0b1c8831de::t_68d5592c88ef0f 1-7
+deploy/docker/docker-compose.mail.yml
+  s_00ea0b1c8831de::t_4af89588cfe63e 1-4,7-11,13
+  s_00ea0b1c8831de::t_1217ad112d7e0b 12
+  s_00ea0b1c8831de::t_c50fda15d50119 5-6
+  s_00ea0b1c8831de::t_7d0432ee6b280c 14-15
+deploy/observability/prometheus/alerts/framm.yml
+  s_00ea0b1c8831de::t_a8083bd4bbc4e5 1-26
+deploy/scripts/backup-stalwart.sh
+  s_00ea0b1c8831de::t_aa93d937a3b48a 1-20
+bin/framm
+  s_00ea0b1c8831de::t_94c9f8ad91c660 24-26
+  s_00ea0b1c8831de::t_211e3d0b7fca2e 33-36,38
+  s_00ea0b1c8831de::t_68fa1bf634f575 1-16,27,32,37,39-41
+  s_00ea0b1c8831de::t_f09a50c3ff75bb 17-23,28-31
+deploy/scripts/remote-deploy.sh
+  s_00ea0b1c8831de::t_9a02b54bcfe91e 27-29,31-33,38-39
+  s_00ea0b1c8831de::t_3854918642d5a4 1-23,30,34-35,40-44,48-51,55-76
+  s_00ea0b1c8831de::t_304e39d20f5cc3 24-26
+  s_00ea0b1c8831de::t_bb70d0a0edca08 36-37
+  s_00ea0b1c8831de::t_f374329137307a 45-47
+  s_00ea0b1c8831de::t_89a2fc5f6c5f08 52-54
+apps/web/src/app/api/auth/[...nextauth]/route.ts
+  s_00ea0b1c8831de::t_64e63d95aa3564 1-3
+terraform/environments/prod/templates/env.production.tpl
+  s_00ea0b1c8831de::t_ea8a2d2be363f5 7-8
+  s_00ea0b1c8831de::t_e11718372bdf80 15
+  s_00ea0b1c8831de::t_572d61ec4b1931 14
+  s_00ea0b1c8831de::t_cdeb7865590b30 1-6,9-13,16-23
+terraform/modules/dns_records/variables.tf
+  s_00ea0b1c8831de::t_41654cb5bbc37f 1-13
+deploy/nginx/mail-ssl.conf
+  s_00ea0b1c8831de::t_07dd34eb09f7b9 1-7,10,15-37
+  s_00ea0b1c8831de::t_7039bcf52070a4 8-9
+  s_00ea0b1c8831de::t_ec0059b50164ec 11-14
+renovate.json
+  s_00ea0b1c8831de::t_c7f34eb12dc0cf 1-15
+LICENSE
+  s_00ea0b1c8831de::t_6c424e3d4c4fbc 1-550
+deploy/cloud-init/app.yaml
+  s_00ea0b1c8831de::t_92c6c379f0c27f 3
+  s_00ea0b1c8831de::t_3c257a5f7d5cf8 13,15-17,26
+  s_00ea0b1c8831de::t_f9f0ef0120474f 27-43
+  s_00ea0b1c8831de::t_7ea5f367da3511 1-2,4-12,14,18-25,44
+apps/web/src/lib/dns/verify.ts
+  s_00ea0b1c8831de::t_6bda53337306bd 1-34
+apps/web/src/app/actions/mailboxes.ts
+  s_00ea0b1c8831de::t_8c36af7d3f06e7 1-37
+apps/web/env.example
+  s_00ea0b1c8831de::t_0cddbfe014d951 13-14
+  s_00ea0b1c8831de::t_8b3b307991fb16 1-12
+apps/web/postcss.config.mjs
+  s_00ea0b1c8831de::t_e9c6dc3fcbe411 1-7
+apps/web/messages/fr.json
+  s_00ea0b1c8831de::t_d1ae3f1feb5423 31
+  s_00ea0b1c8831de::t_89da418ad728d7 44
+  s_00ea0b1c8831de::t_7bed729a2242aa 1-30,32-43,45-78
+terraform/modules/compute_instance/versions.tf
+  s_00ea0b1c8831de::t_50391c26f2d81d 1-7
+terraform/modules/compute_instance/main.tf
+  s_00ea0b1c8831de::t_3f305cd73e9a4f 1-30,32,35-51,53-54,56-57
+  s_00ea0b1c8831de::t_dadaa73161f26c 31,33-34
+  s_00ea0b1c8831de::t_6e11d1f4fcbc68 55
+  s_00ea0b1c8831de::t_1c3ef1d45a4d2c 52
+apps/web/src/lib/prisma.ts
+  s_00ea0b1c8831de::t_46564119779f18 1-11
+apps/web/src/components/layout/dashboard-shell.tsx
+  s_00ea0b1c8831de::t_0aae8760c14a61 1,3-12,14-23,28-50
+  s_00ea0b1c8831de::t_818421fde3910e 2
+  s_00ea0b1c8831de::t_4c564ae0c6d203 13,24-27
+deploy/scripts/health-check.sh
+  s_00ea0b1c8831de::t_40b1d5382ce47e 1-13,16-28,42,46-53
+  s_00ea0b1c8831de::t_d28cde3675f1e2 14-15
+  s_00ea0b1c8831de::t_373e2640985c3d 29-41,43,45
+  s_00ea0b1c8831de::t_53938a5fc8899d 44
+deploy/scripts/lib/ssh-rsync.sh
+  s_00ea0b1c8831de::t_ed7bac0470a726 1,6,8-9,11-12
+  s_00ea0b1c8831de::t_c91a36c69dd5a8 2-5,7,10
+deploy/scripts/lib/docker-disk.sh
+  s_00ea0b1c8831de::t_689a4f780edb7d 1-118
+deploy/docker/docker-compose.observability.yml
+  s_00ea0b1c8831de::t_42ffdd8a8e9cae 1-64
+apps/web/src/app/page.tsx
+  s_00ea0b1c8831de::t_9380883d9a6d43 1-30
+terraform/modules/compute_instance/outputs.tf
+  s_00ea0b1c8831de::t_2405bf22c699e3 1-11
+terraform/modules/object_storage/variables.tf
+  s_00ea0b1c8831de::t_fcf1ef5e1892eb 1-48
+apps/web/src/app/globals.css
+  s_00ea0b1c8831de::t_28c3923f84f8b2 1-12
+deploy/scripts/ci-deploy.sh
+  s_00ea0b1c8831de::t_1e67c5f7cc65a3 1,3-17
+  s_00ea0b1c8831de::t_30f12d4d0c1cb1 2
+apps/web/src/worker/index.ts
+  s_00ea0b1c8831de::t_004140bd1df39c 1-30
+apps/web/src/app/bureau/page.tsx
+  s_00ea0b1c8831de::t_cff8434193a3e5 1
+  s_00ea0b1c8831de::t_d2c88369a9cd9c 2-13,15-20,27-69
+  s_00ea0b1c8831de::t_21d5f729273d30 14
+  s_00ea0b1c8831de::t_721cd1b4f3d2df 21-26
+deploy/nginx/mail-http.conf
+  s_00ea0b1c8831de::t_2523430b11a970 10-13
+  s_00ea0b1c8831de::t_8c704a888b353b 1-9,14-22
+deploy/observability/grafana/provisioning/datasources/prometheus.yml
+  s_00ea0b1c8831de::t_7a10bf8266ad76 1-7
+deploy/scripts/export-backup-metrics.sh
+  s_00ea0b1c8831de::t_cc7389be5c40b1 1-6
+apps/web/next-env.d.ts
+  s_00ea0b1c8831de::t_2851af2fd38130 1-2
+apps/web/prisma/migrations/migration_lock.toml
+  s_00ea0b1c8831de::t_1963288d3d3ac4 1-3
+deploy/scripts/render-alertmanager.sh
+  s_00ea0b1c8831de::t_03f1d96b1e91d0 1-34
+apps/web/package.json
+  s_00ea0b1c8831de::t_72e0770abe94bf 1-49
+deploy/observability/grafana/dashboards/framm-overview.json
+  s_00ea0b1c8831de::t_aa0469ed210755 1-14
+apps/web/src/app/actions/auth.ts
+  s_00ea0b1c8831de::t_6e7140cf737b48 1-67,69-70
+  s_00ea0b1c8831de::t_4efb43e094f1de 68
+deploy/scripts/lib/stalwart-setup.sh
+  s_00ea0b1c8831de::t_555af9951432c3 1-13,15-60,71-73,84,88,90-112
+  s_00ea0b1c8831de::t_0bad07ee34d53e 61-70,74-83,85-87,89
+  s_00ea0b1c8831de::t_3f34f10f844828 14
+apps/web/src/app/actions/bureau.ts
+  s_00ea0b1c8831de::t_9dffce9f223e04 1-23
+apps/web/src/lib/stalwart/client.ts
+  s_00ea0b1c8831de::t_8d472aad071ddf 1-104
+apps/web/src/app/signup/page.tsx
+  s_00ea0b1c8831de::t_3a74b6012abc9c 1-67
+deploy/scripts/backup-postgres.sh
+  s_00ea0b1c8831de::t_9910957c19d0a1 1-20
+deploy/scripts/tf-apply.sh
+  s_00ea0b1c8831de::t_675278608018f1 6-7,9,11,24
+  s_00ea0b1c8831de::t_3bd31f2dcb1b68 1-5,8,10,12-23,25
+deploy/docker/docker-compose.dev.yml
+  s_00ea0b1c8831de::t_4516357821fe92 1-14
+deploy/scripts/wait-dns-and-apply.sh
+  s_00ea0b1c8831de::t_6be6248f2e7e91 1-25
+apps/web/src/i18n/request.ts
+  s_00ea0b1c8831de::t_ae1a03e2faef39 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "1ee95b7fc4e05072afa0e539a9cc0c1c04296ae6",
+  "prompts": {},
+  "sessions": {
+    "s_00ea0b1c8831de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a860922-e9f4-4046-b28b-24f34780c59e",
+        "model": "composer-2.5"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
