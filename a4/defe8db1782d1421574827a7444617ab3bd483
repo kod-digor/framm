@@ -1,0 +1,19 @@
+apps/web/messages/fr.json
+  s_8c8df2da6ad22c::t_b47f35781f29f4 64,164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "a4defe8db1782d1421574827a7444617ab3bd483",
+  "prompts": {},
+  "sessions": {
+    "s_8c8df2da6ad22c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "af5d909d-922c-46a4-a627-3fca670f9b8f",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
