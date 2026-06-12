@@ -137,6 +137,7 @@ export default async function BureauPage({
                   <th className="pb-2 pr-4 font-medium">{t("colDomains")}</th>
                   <th className="pb-2 pr-4 font-medium">{t("colStorage")}</th>
                   <th className="pb-2 pr-4 font-medium">{t("colCost")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("colWallet")}</th>
                   <th className="pb-2 font-medium">{t("colActions")}</th>
                 </tr>
               </thead>
@@ -170,6 +171,11 @@ export default async function BureauPage({
                     </td>
                     <td className="py-3 pr-4 text-zinc-700">
                       {org.monthlyCostEur != null ? formatEur(org.monthlyCostEur) : "—"}
+                    </td>
+                    <td className="py-3 pr-4 font-medium text-zinc-900">
+                      {org.status === "APPROVED"
+                        ? formatEur(org.walletBalanceCents / 100)
+                        : "—"}
                     </td>
                     <td className="py-3">
                       {org.status === "PENDING" ? (

@@ -16,6 +16,7 @@ export type BureauOrgRow = {
   domainCount: number;
   storageBytes: bigint;
   monthlyCostEur: number | null;
+  walletBalanceCents: number;
 };
 
 const PLATFORM_SLUG = "kod-digor";
@@ -84,6 +85,7 @@ export async function loadBureauOrganizations(
       domainCount: domainCountByOrg.get(org.id) ?? 0,
       storageBytes,
       monthlyCostEur,
+      walletBalanceCents: org.walletBalanceCents,
     };
   });
 }

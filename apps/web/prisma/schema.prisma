@@ -25,22 +25,30 @@ enum DomainStatus {
   ACTIVE
 }
 
+enum WalletTransactionType {
+  DEPOSIT
+  CONSUMPTION
+  RECHARGE
+}
+
 model Organization {
-  id            String               @id @default(cuid())
-  name          String
-  slug          String               @unique
-  presentation  String
-  status        OrganizationStatus   @default(PENDING)
-  rejectReason  String?
-  approvedAt    DateTime?
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  members       OrganizationMember[]
-  domains       Domain[]
-  mailboxes     Mailbox[]
-  emailAliases  EmailAlias[]
-  usageSnapshots UsageSnapshot[]
-  auditLogs     AuditLog[]
+  id                 String               @id @default(cuid())
+  name               String
+  slug               String               @unique
+  presentation       String
+  status             OrganizationStatus   @default(PENDING)
+  rejectReason       String?
+  approvedAt         DateTime?
+  walletBalanceCents Int                  @default(0)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  members            OrganizationMember[]
+  domains            Domain[]
+  mailboxes          Mailbox[]
+  emailAliases       EmailAlias[]
+  usageSnapshots     UsageSnapshot[]
+  walletTransactions WalletTransaction[]
+  auditLogs          AuditLog[]
 }
 
 model User {
@@ -129,6 +137,22 @@ model PlatformPricing {
   fetchedAt            DateTime @default(now())
 
   @@index([fetchedAt])
+}
+
+model WalletTransaction {
+  id                String                @id @default(cuid())
+  organizationId    String
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type              WalletTransactionType
+  amountCents       Int
+  feeCents          Int                   @default(0)
+  balanceAfterCents Int
+  monthKey          String?
+  description       String?
+  createdAt         DateTime              @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, monthKey, type])
 }
 
 model AuditLog {
