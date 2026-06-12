@@ -7,7 +7,10 @@ import {
 } from "@/lib/billing/pricing";
 import { prisma } from "@/lib/prisma";
 import { getOrgStorageBytes } from "@/lib/storage/s3";
-import { groupUsageSnapshots } from "@/lib/usage/snapshots";
+import {
+  formatUsageMonthLabel,
+  groupUsageSnapshotsByMonth,
+} from "@/lib/usage/snapshots";
 import { formatBytes } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
@@ -36,14 +39,14 @@ export default async function UsagePage() {
     prisma.usageSnapshot.findMany({
       where: { organizationId: orgId },
       orderBy: { recordedAt: "desc" },
-      take: 90,
+      take: 1095,
     }),
     getLatestPricing(),
   ]);
 
   const pricing = latestPricing ?? (await syncPricingIfStale());
 
-  const history = groupUsageSnapshots(snapshots);
+  const history = groupUsageSnapshotsByMonth(snapshots);
   const monthlyEstimate = pricing
     ? estimateStorageCostEur(storage, pricing.storageEurPerGbMonth)
     : null;
@@ -105,7 +108,7 @@ export default async function UsagePage() {
             <table className="w-full min-w-[32rem] text-left text-sm">
               <thead>
                 <tr className="border-b text-zinc-500">
-                  <th className="pb-2 pr-4 font-medium">{t("colDate")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("colMonth")}</th>
                   <th className="pb-2 pr-4 font-medium">{t("colStorage")}</th>
                   <th className="pb-2 pr-4 font-medium">{t("colMailboxes")}</th>
                   <th className="pb-2 font-medium">{t("colDomains")}</th>
@@ -113,8 +116,10 @@ export default async function UsagePage() {
               </thead>
               <tbody>
                 {history.map((row) => (
-                  <tr key={row.recordedAt.toISOString()} className="border-b border-zinc-100">
-                    <td className="py-2 pr-4 text-zinc-700">{formatRecordedAt(row.recordedAt)}</td>
+                  <tr key={row.monthKey} className="border-b border-zinc-100">
+                    <td className="py-2 pr-4 text-zinc-700">
+                      {formatUsageMonthLabel(row.monthKey)}
+                    </td>
                     <td className="py-2 pr-4 font-medium text-zinc-900">
                       {formatBytes(row.storageBytes)}
                     </td>

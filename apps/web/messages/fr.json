@@ -165,7 +165,7 @@
     "rateUpdated": "Tarifs mis à jour le {date}",
     "history": "Historique",
     "historyEmpty": "Aucun relevé pour le moment. Les snapshots quotidiens apparaîtront ici.",
-    "colDate": "Date",
+    "colMonth": "Mois",
     "colStorage": "Stockage",
     "colMailboxes": "Boîtes mail",
     "colDomains": "Domaines"
