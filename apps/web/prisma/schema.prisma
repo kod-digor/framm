@@ -26,16 +26,16 @@ enum DomainStatus {
 }
 
 model Organization {
-  id            String             @id @default(cuid())
+  id            String               @id @default(cuid())
   name          String
-  slug          String             @unique
+  slug          String               @unique
   presentation  String
-  status        OrganizationStatus @default(PENDING)
+  status        OrganizationStatus   @default(PENDING)
   rejectReason  String?
   approvedAt    DateTime?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  users         User[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  members       OrganizationMember[]
   domains       Domain[]
   mailboxes     Mailbox[]
   emailAliases  EmailAlias[]
@@ -44,15 +44,26 @@ model Organization {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  email          String        @unique
-  passwordHash   String
+  id           String               @id @default(cuid())
+  email        String               @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  memberships  OrganizationMember[]
+  auditLogs    AuditLog[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   role           UserRole
-  organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  auditLogs      AuditLog[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, organizationId])
 }
 
 model Domain {
@@ -85,14 +96,14 @@ model Mailbox {
 }
 
 model EmailAlias {
-  id               String       @id @default(cuid())
-  organizationId   String
-  organization     Organization @relation(fields: [organizationId], references: [id])
-  source           String
-  destination      String
-  stalwartAliasId  String?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  source          String
+  destination     String
+  stalwartAliasId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@unique([organizationId, source])
 }
@@ -104,6 +115,20 @@ model UsageSnapshot {
   metric         String
   value          BigInt
   recordedAt     DateTime     @default(now())
+
+  @@index([organizationId, recordedAt])
+}
+
+model PlatformPricing {
+  id                   String   @id @default(cuid())
+  sku                  String
+  region               String
+  storageEurPerGbHour  Float
+  storageEurPerGbMonth Float
+  source               String
+  fetchedAt            DateTime @default(now())
+
+  @@index([fetchedAt])
 }
 
 model AuditLog {

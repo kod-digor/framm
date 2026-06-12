@@ -34,8 +34,14 @@ case "$CMD" in
     "${ROOT}/deploy/scripts/setup-tls.sh" app
     "${ROOT}/deploy/scripts/setup-tls.sh" mail
     ;;
+  sync-dev-env)
+    exec "${ROOT}/deploy/scripts/sync-dev-env.sh"
+    ;;
+  db-tunnel)
+    exec "${ROOT}/deploy/scripts/db-tunnel.sh"
+    ;;
   *)
-    echo "Usage: framm {bootstrap|deploy|status|enable-dns|wait-dns|enable-app-bzh|setup-tls}"
+    echo "Usage: framm {bootstrap|deploy|status|enable-dns|wait-dns|enable-app-bzh|setup-tls|sync-dev-env|db-tunnel}"
     exit 1
     ;;
 esac

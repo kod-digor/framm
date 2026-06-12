@@ -29,23 +29,32 @@ async function main() {
     },
   });
 
-  await prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { email },
     update: {
       passwordHash: hash,
       role: UserRole.BUREAU,
-      organizationId: org.id,
     },
     create: {
       email,
       passwordHash: hash,
       role: UserRole.BUREAU,
+    },
+  });
+
+  await prisma.organizationMember.upsert({
+    where: {
+      userId_organizationId: { userId: user.id, organizationId: org.id },
+    },
+    update: { role: UserRole.BUREAU },
+    create: {
+      userId: user.id,
       organizationId: org.id,
+      role: UserRole.BUREAU,
     },
   });
 
   console.log(`Bureau admin seeded: ${email} (org: ${org.name})`);
 }
 
-main()
-  .finally(() => prisma.$disconnect());
+main().finally(() => prisma.$disconnect());

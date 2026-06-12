@@ -6,8 +6,13 @@ type JmapRequest = {
   methodCalls: [string, Record<string, unknown>, string][];
 };
 
+function stalwartJmapUrl() {
+  const base = (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
+  return `${base}/jmap`;
+}
+
 async function jmapCall(methodCalls: JmapRequest["methodCalls"]) {
-  if (!STALWART_URL || !STALWART_API_KEY) {
+  if (!STALWART_API_KEY) {
     return { unavailable: true as const };
   }
 
@@ -16,20 +21,38 @@ async function jmapCall(methodCalls: JmapRequest["methodCalls"]) {
     methodCalls,
   };
 
-  const res = await fetch(`${STALWART_URL}/jmap`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${STALWART_API_KEY}`,
-    },
-    body: JSON.stringify(body),
-  });
+  try {
+    const res = await fetch(stalwartJmapUrl(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STALWART_API_KEY}`,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
+    });
 
-  if (!res.ok) {
-    return { error: `Stalwart JMAP error: ${res.status}` };
+    if (!res.ok) {
+      return { error: `Stalwart JMAP error: ${res.status}` as const };
+    }
+
+    return res.json();
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    return { error: `Stalwart unreachable: ${detail}` as const };
   }
+}
 
-  return res.json();
+export async function deleteDomain(stalwartDomainId: string) {
+  return jmapCall([
+    [
+      "x:Domain/set",
+      {
+        destroy: [stalwartDomainId],
+      },
+      "d1",
+    ],
+  ]);
 }
 
 export async function createDomain(fqdn: string) {
@@ -92,7 +115,8 @@ export async function listAccounts() {
 }
 
 export function getMailConfig() {
-  const host = STALWART_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const base = process.env.WEBMAIL_URL || STALWART_URL;
+  const host = base.replace(/^https?:\/\//, "").replace(/\/$/, "");
   return {
     imapServer: host,
     smtpServer: host,

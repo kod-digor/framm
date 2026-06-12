@@ -1,8 +1,12 @@
+import { syncPricingIfStale } from "@/lib/billing/pricing";
 import { prisma } from "@/lib/prisma";
 import { getOrgStorageBytes } from "@/lib/storage/s3";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 async function syncUsage() {
   const orgs = await prisma.organization.findMany({ where: { status: "APPROVED" } });
+  const recordedAt = new Date();
 
   for (const org of orgs) {
     const storage = await getOrgStorageBytes(org.id);
@@ -13,9 +17,9 @@ async function syncUsage() {
 
     await prisma.usageSnapshot.createMany({
       data: [
-        { organizationId: org.id, metric: "STORAGE_BYTES", value: storage },
-        { organizationId: org.id, metric: "MAILBOX_COUNT", value: BigInt(mailboxCount) },
-        { organizationId: org.id, metric: "DOMAIN_COUNT", value: BigInt(domainCount) },
+        { organizationId: org.id, metric: "STORAGE_BYTES", value: storage, recordedAt },
+        { organizationId: org.id, metric: "MAILBOX_COUNT", value: BigInt(mailboxCount), recordedAt },
+        { organizationId: org.id, metric: "DOMAIN_COUNT", value: BigInt(domainCount), recordedAt },
       ],
     });
   }
@@ -23,8 +27,13 @@ async function syncUsage() {
 
 async function run() {
   console.log("Framm worker started");
+  await syncPricingIfStale();
   await syncUsage();
-  setInterval(syncUsage, 24 * 60 * 60 * 1000);
+
+  setInterval(syncUsage, DAY_MS);
+  setInterval(() => {
+    void syncPricingIfStale();
+  }, DAY_MS);
 }
 
 run();

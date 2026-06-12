@@ -21,3 +21,8 @@ export async function rejectOrganization(orgId: string, reason: string) {
   });
   revalidatePath("/bureau");
 }
+
+export async function rejectOrganizationForm(orgId: string, formData: FormData) {
+  const reason = (formData.get("reason") as string)?.trim();
+  await rejectOrganization(orgId, reason || "Refusé");
+}

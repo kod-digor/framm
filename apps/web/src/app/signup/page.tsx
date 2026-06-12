@@ -26,6 +26,12 @@ export default async function SignupPage({
               {t("signupPending")}
             </p>
           )}
+          {params.error === "invalid" && (
+            <p className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800">
+              {t("invalidCredentials")}
+            </p>
+          )}
+          <p className="mb-4 text-sm text-zinc-600">{t("signupExistingHint")}</p>
           <form action={signupAction} className="space-y-4">
             <div>
               <Label htmlFor="orgName">{t("orgName")}</Label>

@@ -21,7 +21,10 @@ export default async function LoginPage({
           <CardTitle>{t("loginTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {params.error && (
+          {params.error === "session" && (
+            <p className="mb-4 text-sm text-red-600">{t("sessionExpired")}</p>
+          )}
+          {params.error && params.error !== "session" && (
             <p className="mb-4 text-sm text-red-600">{t("invalidCredentials")}</p>
           )}
           <form action={loginAction} className="space-y-4">

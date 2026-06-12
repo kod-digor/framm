@@ -4,7 +4,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Framm — Kod Digor",
+  title: "Kod Digor",
   description: "Infrastructure numérique pour les associations",
 };
 

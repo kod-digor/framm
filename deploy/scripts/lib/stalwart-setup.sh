@@ -69,12 +69,23 @@ framm_stalwart_api_key_valid() {
 
 framm_stalwart_create_api_key() {
   local body query_body api_secret env_file="/opt/framm/deploy/.generated/env.production"
+  local create_id="framm-$(date +%s)"
 
   framm_stalwart_recovery_auth
   echo "Création clé API Stalwart (framm-platform)..."
-  body='{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:ApiKey/set",{"create":{"framm":{"description":"framm-platform","permissions":{"@type":"Inherit"},"allowedIps":{}}}}, "c1"]]}'
-  query_body="$(framm_stalwart_jmap "$RECOVERY_USER" "$RECOVERY_PASS" "$body")"
-  api_secret="$(printf '%s' "$query_body" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r["methodResponses"][0][1]["created"]["framm"]["secret"])' 2>/dev/null || true)"
+  body="$(cat <<EOF
+{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:ApiKey/set",{"create":{"${create_id}":{"description":"framm-platform","permissions":{"@type":"Inherit"},"allowedIps":{}}}}, "c1"]]}
+EOF
+)"
+  query_body="$(framm_stalwart_jmap "$RECOVERY_USER" "$RECOVERY_PASS" "$body" 2>/dev/null || true)"
+  api_secret="$(printf '%s' "$query_body" | python3 -c 'import json,sys; r=json.load(sys.stdin); created=r["methodResponses"][0][1].get("created",{}); print(next(iter(created.values())).get("secret","") if created else "")' 2>/dev/null || true)"
+
+  if [[ -z "$api_secret" && -n "${STALWART_ADMIN_PASSWORD:-}" ]]; then
+    local admin_user="admin@${PRIMARY_PLATFORM_DOMAIN:?}"
+    echo "Tentative création clé API via ${admin_user}..."
+    query_body="$(framm_stalwart_jmap "$admin_user" "$STALWART_ADMIN_PASSWORD" "$body" 2>/dev/null || true)"
+    api_secret="$(printf '%s' "$query_body" | python3 -c 'import json,sys; r=json.load(sys.stdin); created=r["methodResponses"][0][1].get("created",{}); print(next(iter(created.values())).get("secret","") if created else "")' 2>/dev/null || true)"
+  fi
   if [[ -n "$api_secret" && -f "$env_file" ]]; then
     sed -i "s|^STALWART_API_KEY=.*|STALWART_API_KEY=${api_secret}|" "$env_file"
     export STALWART_API_KEY="$api_secret"

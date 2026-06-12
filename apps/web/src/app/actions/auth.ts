@@ -29,21 +29,45 @@ export async function signupAction(formData: FormData) {
 
   const { orgName, presentation, email, password } = parsed.data;
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) redirect("/signup?error=exists");
-
   const hash = await bcrypt.hash(password, 12);
   const slug = slugify(orgName);
+
+  if (existing) {
+    const valid = await bcrypt.compare(password, existing.passwordHash);
+    if (!valid) redirect("/signup?error=invalid");
+
+    await prisma.organization.create({
+      data: {
+        name: orgName,
+        slug: `${slug}-${Date.now()}`,
+        presentation,
+        members: {
+          create: {
+            userId: existing.id,
+            role: UserRole.ASSOC_ADMIN,
+          },
+        },
+      },
+    });
+
+    redirect("/signup?success=pending");
+  }
 
   await prisma.organization.create({
     data: {
       name: orgName,
       slug: `${slug}-${Date.now()}`,
       presentation,
-      users: {
+      members: {
         create: {
-          email,
-          passwordHash: hash,
           role: UserRole.ASSOC_ADMIN,
+          user: {
+            create: {
+              email,
+              passwordHash: hash,
+              role: UserRole.ASSOC_ADMIN,
+            },
+          },
         },
       },
     },
@@ -53,7 +77,7 @@ export async function signupAction(formData: FormData) {
 }
 
 export async function loginAction(formData: FormData) {
-  const email = formData.get("email") as string;
+  const email = (formData.get("email") as string).toLowerCase().trim();
   const password = formData.get("password") as string;
 
   const result = await signIn("credentials", {
@@ -64,7 +88,14 @@ export async function loginAction(formData: FormData) {
 
   if (result?.error) redirect("/login?error=invalid");
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (user?.role === "BUREAU" && !user.organizationId) redirect("/bureau");
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { memberships: true },
+  });
+
+  if (user?.role === "BUREAU" && user.memberships.length === 0) {
+    redirect("/bureau");
+  }
+
   redirect("/dashboard");
 }

@@ -1,15 +1,25 @@
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
+import {
+  estimateStorageCostEur,
+  formatEur,
+  getLatestPricing,
+  syncPricingIfStale,
+} from "@/lib/billing/pricing";
 import { prisma } from "@/lib/prisma";
 import { getOrgStorageBytes } from "@/lib/storage/s3";
+import { groupUsageSnapshots } from "@/lib/usage/snapshots";
+import { formatBytes } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
 
-function formatBytes(bytes: bigint) {
-  const n = Number(bytes);
-  if (n < 1024) return `${n} o`;
-  if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} Ko`;
-  if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)} Mo`;
-  return `${(n / 1024 ** 3).toFixed(2)} Go`;
+function formatRecordedAt(date: Date) {
+  return date.toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default async function UsagePage() {
@@ -17,7 +27,7 @@ export default async function UsagePage() {
   const orgId = getOrgId(session)!;
   const t = await getT("usage");
 
-  const [storage, mailboxCount, domainCount, snapshots] = await Promise.all([
+  const [storage, mailboxCount, domainCount, snapshots, latestPricing] = await Promise.all([
     getOrgStorageBytes(orgId),
     prisma.mailbox.count({ where: { organizationId: orgId } }),
     prisma.domain.count({
@@ -26,9 +36,17 @@ export default async function UsagePage() {
     prisma.usageSnapshot.findMany({
       where: { organizationId: orgId },
       orderBy: { recordedAt: "desc" },
-      take: 10,
+      take: 90,
     }),
+    getLatestPricing(),
   ]);
+
+  const pricing = latestPricing ?? (await syncPricingIfStale());
+
+  const history = groupUsageSnapshots(snapshots);
+  const monthlyEstimate = pricing
+    ? estimateStorageCostEur(storage, pricing.storageEurPerGbMonth)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -55,20 +73,67 @@ export default async function UsagePage() {
         </Card>
       </div>
 
-      {snapshots.length > 0 && (
+      {pricing && (
         <Card>
           <CardHeader>
-            <CardTitle>Historique</CardTitle>
+            <CardTitle>{t("billingTitle")}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-1 text-sm text-zinc-600">
-              {snapshots.map((s) => (
-                <li key={s.id}>
-                  {s.metric} : {s.value.toString()} — {s.recordedAt.toLocaleString("fr-FR")}
-                </li>
-              ))}
-            </ul>
+          <CardContent className="space-y-2 text-sm text-zinc-600">
+            <p className="text-2xl font-bold text-zinc-900">
+              {monthlyEstimate != null ? formatEur(monthlyEstimate) : "—"}
+              <span className="ml-2 text-sm font-normal text-zinc-500">{t("perMonthHt")}</span>
+            </p>
+            <p>
+              {t("rateLine", {
+                rate: formatEur(pricing.storageEurPerGbMonth),
+                region: pricing.region,
+              })}
+            </p>
+            <p className="text-xs text-zinc-500">
+              {t("rateUpdated", { date: formatRecordedAt(pricing.fetchedAt) })}
+            </p>
           </CardContent>
+        </Card>
+      )}
+
+      {history.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("history")}</CardTitle>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <table className="w-full min-w-[32rem] text-left text-sm">
+              <thead>
+                <tr className="border-b text-zinc-500">
+                  <th className="pb-2 pr-4 font-medium">{t("colDate")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("colStorage")}</th>
+                  <th className="pb-2 pr-4 font-medium">{t("colMailboxes")}</th>
+                  <th className="pb-2 font-medium">{t("colDomains")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((row) => (
+                  <tr key={row.recordedAt.toISOString()} className="border-b border-zinc-100">
+                    <td className="py-2 pr-4 text-zinc-700">{formatRecordedAt(row.recordedAt)}</td>
+                    <td className="py-2 pr-4 font-medium text-zinc-900">
+                      {formatBytes(row.storageBytes)}
+                    </td>
+                    <td className="py-2 pr-4 text-zinc-700">{row.mailboxCount}</td>
+                    <td className="py-2 text-zinc-700">{row.domainCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      )}
+
+      {history.length === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("history")}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-zinc-500">{t("historyEmpty")}</CardContent>
         </Card>
       )}
     </div>
