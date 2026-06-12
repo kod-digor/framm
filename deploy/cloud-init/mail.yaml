@@ -1,0 +1,27 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+packages:
+  - docker.io
+  - docker-compose-v2
+  - nginx
+  - certbot
+  - python3-certbot-nginx
+  - unattended-upgrades
+  - fail2ban
+  - rsync
+
+ssh_authorized_keys:
+  - ${ssh_public_key}
+
+write_files:
+  - path: /etc/framm/domain
+    content: ${domain}
+    permissions: '0644'
+
+runcmd:
+  - systemctl enable docker && systemctl start docker
+  - usermod -aG docker root
+  - mkdir -p /opt/framm/mail-data /opt/framm/stalwart /var/www/acme
+  - echo "Cloud-init Framm mail complete" > /opt/framm/ready.txt

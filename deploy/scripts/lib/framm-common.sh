@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# Fonctions partagées — sourcer, ne pas exécuter directement
+set -euo pipefail
+
+FRAMM_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+
+framm_load_env() {
+  local env_file="${FRAMM_ROOT}/.env"
+  if [[ ! -f "$env_file" ]]; then
+    echo "Fichier .env manquant. Copiez .env.example vers .env"
+    exit 1
+  fi
+  set -a
+  # shellcheck source=/dev/null
+  source "$env_file"
+  set +a
+
+  for var in SCW_ACCESS_KEY SCW_SECRET_KEY SCW_PROJECT_ID ADMIN_PASSWORD BUREAU_ADMIN_EMAIL; do
+    if [[ -z "${!var:-}" ]]; then
+      echo "Variable $var requise dans .env"
+      exit 1
+    fi
+  done
+
+  unset SCW_PROFILE 2>/dev/null || true
+  export SCW_DEFAULT_PROJECT_ID="$SCW_PROJECT_ID"
+  export SCW_DEFAULT_REGION="${SCW_DEFAULT_REGION:-fr-par}"
+  export SCW_DEFAULT_ZONE="${SCW_DEFAULT_ZONE:-fr-par-1}"
+
+  if [[ -z "${SSH_PUBLIC_KEY:-}" ]]; then
+    for key_file in "${HOME}/.ssh/id_ed25519.pub" "${HOME}/.ssh/id_rsa.pub"; do
+      if [[ -f "$key_file" ]]; then
+        SSH_PUBLIC_KEY="$(tr -d '\n' < "$key_file")"
+        break
+      fi
+    done
+  fi
+
+  if [[ -z "${SSH_PUBLIC_KEY:-}" ]]; then
+    echo "SSH_PUBLIC_KEY manquante — ajoutez-la dans .env ou placez une clé dans ~/.ssh/"
+    exit 1
+  fi
+
+  PRIMARY_PLATFORM_DOMAIN="${PRIMARY_PLATFORM_DOMAIN:-kod-digor.bzh}"
+  framm_init_ssh
+}
+
+framm_init_ssh() {
+  FRAMM_KNOWN_HOSTS="/tmp/framm-ssh-known-hosts-${UID:-0}"
+  touch "$FRAMM_KNOWN_HOSTS"
+  SSH_OPTS=(
+    -o BatchMode=yes
+    -o StrictHostKeyChecking=accept-new
+    -o UserKnownHostsFile="${FRAMM_KNOWN_HOSTS}"
+    -o ConnectTimeout=15
+  )
+  if [[ -n "${SSH_PRIVATE_KEY_FILE:-}" && -f "${SSH_PRIVATE_KEY_FILE}" ]]; then
+    SSH_OPTS+=(-i "${SSH_PRIVATE_KEY_FILE}")
+  fi
+}
+
+framm_ci_setup_ssh() {
+  if [[ -z "${SSH_PRIVATE_KEY:-}" ]]; then
+    echo "Secret CI SSH_PRIVATE_KEY requis (clé privée correspondant à la VM)"
+    exit 1
+  fi
+  if [[ -f "${SSH_PRIVATE_KEY}" ]]; then
+    SSH_PRIVATE_KEY_FILE="${SSH_PRIVATE_KEY}"
+  else
+    mkdir -p "${HOME}/.ssh"
+    chmod 700 "${HOME}/.ssh"
+    SSH_PRIVATE_KEY_FILE="${HOME}/.ssh/framm_ci_deploy"
+    printf '%s\n' "${SSH_PRIVATE_KEY}" > "${SSH_PRIVATE_KEY_FILE}"
+    chmod 600 "${SSH_PRIVATE_KEY_FILE}"
+  fi
+  export SSH_PRIVATE_KEY_FILE
+  framm_init_ssh
+}
+
+framm_load_deploy_context() {
+  PRIMARY_PLATFORM_DOMAIN="${PRIMARY_PLATFORM_DOMAIN:-kod-digor.bzh}"
+
+  if [[ -n "${APP_PUBLIC_IP:-}" && -n "${MAIL_PUBLIC_IP:-}" ]]; then
+    export APP_PUBLIC_IP MAIL_PUBLIC_IP
+    return 0
+  fi
+
+  if [[ -f "${FRAMM_ROOT}/.env" ]]; then
+    framm_load_tf_outputs
+    return 0
+  fi
+
+  echo "APP_PUBLIC_IP et MAIL_PUBLIC_IP requis (variables CI ou terraform output local)"
+  exit 1
+}
+
+framm_reset_known_hosts() {
+  framm_load_tf_outputs 2>/dev/null || true
+  : > "/tmp/framm-ssh-known-hosts-${UID}"
+  ssh-keygen -R "${APP_PUBLIC_IP:-}" -f "${HOME}/.ssh/known_hosts" 2>/dev/null || true
+  ssh-keygen -R "${MAIL_PUBLIC_IP:-}" -f "${HOME}/.ssh/known_hosts" 2>/dev/null || true
+}
+
+framm_load_tf_outputs() {
+  local tf_dir="${FRAMM_ROOT}/terraform/environments/prod"
+  APP_PUBLIC_IP="$(cd "$tf_dir" && terraform output -raw app_public_ip)"
+  MAIL_PUBLIC_IP="$(cd "$tf_dir" && terraform output -raw mail_public_ip)"
+  export APP_PUBLIC_IP MAIL_PUBLIC_IP
+}
+
+framm_ssh() {
+  local host="$1"
+  shift
+  ssh "${SSH_OPTS[@]}" "root@${host}" "$@"
+}
+
+framm_wait_ssh() {
+  local host="$1"
+  local max="${2:-40}"
+  echo "Attente SSH sur ${host} (max ${max}×10s)..."
+  for i in $(seq 1 "$max"); do
+    if framm_ssh "$host" "command -v docker >/dev/null && systemctl is-active docker >/dev/null" 2>/dev/null; then
+      echo "SSH OK sur ${host} (${i} tentative(s))"
+      return 0
+    fi
+    echo "[${i}/${max}] SSH pas encore prêt..."
+    sleep 10
+  done
+  echo "Timeout SSH sur ${host}"
+  return 1
+}
+
+framm_rsync_prepare() {
+  cp "${FRAMM_ROOT}/deploy/scripts/lib/ssh-rsync.sh" /tmp/framm-ssh-rsync.sh
+  chmod +x /tmp/framm-ssh-rsync.sh
+}
+
+framm_rsync_app() {
+  framm_rsync_prepare
+  rsync -az --delete -e /tmp/framm-ssh-rsync.sh \
+    --exclude '.git' \
+    --exclude 'node_modules' \
+    --exclude '.next' \
+    --exclude 'terraform/.terraform' \
+    --exclude 'terraform/**/terraform.tfstate*' \
+    --exclude '.env' \
+    "${FRAMM_ROOT}/" "root@${APP_PUBLIC_IP}:/opt/framm/"
+}
+
+framm_rsync_mail() {
+  framm_rsync_prepare
+  rsync -az --delete -e /tmp/framm-ssh-rsync.sh \
+    --exclude '.git' \
+    "${FRAMM_ROOT}/deploy/" "root@${MAIL_PUBLIC_IP}:/opt/framm/deploy/"
+}
+
+framm_render_nginx() {
+  local template="$1"
+  local output="$2"
+  local domain="${PRIMARY_PLATFORM_DOMAIN}"
+  sed "s/\${PRIMARY_DOMAIN}/${domain}/g" "$template" > "$output"
+}
+
+framm_wait_dns_public() {
+  local domain="${PRIMARY_PLATFORM_DOMAIN}"
+  local expected_ip="$APP_PUBLIC_IP"
+  local max="${1:-60}"
+  echo "Attente propagation DNS publique pour ${domain} → ${expected_ip}..."
+  for i in $(seq 1 "$max"); do
+    local resolved
+    resolved="$(dig +short "$domain" A @1.1.1.1 2>/dev/null | head -1 || true)"
+    if [[ "$resolved" == "$expected_ip" ]]; then
+      echo "DNS public OK après ${i} tentative(s)"
+      return 0
+    fi
+    echo "[${i}/${max}] DNS: '${resolved:-vide}' — attente 30s..."
+    sleep 30
+  done
+  echo "DNS public pas encore propagé — poursuite (certificats peuvent échouer)"
+  return 1
+}

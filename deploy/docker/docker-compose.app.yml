@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: framm
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-framm}
+      POSTGRES_DB: framm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U framm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.generated/env.production
+    environment:
+      DATABASE_URL: postgresql://framm:${DB_PASSWORD}@postgres:5432/framm
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    env_file:
+      - ../.generated/env.production
+    environment:
+      DATABASE_URL: postgresql://framm:${DB_PASSWORD}@postgres:5432/framm
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

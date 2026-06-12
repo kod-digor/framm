@@ -1,0 +1,26 @@
+groups:
+  - name: framm
+    rules:
+      - alert: FrammStalwartDown
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service indisponible"
+
+      - alert: FrammBackupFailed
+        expr: backup_postgres_success != 1
+        for: 26h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup PostgreSQL en échec"
+
+      - alert: FrammDiskSpaceWarning
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Espace disque faible"

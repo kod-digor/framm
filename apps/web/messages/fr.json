@@ -1,0 +1,78 @@
+{
+  "common": {
+    "appName": "Framm",
+    "login": "Se connecter",
+    "signup": "S'inscrire",
+    "logout": "Se déconnecter",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "loading": "Chargement..."
+  },
+  "landing": {
+    "title": "Infrastructure numérique pour les associations",
+    "subtitle": "Framm par Kod Digor — hébergement, messagerie et gestion de domaines en toute transparence.",
+    "ctaLogin": "Se connecter",
+    "ctaSignup": "Inscrire mon association"
+  },
+  "auth": {
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "loginTitle": "Connexion",
+    "signupTitle": "Inscription association",
+    "orgName": "Nom de l'association",
+    "presentation": "Présentation du projet",
+    "presentationHint": "Décrivez votre association et l'usage prévu de la plateforme.",
+    "signupPending": "Votre demande a été envoyée. Le bureau Kod Digor la validera sous peu.",
+    "invalidCredentials": "Identifiants incorrects"
+  },
+  "bureau": {
+    "title": "Bureau Kod Digor",
+    "myOrg": "Mon espace association",
+    "pending": "Demandes en attente",
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "rejectReason": "Motif du refus",
+    "noPending": "Aucune demande en attente"
+  },
+  "dashboard": {
+    "overview": "Vue d'ensemble",
+    "domains": "Domaines",
+    "mailboxes": "Boîtes mail",
+    "aliases": "Redirections",
+    "usage": "Consommation",
+    "bureau": "Validation associations",
+    "welcome": "Bienvenue sur votre espace association"
+  },
+  "domains": {
+    "add": "Ajouter un domaine",
+    "fqdn": "Nom de domaine",
+    "verify": "Vérifier le DNS",
+    "records": "Enregistrements DNS requis",
+    "verified": "Domaine vérifié",
+    "pending": "En attente de vérification DNS"
+  },
+  "mailboxes": {
+    "add": "Créer une boîte mail",
+    "address": "Adresse e-mail",
+    "quota": "Quota",
+    "config": "Configuration client mail",
+    "imapServer": "Serveur IMAP",
+    "smtpServer": "Serveur SMTP",
+    "imapPort": "Port IMAP",
+    "smtpPort": "Port SMTP",
+    "username": "Utilisateur",
+    "webmail": "Accéder au webmail"
+  },
+  "aliases": {
+    "add": "Ajouter une redirection",
+    "source": "Adresse source",
+    "destination": "Adresse de destination"
+  },
+  "usage": {
+    "title": "Consommation",
+    "storage": "Stockage S3",
+    "mailboxes": "Boîtes mail",
+    "domains": "Domaines actifs"
+  }
+}

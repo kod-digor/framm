@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CMD="${1:-}"
+
+case "$CMD" in
+  bootstrap)
+    exec "${ROOT}/deploy/scripts/bootstrap.sh"
+    ;;
+  deploy)
+    exec "${ROOT}/deploy/scripts/update-stack.sh"
+    ;;
+  status)
+    exec "${ROOT}/deploy/scripts/health-check.sh"
+    ;;
+  enable-dns)
+    export DNS_ENABLED=true
+    export APP_BZH_ENABLED="${APP_BZH_ENABLED:-false}"
+    "${ROOT}/deploy/scripts/tf-apply.sh"
+    "${ROOT}/deploy/scripts/render-alertmanager.sh"
+    echo "DNS activé pour kod-digor.bzh"
+    ;;
+  wait-dns)
+    exec "${ROOT}/deploy/scripts/wait-dns-and-apply.sh" "${2:-kod-digor.bzh}"
+    ;;
+  enable-app-bzh)
+    export DNS_ENABLED=true
+    export APP_BZH_ENABLED=true
+    "${ROOT}/deploy/scripts/tf-apply.sh"
+    echo "app.bzh activé (DNS requis)"
+    ;;
+  setup-tls)
+    "${ROOT}/deploy/scripts/setup-tls.sh" app
+    "${ROOT}/deploy/scripts/setup-tls.sh" mail
+    ;;
+  *)
+    echo "Usage: framm {bootstrap|deploy|status|enable-dns|wait-dns|enable-app-bzh|setup-tls}"
+    exit 1
+    ;;
+esac

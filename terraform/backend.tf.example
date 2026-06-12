@@ -1,0 +1,14 @@
+# Copier vers backend.tf et adapter après création du bucket tfstate
+terraform {
+  backend "s3" {
+    bucket                      = "framm-tfstate-PROJECT_ID"
+    key                         = "prod/terraform.tfstate"
+    region                      = "fr-par"
+    endpoint                    = "https://s3.fr-par.scw.cloud"
+    skip_credentials_validation = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_metadata_api_check     = true
+    force_path_style            = true
+  }
+}

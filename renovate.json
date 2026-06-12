@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchPaths": ["apps/web/**"],
+      "groupName": "framm-web-deps"
+    },
+    {
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "groupName": "framm-docker"
+    }
+  ]
+}

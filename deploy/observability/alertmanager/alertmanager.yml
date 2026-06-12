@@ -1,0 +1,11 @@
+route:
+  receiver: bureau
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: bureau
+    email_configs:
+      - to: igor@mages.pro
+        send_resolved: true

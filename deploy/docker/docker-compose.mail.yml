@@ -1,0 +1,15 @@
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:latest
+    restart: unless-stopped
+    env_file:
+      - ../.generated/env.production
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+      - "127.0.0.1:8080:8080"
+    environment:
+      - STALWART_RECOVERY_ADMIN=admin:${STALWART_API_KEY}
+      - STALWART_PUBLIC_URL=${WEBMAIL_URL}

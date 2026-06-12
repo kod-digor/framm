@@ -1,0 +1,70 @@
+# GitOps Framm — push sur main/master → déploiement prod automatique
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+env:
+  NODE_VERSION: "22"
+  PRIMARY_PLATFORM_DOMAIN: kod-digor.bzh
+  AUTH_URL: https://kod-digor.bzh
+  WEBMAIL_URL: https://webmail.kod-digor.bzh
+
+jobs:
+  test-web:
+    name: Test web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  terraform-validate:
+    name: Terraform validate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - run: terraform init -backend=false && terraform validate
+        working-directory: terraform/environments/prod
+
+  deploy-prod:
+    name: Deploy production
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: test-web
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://kod-digor.bzh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to VMs
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          APP_PUBLIC_IP: ${{ secrets.APP_PUBLIC_IP }}
+          MAIL_PUBLIC_IP: ${{ secrets.MAIL_PUBLIC_IP }}
+        run: ./deploy/scripts/ci-deploy.sh

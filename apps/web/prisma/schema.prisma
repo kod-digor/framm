@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BUREAU
+  ASSOC_ADMIN
+  ASSOC_MEMBER
+}
+
+enum OrganizationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DomainStatus {
+  PENDING_DNS
+  VERIFIED
+  ACTIVE
+}
+
+model Organization {
+  id            String             @id @default(cuid())
+  name          String
+  slug          String             @unique
+  presentation  String
+  status        OrganizationStatus @default(PENDING)
+  rejectReason  String?
+  approvedAt    DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  users         User[]
+  domains       Domain[]
+  mailboxes     Mailbox[]
+  emailAliases  EmailAlias[]
+  usageSnapshots UsageSnapshot[]
+  auditLogs     AuditLog[]
+}
+
+model User {
+  id             String        @id @default(cuid())
+  email          String        @unique
+  passwordHash   String
+  role           UserRole
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  auditLogs      AuditLog[]
+}
+
+model Domain {
+  id               String       @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  fqdn             String
+  status           DomainStatus @default(PENDING_DNS)
+  dnsRecordsJson   Json?
+  stalwartDomainId String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  mailboxes        Mailbox[]
+
+  @@unique([organizationId, fqdn])
+}
+
+model Mailbox {
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  domainId          String
+  domain            Domain       @relation(fields: [domainId], references: [id])
+  address           String       @unique
+  stalwartAccountId String?
+  quotaBytes        BigInt       @default(1073741824)
+  usedBytes         BigInt       @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model EmailAlias {
+  id               String       @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  source           String
+  destination      String
+  stalwartAliasId  String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([organizationId, source])
+}
+
+model UsageSnapshot {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  metric         String
+  value          BigInt
+  recordedAt     DateTime     @default(now())
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  actorId        String?
+  actor          User?         @relation(fields: [actorId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  action         String
+  target         String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+}
