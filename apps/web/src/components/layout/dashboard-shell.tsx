@@ -110,12 +110,7 @@ export async function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-zinc-50/80">
-      <Sidebar
-        overview={overview}
-        groups={groups}
-        title={tc("appName")}
-        tagline={tc("appTagline")}
-      />
+      <Sidebar overview={overview} groups={groups} logoAlt={tc("appName")} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200/80 bg-white/90 px-6 py-3 backdrop-blur-sm">
           <div className="min-w-0">

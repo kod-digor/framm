@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -122,21 +123,25 @@ function CollapsibleGroup({
 export function Sidebar({
   overview,
   groups,
-  title,
-  tagline,
+  logoAlt,
 }: {
   overview: NavItem;
   groups: NavGroup[];
-  title: string;
-  tagline?: string;
+  logoAlt: string;
 }) {
   const pathname = usePathname();
 
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-zinc-200/80 bg-white">
-      <div className="border-b border-zinc-100 px-5 py-5">
-        <p className="text-base font-semibold tracking-tight text-zinc-900">{title}</p>
-        {tagline && <p className="mt-0.5 text-xs text-zinc-500">{tagline}</p>}
+      <div className="border-b border-zinc-100 px-4 py-4">
+        <Image
+          src="/logo-kod-digor.png"
+          alt={logoAlt}
+          width={1024}
+          height={241}
+          className="h-auto w-full"
+          priority
+        />
       </div>
       <nav className="flex flex-1 flex-col overflow-y-auto p-3">
         <div className="mb-2">
