@@ -144,6 +144,7 @@ framm_rsync_app() {
     --exclude 'terraform/.terraform' \
     --exclude 'terraform/**/terraform.tfstate*' \
     --exclude '.env' \
+    --exclude 'deploy/.generated' \
     "${FRAMM_ROOT}/" "root@${APP_PUBLIC_IP}:/opt/framm/"
 }
 
@@ -151,6 +152,7 @@ framm_rsync_mail() {
   framm_rsync_prepare
   rsync -az --delete -e /tmp/framm-ssh-rsync.sh \
     --exclude '.git' \
+    --exclude '.generated' \
     "${FRAMM_ROOT}/deploy/" "root@${MAIL_PUBLIC_IP}:/opt/framm/deploy/"
 }
 
