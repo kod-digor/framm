@@ -34,14 +34,19 @@ function formatDate(date: Date) {
 function OrgPendingActions({
   orgId,
   labels,
+  compact = false,
 }: {
   orgId: string;
   labels: Pick<BureauOrgListLabels, "approve" | "reject" | "rejectReason">;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className={compact ? "flex min-w-44 flex-col gap-2" : "flex flex-col gap-3"}>
       <form action={approveOrganization.bind(null, orgId)}>
-        <Button type="submit" className="min-h-11 w-full md:min-h-0 md:h-8 md:text-sm">
+        <Button
+          type="submit"
+          className={compact ? "h-8 w-full text-sm" : "min-h-11 w-full"}
+        >
           {labels.approve}
         </Button>
       </form>
@@ -49,12 +54,16 @@ function OrgPendingActions({
         <input
           name="reason"
           placeholder={labels.rejectReason}
-          className="min-h-11 rounded-md border border-zinc-200 px-3 py-2 text-sm md:min-h-0 md:px-2 md:py-1 md:text-xs"
+          className={
+            compact
+              ? "w-full rounded-md border border-zinc-200 px-2 py-1 text-xs"
+              : "min-h-11 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm"
+          }
         />
         <Button
           type="submit"
           variant="destructive"
-          className="min-h-11 w-full md:min-h-0 md:h-8 md:text-sm"
+          className={compact ? "h-8 w-full text-sm" : "min-h-11 w-full"}
         >
           {labels.reject}
         </Button>
@@ -136,13 +145,13 @@ function OrgMobileCard({ org, labels }: { org: BureauOrgRow; labels: BureauOrgLi
 export function BureauOrgList({ orgs, labels }: { orgs: BureauOrgRow[]; labels: BureauOrgListLabels }) {
   return (
     <>
-      <div className="space-y-4 md:hidden">
+      <div className="space-y-4 lg:hidden">
         {orgs.map((org) => (
           <OrgMobileCard key={org.id} org={org} labels={labels} />
         ))}
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b text-zinc-500">
@@ -155,7 +164,7 @@ export function BureauOrgList({ orgs, labels }: { orgs: BureauOrgRow[]; labels: 
               <th className="pb-2 pr-4 font-medium">{labels.colStorage}</th>
               <th className="pb-2 pr-4 font-medium">{labels.colCost}</th>
               <th className="pb-2 pr-4 font-medium">{labels.colWallet}</th>
-              <th className="pb-2 font-medium">{labels.colActions}</th>
+              <th className="min-w-44 pb-2 font-medium">{labels.colActions}</th>
             </tr>
           </thead>
           <tbody>
@@ -191,9 +200,9 @@ export function BureauOrgList({ orgs, labels }: { orgs: BureauOrgRow[]; labels: 
                     ? formatEur(org.walletBalanceCents / 100)
                     : "—"}
                 </td>
-                <td className="py-3">
+                <td className="min-w-44 py-3">
                   {org.status === "PENDING" ? (
-                    <OrgPendingActions orgId={org.id} labels={labels} />
+                    <OrgPendingActions orgId={org.id} labels={labels} compact />
                   ) : (
                     <span className="text-xs text-zinc-400">—</span>
                   )}

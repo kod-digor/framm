@@ -60,7 +60,7 @@ export default async function BureauPage({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t("title")}</h1>
@@ -130,7 +130,7 @@ export default async function BureauPage({
         <CardHeader>
           <CardTitle>{t("associations")}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-hidden">
           {filtered.length === 0 ? (
             <p className="text-sm text-zinc-500">{t("empty")}</p>
           ) : (
