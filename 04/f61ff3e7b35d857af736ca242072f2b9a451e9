@@ -1,0 +1,25 @@
+apps/web/src/components/layout/dashboard-shell.tsx
+  s_f79b565742977e::t_79bb8b9833495d 1,3-4,20-47,49-51,54,57-74,78-97,113-118
+apps/web/messages/fr.json
+  s_f79b565742977e::t_328f09a1651be1 76,78,84-85
+apps/web/src/components/ui/sidebar.tsx
+  s_f79b565742977e::t_076ac877986875 70-76,85,90
+  s_f79b565742977e::t_5b270a58fa9197 5
+  s_f79b565742977e::t_a2526b1032a672 7,13,18-29,31-37,40-41,43,48-69,77-84,86-89,91-121,123-124,128-129,141-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "04f61ff3e7b35d857af736ca242072f2b9a451e9",
+  "prompts": {},
+  "sessions": {
+    "s_f79b565742977e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "672abd81-3c43-4ffa-9841-161b5dd7d694",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
