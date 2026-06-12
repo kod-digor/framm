@@ -1,0 +1,29 @@
+deploy/scripts/update-stack.sh
+  s_351092d8a0e411::t_4dec31fbaad484 48
+deploy/cloud-init/mail.yaml
+  s_351092d8a0e411::t_61370a10ea5053 27-49
+deploy/cloud-init/app.yaml
+  s_351092d8a0e411::t_87bd3ddf2a79ec 41-42,46,48
+  s_351092d8a0e411::t_e7e7b7659c32b9 43-45,47
+deploy/scripts/lib/docker-disk.sh
+  s_351092d8a0e411::t_14e7b5cde2f489 138,145,155-159
+  s_351092d8a0e411::t_05854079fc8f2d 80-116
+  s_351092d8a0e411::t_81bfc32b4c58e1 5,7
+  s_351092d8a0e411::t_1e555e43cd9f4a 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e4940826e1e69e16c77083b5fd6428349f4ea6b2",
+  "prompts": {},
+  "sessions": {
+    "s_351092d8a0e411": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e7c39eb3-be82-463d-9803-83f7cf278932",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
