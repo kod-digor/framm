@@ -1,0 +1,27 @@
+apps/web/src/app/dashboard/usage/page.tsx
+  s_6d67d4512b2504::t_25455b4df2cc21 49
+  s_6d67d4512b2504::t_fa0cb9f4434725 111
+  s_6d67d4512b2504::t_4ea75e3e58d72b 10-13
+  s_6d67d4512b2504::t_912f37cd0444be 119-122
+  s_6d67d4512b2504::t_e96fb7c8853336 42
+apps/web/messages/fr.json
+  s_6d67d4512b2504::t_e2ab6b5718666f 168
+apps/web/src/lib/usage/snapshots.ts
+  s_6d67d4512b2504::t_f765b808955f39 4,11-27,30,34,36,38,45-58,60,63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "288a78f18ee843ae42cb271b154a4f414241cce7",
+  "prompts": {},
+  "sessions": {
+    "s_6d67d4512b2504": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e3a40342-6d33-49bd-8f96-924a0d980977",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
