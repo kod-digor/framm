@@ -133,13 +133,13 @@ export function Sidebar({
 
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-zinc-200/80 bg-white">
-      <div className="border-b border-zinc-100 px-4 py-4">
+      <div className="flex h-16 shrink-0 items-center border-b border-zinc-200/80 px-4">
         <Image
           src="/logo-kod-digor.png"
           alt={logoAlt}
           width={1024}
           height={241}
-          className="h-auto w-full"
+          className="h-10 max-h-10 w-auto max-w-full object-contain"
           priority
         />
       </div>
