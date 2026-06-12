@@ -40,7 +40,9 @@ services:
     image: prom/alertmanager:v0.27.0
     restart: unless-stopped
     volumes:
-      - ../observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      # Rendu sur la VM par framm_host_render_alertmanager (host-setup.sh),
+      # jamais commité : il contient les identifiants SMTP.
+      - ../.generated/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     ports:
       - "127.0.0.1:9093:9093"
 
@@ -53,10 +55,12 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - /var/lib/node_exporter/textfile_collector:/textfile:ro
     command:
       - --path.procfs=/host/proc
       - --path.sysfs=/host/sys
       - --path.rootfs=/rootfs
+      - --collector.textfile.directory=/textfile
 
 volumes:
   prometheus_data:

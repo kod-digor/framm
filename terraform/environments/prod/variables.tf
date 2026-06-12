@@ -53,3 +53,30 @@ variable "environment" {
   type    = string
   default = "prod"
 }
+
+variable "alert_smtp_host" {
+  type        = string
+  default     = ""
+  description = "Serveur SMTP pour l'envoi des alertes (vide = alertes email désactivées)"
+}
+
+variable "alert_smtp_port" {
+  type    = string
+  default = "587"
+}
+
+variable "alert_smtp_user" {
+  type    = string
+  default = ""
+}
+
+variable "alert_smtp_password" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "alert_smtp_from" {
+  type    = string
+  default = ""
+}

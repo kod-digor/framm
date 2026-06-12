@@ -1,6 +1,6 @@
 services:
   stalwart:
-    image: stalwartlabs/stalwart:latest
+    image: stalwartlabs/stalwart:${STALWART_VERSION:-latest}
     restart: unless-stopped
     env_file:
       - ../.generated/env.production
@@ -13,3 +13,23 @@ services:
     environment:
       - STALWART_RECOVERY_ADMIN=admin:${STALWART_API_KEY}
       - STALWART_PUBLIC_URL=${WEBMAIL_URL}
+    volumes:
+      # Persistance obligatoire : sans ce montage, mails + config vivent dans
+      # la couche éphémère du conteneur et sont perdus à chaque recréation.
+      - /opt/framm/mail-data:/opt/stalwart
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.0
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /var/lib/node_exporter/textfile_collector:/textfile:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.textfile.directory=/textfile

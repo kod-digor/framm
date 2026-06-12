@@ -156,6 +156,22 @@ framm_rsync_mail() {
     "${FRAMM_ROOT}/deploy/" "root@${MAIL_PUBLIC_IP}:/opt/framm/deploy/"
 }
 
+# Dépose env.production sur les VMs s'il n'y est pas encore (le rsync exclut
+# .generated pour ne pas écraser les valeurs mises à jour côté VM, comme la
+# clé API Stalwart régénérée).
+framm_push_env() {
+  local env_file="${FRAMM_ROOT}/deploy/.generated/env.production"
+  [[ -f "$env_file" ]] || return 0
+  local host
+  for host in "$APP_PUBLIC_IP" "$MAIL_PUBLIC_IP"; do
+    if ! framm_ssh "$host" "test -f /opt/framm/deploy/.generated/env.production" 2>/dev/null; then
+      framm_ssh "$host" "mkdir -p /opt/framm/deploy/.generated"
+      scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/opt/framm/deploy/.generated/env.production"
+      echo "env.production déposé sur ${host}"
+    fi
+  done
+}
+
 framm_render_nginx() {
   local template="$1"
   local output="$2"

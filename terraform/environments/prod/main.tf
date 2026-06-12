@@ -14,6 +14,16 @@ module "backups" {
   scaleway_project_id = var.scw_project_id
   scaleway_region     = var.scw_region
   iam_application_name = "framm-backups"
+
+  # 30 backups quotidiens conservés (le versioning du bucket protège en plus
+  # contre l'écrasement ou la suppression accidentelle).
+  lifecycle_rules = [{
+    id              = "expire-old-backups"
+    prefix          = ""
+    enabled         = true
+    transitions     = []
+    expiration_days = 30
+  }]
 }
 
 module "cold_archive" {
@@ -61,6 +71,12 @@ module "mail_vm" {
   zone           = var.scw_zone
   inbound_ports  = [22, 25, 80, 443, 465, 587, 993]
   admin_ips      = var.admin_ips
+
+  # node-exporter scrapé par le Prometheus de la VM App uniquement
+  restricted_inbound_rules = [{
+    port     = 9100
+    ip_range = "${module.app_vm.public_ip}/32"
+  }]
 
   cloud_init = templatefile("${path.module}/../../../deploy/cloud-init/mail.yaml", {
     domain         = var.primary_platform_domain
@@ -112,6 +128,11 @@ resource "local_file" "env_production" {
     grafana_password     = random_password.grafana_password.result
     grafana_root_url     = local.grafana_url
     alert_email          = var.admin_email
+    alert_smtp_host      = var.alert_smtp_host
+    alert_smtp_port      = var.alert_smtp_port
+    alert_smtp_user      = var.alert_smtp_user
+    alert_smtp_password  = var.alert_smtp_password
+    alert_smtp_from      = var.alert_smtp_from
     bureau_admin_email   = var.admin_email
     bureau_admin_password = var.admin_password
     primary_domain       = var.primary_platform_domain

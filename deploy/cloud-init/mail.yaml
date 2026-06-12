@@ -11,6 +11,7 @@ packages:
   - unattended-upgrades
   - fail2ban
   - rsync
+  - awscli
 
 ssh_authorized_keys:
   - ${ssh_public_key}
@@ -23,5 +24,22 @@ write_files:
 runcmd:
   - systemctl enable docker && systemctl start docker
   - usermod -aG docker root
-  - mkdir -p /opt/framm/mail-data /opt/framm/stalwart /var/www/acme
+  # Volume bloc Scaleway monté sur /opt/framm : les données mail (Stalwart)
+  # survivent ainsi à une recréation de la VM.
+  - |
+    for id in /dev/disk/by-id/scsi-0SCW_sbs_volume-*; do
+      [ -e "$id" ] || continue
+      dev=$(readlink -f "$id")
+      echo "$dev" | grep -q sda && continue
+      lsblk -n -o MOUNTPOINT "$dev" 2>/dev/null | grep -q . && continue
+      if ! blkid -o value -s TYPE "$dev" 2>/dev/null | grep -q .; then
+        mkfs.ext4 -F -L framm-mail-data "$dev"
+      fi
+      mkdir -p /opt/framm
+      mount "$dev" /opt/framm
+      uuid=$(blkid -s UUID -o value "$dev")
+      grep -q "$uuid" /etc/fstab 2>/dev/null || echo "UUID=$uuid /opt/framm ext4 defaults,nofail 0 2" >> /etc/fstab
+      break
+    done
+  - mkdir -p /opt/framm/mail-data /opt/framm/stalwart /var/www/acme /var/lib/node_exporter/textfile_collector
   - echo "Cloud-init Framm mail complete" > /opt/framm/ready.txt

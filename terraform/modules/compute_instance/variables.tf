@@ -32,6 +32,15 @@ variable "admin_ips" {
   default = []
 }
 
+variable "restricted_inbound_rules" {
+  description = "Ports ouverts uniquement pour une plage IP donnée (ex: scrape Prometheus inter-VM)"
+  type = list(object({
+    port     = number
+    ip_range = string
+  }))
+  default = []
+}
+
 variable "private_network_id" {
   type    = string
   default = ""

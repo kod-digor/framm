@@ -25,6 +25,16 @@ resource "scaleway_instance_security_group" "this" {
       protocol = "ANY"
     }
   }
+
+  dynamic "inbound_rule" {
+    for_each = var.restricted_inbound_rules
+    content {
+      action   = "accept"
+      port     = inbound_rule.value.port
+      ip_range = inbound_rule.value.ip_range
+      protocol = "TCP"
+    }
+  }
 }
 
 resource "scaleway_block_volume" "this" {

@@ -11,6 +11,7 @@ packages:
   - unattended-upgrades
   - fail2ban
   - rsync
+  - awscli
 
 ssh_authorized_keys:
   - ${ssh_public_key}
@@ -23,7 +24,7 @@ write_files:
 runcmd:
   - systemctl enable docker && systemctl start docker
   - usermod -aG docker root
-  - mkdir -p /opt/framm /opt/framm/data/postgres /var/www/acme
+  - mkdir -p /opt/framm /opt/framm/data/postgres /var/www/acme /var/lib/node_exporter/textfile_collector
   - |
     for id in /dev/disk/by-id/scsi-0SCW_sbs_volume-*; do
       [ -e "$id" ] || continue

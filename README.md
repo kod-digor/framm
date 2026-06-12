@@ -92,7 +92,41 @@ L'infra (Terraform, DNS, HTTPS initial) reste sur `bin/framm bootstrap` en local
 ## Observabilité
 
 - Grafana : `https://grafana.kod-digor.bzh`
-- Alertes envoyées à l'email défini dans `BUREAU_ADMIN_EMAIL`
+- Prometheus supervise les deux VMs (node-exporter sur App **et** Mail), l'application web et la fraîcheur des backups.
+- Alertes envoyées à l'email défini dans `BUREAU_ADMIN_EMAIL` (ou `ALERT_EMAIL`).
+
+**Important** : Alertmanager a besoin d'un compte SMTP pour envoyer les emails (`ALERT_SMTP_*` dans `.env`, voir `.env.example`). Utilisez un SMTP **externe** à la plateforme (Scaleway TEM, Brevo…) : si la VM mail tombe, l'alerte doit quand même partir. Sans ces variables, les alertes sont visibles dans Grafana mais ne sont notifiées nulle part.
+
+## Sauvegardes & restauration
+
+Installées automatiquement à chaque déploiement (`/etc/cron.d/framm-backup`) :
+
+| Donnée | Quand | Destination |
+|--------|-------|-------------|
+| PostgreSQL (`pg_dump`) | tous les jours à 03h00 | `s3://<bucket-backups>/postgres/` |
+| Stalwart (mails + config) | tous les jours à 03h30 | `s3://<bucket-backups>/stalwart/` |
+
+Le bucket de backups a le **versioning activé** et une rétention de 30 jours. Chaque exécution exporte une métrique Prometheus ; une alerte critique se déclenche si aucun backup n'a réussi depuis 28h.
+
+**Restauration** :
+
+```bash
+# Sur la VM App — restaure le backup le plus récent (ou passez une clé S3 précise)
+/opt/framm/deploy/scripts/restore-postgres.sh
+# Stalwart : télécharger l'archive s3://<bucket>/stalwart/<date>.tar.gz,
+# l'extraire dans /opt/framm/ puis docker compose restart stalwart
+```
+
+**Testez la restauration régulièrement** : un backup jamais restauré n'est pas un backup.
+
+### Persistance des données
+
+- VM App : `/var/lib/docker` (dont le volume PostgreSQL) est sur un volume bloc Scaleway dédié — les données survivent à une recréation de la VM.
+- VM Mail : `/opt/framm` (données Stalwart) est sur un volume bloc dédié de 50 Go, monté dans le conteneur via `docker-compose.mail.yml`.
+
+### État Terraform
+
+Configurez le backend S3 (`terraform/backend.tf.example` → `backend.tf`) : un tfstate uniquement local peut être perdu avec la machine qui l'héberge.
 
 ## Licence
 
