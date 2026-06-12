@@ -1,0 +1,21 @@
+apps/web/src/components/ui/dropdown-menu.tsx
+  s_524a51acdb1905::t_0f41fb682276a2 40
+  s_524a51acdb1905::t_e8cd0d698f4a3a 51
+  s_524a51acdb1905::t_26414e3d31f868 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c41fd31697fc9f6d17e5aba07b8000cd20cb0a65",
+  "prompts": {},
+  "sessions": {
+    "s_524a51acdb1905": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a533b98e-af32-40ff-af22-3bb49d60ced4",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
