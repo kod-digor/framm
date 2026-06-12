@@ -1,0 +1,51 @@
+apps/web/src/lib/usage/snapshots.ts
+  s_e4f30a7655ad0f::t_1238f973ab9226 30-66
+apps/web/package.json
+  s_e4f30a7655ad0f::t_b7d6c872e50a6f 36
+apps/web/src/app/dashboard/usage/page.tsx
+  s_e4f30a7655ad0f::t_be64aca24af02c 1-2,4,12,17,19,33-36,59-79,82-83,185,188-200,203,207-210,215-234,236-239,242,247,250
+  s_7880b9a1224f33::t_ce6be65880eaf6 11,42-56,80-81,89-91,96-105,126-160,171,211,235
+apps/web/src/components/usage/consumption-chart.tsx
+  s_e4f30a7655ad0f::t_714ee41ca40a99 1-139
+apps/web/src/lib/billing/invoice.ts
+  s_7880b9a1224f33::t_ba246d172811ea 2-6,16,24
+  s_e4f30a7655ad0f::t_3c2e8b863f1577 1,7-15,17-23,25-28
+apps/web/package-lock.json
+  s_7880b9a1224f33::t_b8d8f388529f0b 30,3437-3472,3610-3615,4154-4216,4268-4273,5561-5681,5761-5766,6116-6125,6617-6622,7224-7233,7276-7284,9139-9161,9245-9289,9334-9339,9948-9953,10343-10371
+apps/web/messages/fr.json
+  s_8c8df2da6ad22c::t_2b479815da1064 168,176,179,181,184-188,190
+  s_7880b9a1224f33::t_aee4c870732803 63
+  s_7880b9a1224f33::t_e5c52aa13c09c9 160-167,173,177-178,180,189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "5154eee12ff523f9cb9985e0692782cb416f5dad",
+  "prompts": {},
+  "sessions": {
+    "s_7880b9a1224f33": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "846e07c8-a5fa-44e9-8b17-704f696bc08b",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_8c8df2da6ad22c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "af5d909d-922c-46a4-a627-3fca670f9b8f",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_e4f30a7655ad0f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c89ec740-3fb2-4d24-839d-9922a0f66103",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
