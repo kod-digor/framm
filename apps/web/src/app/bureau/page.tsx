@@ -1,23 +1,14 @@
 import Link from "next/link";
 import type { OrganizationStatus } from "@prisma/client";
-import { approveOrganization, rejectOrganizationForm } from "@/app/actions/bureau";
-import { OrgStatusBadge } from "@/components/bureau/org-status-badge";
+import { BureauOrgList } from "@/components/bureau/org-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatEur, getLatestPricing, syncPricingIfStale } from "@/lib/billing/pricing";
 import { loadBureauOrganizations, summarizeBureauOrgs } from "@/lib/bureau/load-orgs";
-import { cn, formatBytes } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { getT } from "@/i18n/t";
 
 type StatusFilter = OrganizationStatus | "all";
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
 
 function statusLabel(
   status: OrganizationStatus,
@@ -51,19 +42,36 @@ export default async function BureauPage({
     { key: "REJECTED", label: t("filterRejected"), count: summary.rejected },
   ];
 
+  const orgListLabels = {
+    colName: t("colName"),
+    colStatus: t("colStatus"),
+    colAdmin: t("colAdmin"),
+    colCreated: t("colCreated"),
+    colMailboxes: t("colMailboxes"),
+    colDomains: t("colDomains"),
+    colStorage: t("colStorage"),
+    colCost: t("colCost"),
+    colWallet: t("colWallet"),
+    colActions: t("colActions"),
+    approve: t("approve"),
+    reject: t("reject"),
+    rejectReason: t("rejectReason"),
+    statusLabel: (status: OrganizationStatus) => statusLabel(status, t),
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="mt-1 text-sm text-zinc-500">{t("subtitle")}</p>
         </div>
-        <Button variant="outline" asChild>
+        <Button variant="outline" asChild className="min-h-11 w-full sm:w-auto">
           <Link href="/dashboard">{t("myOrg")}</Link>
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-zinc-500">{t("statTotal")}</CardTitle>
@@ -96,13 +104,13 @@ export default async function BureauPage({
         </Card>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {tabs.map((tab) => (
           <Link
             key={tab.key}
             href={tab.key === "all" ? "/bureau" : `/bureau?status=${tab.key}`}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:justify-start sm:py-1.5",
               filter === tab.key
                 ? "bg-zinc-900 text-white"
                 : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50"
@@ -122,91 +130,11 @@ export default async function BureauPage({
         <CardHeader>
           <CardTitle>{t("associations")}</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent>
           {filtered.length === 0 ? (
             <p className="text-sm text-zinc-500">{t("empty")}</p>
           ) : (
-            <table className="w-full min-w-[56rem] text-left text-sm">
-              <thead>
-                <tr className="border-b text-zinc-500">
-                  <th className="pb-2 pr-4 font-medium">{t("colName")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colStatus")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colAdmin")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colCreated")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colMailboxes")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colDomains")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colStorage")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colCost")}</th>
-                  <th className="pb-2 pr-4 font-medium">{t("colWallet")}</th>
-                  <th className="pb-2 font-medium">{t("colActions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((org) => (
-                  <tr key={org.id} className="border-b border-zinc-100 align-top">
-                    <td className="py-3 pr-4">
-                      <p className="font-medium text-zinc-900">{org.name}</p>
-                      <p className="text-xs text-zinc-500">{org.slug}</p>
-                      {org.status === "PENDING" && (
-                        <p className="mt-1 max-w-xs text-xs text-zinc-500 line-clamp-2">
-                          {org.presentation}
-                        </p>
-                      )}
-                      {org.status === "REJECTED" && org.rejectReason && (
-                        <p className="mt-1 max-w-xs text-xs text-red-600">{org.rejectReason}</p>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <OrgStatusBadge
-                        status={org.status}
-                        label={statusLabel(org.status, t)}
-                      />
-                    </td>
-                    <td className="py-3 pr-4 text-zinc-700">{org.adminEmail ?? "—"}</td>
-                    <td className="py-3 pr-4 text-zinc-700">{formatDate(org.createdAt)}</td>
-                    <td className="py-3 pr-4 text-zinc-700">{org.mailboxCount}</td>
-                    <td className="py-3 pr-4 text-zinc-700">{org.domainCount}</td>
-                    <td className="py-3 pr-4 font-medium text-zinc-900">
-                      {formatBytes(org.storageBytes)}
-                    </td>
-                    <td className="py-3 pr-4 text-zinc-700">
-                      {org.monthlyCostEur != null ? formatEur(org.monthlyCostEur) : "—"}
-                    </td>
-                    <td className="py-3 pr-4 font-medium text-zinc-900">
-                      {org.status === "APPROVED"
-                        ? formatEur(org.walletBalanceCents / 100)
-                        : "—"}
-                    </td>
-                    <td className="py-3">
-                      {org.status === "PENDING" ? (
-                        <div className="flex min-w-[12rem] flex-col gap-2">
-                          <form action={approveOrganization.bind(null, org.id)}>
-                            <Button type="submit" size="sm" className="w-full">
-                              {t("approve")}
-                            </Button>
-                          </form>
-                          <form
-                            action={rejectOrganizationForm.bind(null, org.id)}
-                            className="flex flex-col gap-1.5"
-                          >
-                            <input
-                              name="reason"
-                              placeholder={t("rejectReason")}
-                              className="rounded-md border border-zinc-200 px-2 py-1 text-xs"
-                            />
-                            <Button type="submit" size="sm" variant="destructive" className="w-full">
-                              {t("reject")}
-                            </Button>
-                          </form>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-zinc-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <BureauOrgList orgs={filtered} labels={orgListLabels} />
           )}
         </CardContent>
       </Card>
