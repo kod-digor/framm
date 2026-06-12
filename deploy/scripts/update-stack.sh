@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 source "${ROOT}/deploy/scripts/lib/framm-common.sh"
 
 if [[ "${FRAMM_CI:-}" == "true" ]]; then
+  framm_ci_setup_ssh
   framm_load_deploy_context
 else
   framm_load_env
