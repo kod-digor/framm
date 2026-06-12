@@ -15,16 +15,29 @@ export async function DashboardShell({
   const t = await getT("dashboard");
   const tc = await getT("common");
 
-  const items = [
-    { href: "/dashboard", label: t("overview") },
-    { href: "/dashboard/domains", label: t("domains") },
-    { href: "/dashboard/mailboxes", label: t("mailboxes") },
-    { href: "/dashboard/aliases", label: t("aliases") },
-    { href: "/dashboard/usage", label: t("usage") },
+  const sections = [
+    {
+      items: [{ href: "/dashboard", label: t("overview") }],
+    },
+    {
+      label: t("sections.messaging"),
+      items: [
+        { href: "/dashboard/domains", label: t("domains") },
+        { href: "/dashboard/mailboxes", label: t("mailboxes") },
+        { href: "/dashboard/aliases", label: t("aliases") },
+      ],
+    },
+    {
+      label: t("sections.billing"),
+      items: [{ href: "/dashboard/usage", label: t("usage") }],
+    },
   ];
 
   if (session?.user.role === "BUREAU") {
-    items.push({ href: "/bureau", label: t("bureau") });
+    sections.push({
+      label: t("sections.platform"),
+      items: [{ href: "/bureau", label: t("bureau") }],
+    });
   }
 
   const memberships = session?.user.id
@@ -39,7 +52,7 @@ export async function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-zinc-50/80">
-      <Sidebar items={items} title={tc("appName")} tagline={tc("appTagline")} />
+      <Sidebar sections={sections} title={tc("appName")} tagline={tc("appTagline")} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200/80 bg-white/90 px-6 py-3 backdrop-blur-sm">
           <div className="min-w-0">

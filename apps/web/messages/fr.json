@@ -78,7 +78,12 @@
     "aliases": "Redirections",
     "usage": "Consommation",
     "bureau": "Administration",
-    "welcome": "Bienvenue sur votre espace association"
+    "welcome": "Bienvenue sur votre espace association",
+    "sections": {
+      "messaging": "Messagerie",
+      "billing": "Compte",
+      "platform": "Plateforme"
+    }
   },
   "domains": {
     "title": "Vos domaines",

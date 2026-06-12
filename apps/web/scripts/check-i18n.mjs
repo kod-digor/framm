@@ -24,7 +24,14 @@ function walk(dir) {
 
 function hasKey(namespace, key) {
   const section = messages[namespace];
-  return section && Object.prototype.hasOwnProperty.call(section, key);
+  if (!section) return false;
+
+  let current = section;
+  for (const part of key.split(".")) {
+    if (!current || !Object.prototype.hasOwnProperty.call(current, part)) return false;
+    current = current[part];
+  }
+  return true;
 }
 
 const files = walk(SRC_DIR);
