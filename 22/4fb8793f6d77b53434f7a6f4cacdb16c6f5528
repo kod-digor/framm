@@ -1,0 +1,30 @@
+apps/web/src/lib/prisma.ts
+  s_e1ccdcb8d14c03::t_771c9caec902d4 14-19,23,44-48,51-61
+  s_bb15d6503e1d87::t_df748e2fd7a85f 3,5-9,12-13,20-22,24-43,49
+apps/web/src/lib/billing/pricing.ts
+  s_e1ccdcb8d14c03::t_962e3a88d9f9c6 1,3,8-59,83-87,98-101,103,114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "224fb8793f6d77b53434f7a6f4cacdb16c6f5528",
+  "prompts": {},
+  "sessions": {
+    "s_bb15d6503e1d87": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3542853b-bc75-4cc2-ac31-503a62ba30ca",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_e1ccdcb8d14c03": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "25042375-19d2-401a-8c20-08fbc7978380",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
