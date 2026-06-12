@@ -61,7 +61,7 @@
     "colStorage": "Stockage",
     "colCost": "Coût / mois HT",
     "colActions": "Actions",
-    "pricingNote": "Estimation basée sur le tarif Scaleway {rate} / Go / mois (mis à jour le {date})."
+    "pricingNote": "Estimation basée sur le tarif de stockage {rate} / Go / mois (mis à jour le {date})."
   },
   "tenant": {
     "select": "Choisir une association",
@@ -161,7 +161,7 @@
     "domains": "Domaines actifs",
     "billingTitle": "Estimation mensuelle",
     "perMonthHt": "HT / mois",
-    "rateLine": "Tarif Scaleway : {rate} / Go / mois ({region})",
+    "rateLine": "Tarif stockage : {rate} / Go / mois ({region})",
     "rateUpdated": "Tarifs mis à jour le {date}",
     "history": "Historique",
     "historyEmpty": "Aucun relevé pour le moment. Les snapshots quotidiens apparaîtront ici.",
