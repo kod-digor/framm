@@ -60,8 +60,9 @@
     "colDomains": "Domaines",
     "colStorage": "Stockage",
     "colCost": "Coût / mois HT",
+    "colWallet": "Solde",
     "colActions": "Actions",
-    "pricingNote": "Estimation basée sur le tarif Scaleway {rate} / Go / mois (mis à jour le {date})."
+    "pricingNote": "Estimation basée sur le tarif de stockage {rate} / Go / mois (mis à jour le {date})."
   },
   "tenant": {
     "select": "Choisir une association",
@@ -72,12 +73,19 @@
   },
   "dashboard": {
     "overview": "Vue d'ensemble",
+    "members": "Adhérents",
     "domains": "Domaines",
-    "mailboxes": "Boîtes mail",
+    "mailboxes": "Boîtes email",
     "aliases": "Redirections",
     "usage": "Consommation",
     "bureau": "Administration",
-    "welcome": "Bienvenue sur votre espace association"
+    "welcome": "Bienvenue sur votre espace association",
+    "sections": {
+      "association": "Association",
+      "accounting": "Comptabilité",
+      "messaging": "Messagerie",
+      "platform": "Plateforme"
+    }
   },
   "domains": {
     "title": "Vos domaines",
@@ -156,18 +164,36 @@
   },
   "usage": {
     "title": "Consommation",
-    "storage": "Stockage",
+    "walletBalance": "Solde actuel",
+    "walletBalanceHint": "Prélevé automatiquement chaque mois sur votre consommation HT.",
+    "walletTitle": "Portefeuille association",
+    "walletIntro": "Les frais d'inscription de 10 € ne sont pas un abonnement : ils alimentent un solde prépayé pour éviter les petits prélèvements bancaires répétés.",
+    "walletInitialDeposit": "À l'inscription, vous payez {gross} : après déduction des frais bancaires ({fee}), {net} sont crédités sur votre solde.",
+    "walletConsumption": "Chaque mois, la consommation HT (stockage) est déduite de ce solde. Les frais CB ne s'appliquent qu'aux recharges.",
+    "walletAutoRechargeHigh": "Votre consommation moyenne est de {avg} / mois. En cas de solde insuffisant, une recharge automatique de {gross} sera effectuée (frais bancaires : {fee}, crédit net : {net}).",
+    "walletAutoRechargeLow": "En cas de solde insuffisant, une recharge automatique de {gross} sera effectuée (frais bancaires : {fee}, crédit net : {net}).",
+    "storage": "Stockage S3",
     "mailboxes": "Boîtes mail",
     "domains": "Domaines actifs",
     "billingTitle": "Estimation mensuelle",
     "perMonthHt": "HT / mois",
-    "rateLine": "Tarif Scaleway : {rate} / Go / mois ({region})",
+    "billingWalletNote": "Ce montant sera prélevé sur votre solde en fin de mois. Aucun frais CB sur la consommation mensuelle.",
+    "rateLine": "Tarif stockage : {rate} / Go / mois ({region})",
     "rateUpdated": "Tarifs mis à jour le {date}",
-    "history": "Historique",
+    "chartTitle": "Évolution de la consommation",
+    "chartHint": "Graphique basé sur le pic mensuel de stockage. Les montants correspondent à la consommation HT prélevée sur le solde.",
+    "chartAriaLabel": "Graphique de l'évolution mensuelle de la consommation HT",
+    "invoiceHistory": "Facturation mensuelle",
+    "invoiceHint": "Chaque ligne correspond à la consommation HT du mois (pic de stockage), prélevée sur votre solde. Les frais bancaires s'appliquent uniquement aux recharges.",
+    "currentMonth": "(en cours)",
     "historyEmpty": "Aucun relevé pour le moment. Les snapshots quotidiens apparaîtront ici.",
     "colMonth": "Mois",
-    "colStorage": "Stockage",
-    "colMailboxes": "Boîtes mail",
-    "colDomains": "Domaines"
+    "colStoragePeak": "Stockage (pic)",
+    "colMailboxesPeak": "Boîtes mail (pic)",
+    "colDomainsPeak": "Domaines (pic)",
+    "colConsumption": "Consommation HT",
+    "colCardFee": "Frais CB",
+    "colWalletDebit": "Prélèvement solde",
+    "colTotal": "Total"
   }
 }

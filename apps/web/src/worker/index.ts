@@ -1,4 +1,5 @@
 import { syncPricingIfStale } from "@/lib/billing/pricing";
+import { processMonthlyWalletDeductions } from "@/lib/billing/wallet";
 import { prisma } from "@/lib/prisma";
 import { getOrgStorageBytes } from "@/lib/storage/s3";
 
@@ -29,10 +30,19 @@ async function run() {
   console.log("Framm worker started");
   await syncPricingIfStale();
   await syncUsage();
+  const deducted = await processMonthlyWalletDeductions();
+  if (deducted > 0) {
+    console.log(`Wallet: ${deducted} monthly consumption(s) deducted`);
+  }
 
   setInterval(syncUsage, DAY_MS);
   setInterval(() => {
     void syncPricingIfStale();
+  }, DAY_MS);
+  setInterval(() => {
+    void processMonthlyWalletDeductions().then((count) => {
+      if (count > 0) console.log(`Wallet: ${count} monthly consumption(s) deducted`);
+    });
   }, DAY_MS);
 }
 

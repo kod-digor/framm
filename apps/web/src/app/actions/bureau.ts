@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-utils";
+import { creditInitialDeposit } from "@/lib/billing/wallet";
 import { prisma } from "@/lib/prisma";
 
 export async function approveOrganization(orgId: string) {
@@ -10,6 +11,7 @@ export async function approveOrganization(orgId: string) {
     where: { id: orgId },
     data: { status: "APPROVED", approvedAt: new Date(), rejectReason: null },
   });
+  await creditInitialDeposit(orgId);
   revalidatePath("/bureau");
 }
 
