@@ -18,10 +18,10 @@ locals {
 
   # SMTP d'alerte : override manuel (.env) prioritaire, sinon TEM Scaleway
   # provisionné par alerting.tf quand le DNS est géré ici.
-  alert_smtp_host     = var.alert_smtp_host != "" ? var.alert_smtp_host : (var.dns_enabled ? scaleway_tem_domain.alerts[0].smtp_host : "")
+  alert_smtp_host     = var.alert_smtp_host != "" ? var.alert_smtp_host : (var.dns_enabled && var.tem_enabled ? scaleway_tem_domain.alerts[0].smtp_host : "")
   alert_smtp_port     = var.alert_smtp_host != "" ? var.alert_smtp_port : "587"
-  alert_smtp_user     = var.alert_smtp_host != "" ? var.alert_smtp_user : (var.dns_enabled ? scaleway_tem_domain.alerts[0].smtps_auth_user : "")
-  alert_smtp_password = var.alert_smtp_host != "" ? var.alert_smtp_password : (var.dns_enabled ? scaleway_iam_api_key.alerts[0].secret_key : "")
+  alert_smtp_user     = var.alert_smtp_host != "" ? var.alert_smtp_user : (var.dns_enabled && var.tem_enabled ? scaleway_tem_domain.alerts[0].smtps_auth_user : "")
+  alert_smtp_password = var.alert_smtp_host != "" ? var.alert_smtp_password : (var.dns_enabled && var.tem_enabled ? scaleway_iam_api_key.alerts[0].secret_key : "")
   alert_smtp_from     = var.alert_smtp_from != "" ? var.alert_smtp_from : "alertes@${var.primary_platform_domain}"
 
   # Bascule DNS : tant que k8s_lb_ip est vide, l'app pointe sur la VM ;

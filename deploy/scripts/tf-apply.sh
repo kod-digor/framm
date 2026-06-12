@@ -26,6 +26,7 @@ terraform apply -auto-approve \
   -var="admin_password=${ADMIN_PASSWORD}" \
   -var="admin_email=${BUREAU_ADMIN_EMAIL}" \
   -var="dns_enabled=${DNS_ENABLED}" \
+  -var="tem_enabled=${TEM_ENABLED:-false}" \
   -var="app_bzh_enabled=${APP_BZH_ENABLED}" \
   -var="ssh_public_key=${SSH_PUBLIC_KEY}" \
   -var="alert_smtp_host=${ALERT_SMTP_HOST:-}" \

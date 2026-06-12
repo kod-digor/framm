@@ -11,7 +11,18 @@ LOCAL_BIND="${FRAMM_DB_TUNNEL_BIND:-127.0.0.1}"
 
 framm_load_env 2>/dev/null || true
 if [[ -z "${APP_PUBLIC_IP:-}" ]]; then
-  framm_load_tf_outputs
+  PROD_ENV="${ROOT}/deploy/.generated/env.production"
+  if [[ -f "$PROD_ENV" ]]; then
+    # shellcheck source=/dev/null
+    source "$PROD_ENV"
+  else
+    framm_load_tf_outputs
+  fi
+fi
+
+if [[ -z "${APP_PUBLIC_IP:-}" ]]; then
+  echo "APP_PUBLIC_IP introuvable (deploy/.generated/env.production ou terraform output)"
+  exit 1
 fi
 
 framm_init_ssh

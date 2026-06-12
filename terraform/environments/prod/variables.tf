@@ -29,6 +29,12 @@ variable "dns_enabled" {
   description = "Active les records DNS Scaleway — nécessite la zone déléguée chez Scaleway"
 }
 
+variable "tem_enabled" {
+  type        = bool
+  default     = false
+  description = "Active Scaleway TEM pour les alertes SMTP — nécessite un abonnement TEM actif sur le projet"
+}
+
 variable "primary_platform_domain" {
   type    = string
   default = "kod-digor.bzh"

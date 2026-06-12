@@ -31,10 +31,10 @@ render() {
 }
 
 echo "=== Installation ArgoCD ==="
-# Double apply : le premier enregistre les CRDs, le second les ressources
-# qui en dépendent.
-kubectl apply -k "${ROOT}/k8s/bootstrap/argocd" || true
-kubectl apply -k "${ROOT}/k8s/bootstrap/argocd"
+# Server-side apply évite l'annotation last-applied-configuration trop volumineuse
+# sur le CRD applicationsets (limite Kubernetes 256 KiB).
+kubectl apply --server-side --force-conflicts -k "${ROOT}/k8s/bootstrap/argocd" || true
+kubectl apply --server-side --force-conflicts -k "${ROOT}/k8s/bootstrap/argocd"
 kubectl -n argocd rollout status deployment/argocd-server --timeout=300s
 
 # Accès au dépôt si privé (inutile si le dépôt est public)
