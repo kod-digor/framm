@@ -1,0 +1,217 @@
+deploy/scripts/db-tunnel.sh
+  s_00ea0b1c8831de::t_c54bd2992e4e12 1-25
+apps/web/src/app/bureau/layout.tsx
+  s_00ea0b1c8831de::t_8e898d565a10b4 1-7
+apps/web/src/app/dashboard/aliases/page.tsx
+  s_00ea0b1c8831de::t_65d75f4935555f 4,8-12,16,18-27,31-44,51-87
+  s_00ea0b1c8831de::t_334b572824320f 45-50
+apps/web/env.example
+  s_00ea0b1c8831de::t_f958cc662ff166 1,3-5
+apps/web/src/app/signup/page.tsx
+  s_00ea0b1c8831de::t_59d7c0abc007dc 29-34
+apps/web/prisma/migrations/20250612150000_multitenant/migration.sql
+  s_00ea0b1c8831de::t_98df625f24a8f7 1-29
+apps/web/eslint.config.mjs
+  s_00ea0b1c8831de::t_563d9ba3b268a5 4
+  s_00ea0b1c8831de::t_647bd3b90bd9ea 1-3,5-9
+apps/web/src/components/ui/sidebar.tsx
+  s_00ea0b1c8831de::t_be987c0542535f 5-13,18-40,44-69
+apps/web/src/lib/usage/snapshots.ts
+  s_00ea0b1c8831de::t_6075761e8967f1 1-43
+apps/web/src/app/actions/aliases.ts
+  s_00ea0b1c8831de::t_f9d9107d6bb60a 5
+  s_00ea0b1c8831de::t_34cb2a523b52dc 11-12
+  s_00ea0b1c8831de::t_53dc848530ac7d 4
+  s_00ea0b1c8831de::t_6005c905d45999 14-16,18-39,46
+apps/web/package.json
+  s_00ea0b1c8831de::t_ebadc2eea76cab 31,40,48
+  s_00ea0b1c8831de::t_6bc67b1047d319 10-11
+apps/web/src/i18n/global.d.ts
+  s_00ea0b1c8831de::t_0db642e2343729 1-6
+apps/web/src/components/mailboxes/create-mailbox-form.tsx
+  s_00ea0b1c8831de::t_72526886fd1d80 1-101
+apps/web/src/lib/stalwart/client.ts
+  s_00ea0b1c8831de::t_371e789bcb717f 9-13,15,24-37,39-42
+  s_00ea0b1c8831de::t_a810eccc8fa141 118-119
+  s_00ea0b1c8831de::t_8c5e8a21acdc3b 46-55
+apps/web/src/app/dashboard/mailboxes/page.tsx
+  s_00ea0b1c8831de::t_01700464616cf5 43-54
+  s_00ea0b1c8831de::t_81abd6b509113c 5,9,11-15,19,22-26,29,35-41,55-61,63-70,73-76,79-124
+apps/web/src/components/domains/delete-domain-form.tsx
+  s_00ea0b1c8831de::t_23ce29ac7d8c35 1-51
+apps/web/src/lib/auth.ts
+  s_00ea0b1c8831de::t_28dd10912cbeb5 5,13,22,27,39,45-46,51-53,61,67-79,81,87,91,98-113,122-123,125-126
+  s_00ea0b1c8831de::t_7b075262ef30cb 85-86,88-90,92,94-97
+  s_00ea0b1c8831de::t_58649d69002a21 35
+apps/web/prisma/schema.prisma
+  s_00ea0b1c8831de::t_361cc8b0087283 118-131
+  s_00ea0b1c8831de::t_03d57fad74ba57 29,31,33,36-38,47-62,64-66,99-106
+apps/web/src/lib/utils.ts
+  s_00ea0b1c8831de::t_a3055c01e41c0b 8-9,11-21,23-24
+  s_00ea0b1c8831de::t_efc5f81d0ba358 10,22
+apps/web/scripts/check-i18n.mjs
+  s_00ea0b1c8831de::t_db68cf23535f20 6
+  s_00ea0b1c8831de::t_26f85dfe2643e5 1-2,5,7-36,51,53-58,60-70
+  s_00ea0b1c8831de::t_90b9aee040d634 3-4
+  s_00ea0b1c8831de::t_6f6c380d167516 37-50,52,59
+apps/web/prisma/seed.ts
+  s_00ea0b1c8831de::t_4c7f33bc5c945e 32,42-51,53,60
+apps/web/src/lib/billing/scaleway-pricing.ts
+  s_00ea0b1c8831de::t_6cb0c8a3f4171d 1-38,40-78
+  s_00ea0b1c8831de::t_2a8dddcc8c44ee 39
+apps/web/src/components/domains/verify-domain-form.tsx
+  s_00ea0b1c8831de::t_6c49c045983900 5,8,10,15,27
+  s_00ea0b1c8831de::t_fb424033a44633 1-4,6-7,9,11-14,16-26,28-30
+apps/web/src/lib/billing/pricing.ts
+  s_00ea0b1c8831de::t_74f4062388cbf9 1-72
+apps/web/src/lib/dns/verify.ts
+  s_00ea0b1c8831de::t_9fa850c9de5fd2 5-14,16,21-28,43-46,48-51,71
+  s_00ea0b1c8831de::t_1d45795d076d27 63
+  s_00ea0b1c8831de::t_f658af825947bc 29-42,47,52-59,64-70,72-80,83-90,93-98,104
+apps/web/src/components/layout/tenant-switcher.tsx
+  s_00ea0b1c8831de::t_ea789e51837802 1-90
+apps/web/src/lib/bureau/load-orgs.ts
+  s_00ea0b1c8831de::t_55b9464e1bdaa9 1-104
+deploy/scripts/lib/stalwart-setup.sh
+  s_00ea0b1c8831de::t_9bd0a82c2ee832 72,76-79
+  s_00ea0b1c8831de::t_0c32767a977917 80,82-88
+  s_00ea0b1c8831de::t_d0d2febda50819 81
+apps/web/src/lib/auth-utils.ts
+  s_00ea0b1c8831de::t_4c931b23b132b0 4,14-21,23-25,27,31-33,37-42
+  s_00ea0b1c8831de::t_9eda96dabbdeb6 36,43
+apps/web/src/lib/tenant.ts
+  s_00ea0b1c8831de::t_fcaf34a68e5b3e 1-41
+apps/web/src/app/layout.tsx
+  s_00ea0b1c8831de::t_76d9e502d8d629 7
+apps/web/src/app/actions/auth.ts
+  s_00ea0b1c8831de::t_34d7f6ca989297 35-55,61,64-70,91-98
+  s_00ea0b1c8831de::t_374698513098b9 80
+apps/web/src/app/page.tsx
+  s_00ea0b1c8831de::t_a21f6e5271e617 13,15
+deploy/scripts/sync-dev-env.sh
+  s_00ea0b1c8831de::t_bce686bd0865b2 10-12
+  s_00ea0b1c8831de::t_fdcce17cb1a56e 1-9,13-28,45-50,54-65
+  s_00ea0b1c8831de::t_b0435b3d37ab0c 29-44,51-53
+apps/web/src/worker/index.ts
+  s_00ea0b1c8831de::t_018dfd25240d2e 1,5-6,9,20-22,30,32-36
+apps/web/src/app/bureau/page.tsx
+  s_00ea0b1c8831de::t_384ea3542b9949 2-4,7-9,12,14-18,20-51,54-59,65-213
+bin/framm
+  s_00ea0b1c8831de::t_d5ef63eb70c4d3 37-42,44
+apps/web/messages/fr.json
+  s_00ea0b1c8831de::t_1218129ed408d9 29-30
+  s_00ea0b1c8831de::t_0948b24a725bbe 161-171
+  s_00ea0b1c8831de::t_5493718aa0a380 79
+  s_00ea0b1c8831de::t_6ccfa68410e73c 33-34,40-64
+  s_00ea0b1c8831de::t_38ab3ad4ef6dd6 3
+  s_00ea0b1c8831de::t_9c2441b181f23c 28
+  s_00ea0b1c8831de::t_8b5a8ccc6ce6c0 87-89
+  s_00ea0b1c8831de::t_ee4182dfd0d16f 83,90,92-97,105-107,109
+  s_00ea0b1c8831de::t_ab5316c1ec6d0f 98
+  s_00ea0b1c8831de::t_2862fcc5179491 110-114
+  s_00ea0b1c8831de::t_11f5b8ec4931fb 66-71
+  s_00ea0b1c8831de::t_d7603cce66eafe 91
+  s_00ea0b1c8831de::t_dfbb7d6601723b 118,120-121,123-134
+  s_00ea0b1c8831de::t_945f35d6846158 143,145,147-155
+  s_00ea0b1c8831de::t_5279d0224dcc1d 4
+  s_00ea0b1c8831de::t_bc1e5bcf5c7ee3 108,115
+  s_00ea0b1c8831de::t_c35d67ef9c5202 15
+  s_00ea0b1c8831de::t_39fc944953c247 99-104
+apps/web/src/app/login/page.tsx
+  s_00ea0b1c8831de::t_3d71b5ed5a11cc 24-27
+apps/web/src/i18n/t.ts
+  s_00ea0b1c8831de::t_300d9883c62f22 3,5-7,11
+apps/web/src/components/domains/dns-records-table.tsx
+  s_00ea0b1c8831de::t_5fd6def0840e68 75
+  s_00ea0b1c8831de::t_6afd2e1cdf8c5e 15
+  s_00ea0b1c8831de::t_acf2cbeeabeacc 1-14,16-74,76-96
+apps/web/src/i18n/request.ts
+  s_00ea0b1c8831de::t_f5903de66acfd0 1,3,7,10-22
+apps/web/src/components/aliases/create-alias-form.tsx
+  s_00ea0b1c8831de::t_0712a6ec5716fb 1-101
+apps/web/src/components/bureau/org-status-badge.tsx
+  s_00ea0b1c8831de::t_b91f451aab061d 1-27
+apps/web/src/app/dashboard/usage/page.tsx
+  s_00ea0b1c8831de::t_7d10f47c6e1328 2-5,7,10-11,15-22,39,41,46-50,76,79,81-94,98-136
+  s_00ea0b1c8831de::t_87c9cd3e34751b 30,44
+  s_00ea0b1c8831de::t_00803b7764db18 6
+apps/web/src/app/actions/bureau.ts
+  s_00ea0b1c8831de::t_d2011fa254e20c 24-28
+apps/web/src/app/dashboard/domains/page.tsx
+  s_00ea0b1c8831de::t_37be866e85a1eb 75-80
+  s_00ea0b1c8831de::t_8745eee795418e 81-92
+  s_00ea0b1c8831de::t_1fd1ab4801668c 172-174
+  s_00ea0b1c8831de::t_426d0047d3fe18 23-25,33,38-39
+  s_00ea0b1c8831de::t_228f83dd59b56a 129-130,135-138
+  s_00ea0b1c8831de::t_8d5fbde2ae20f7 7
+  s_00ea0b1c8831de::t_7218de17bc3572 46,60,133-134,159,163-165
+  s_00ea0b1c8831de::t_3c56a45d599502 6,53-59,61-62,73,125-128,131-132,140-158,160-162,166-171,175-177,189-191,194-195
+  s_00ea0b1c8831de::t_6f39925c1ed86e 63-70
+  s_00ea0b1c8831de::t_d14939e2c9851d 14-19
+  s_00ea0b1c8831de::t_655ff2b2d75b60 4-5
+  s_00ea0b1c8831de::t_1e0ca08bbad5cb 192-193
+  s_00ea0b1c8831de::t_5c0be0311fb291 93-109
+  s_00ea0b1c8831de::t_0a2bc936dea803 40-42
+  s_00ea0b1c8831de::t_a81e95177d7d97 1,8,21-22,34
+  s_00ea0b1c8831de::t_113dced88da238 26-32
+  s_00ea0b1c8831de::t_bc25f874967d84 178-188
+  s_00ea0b1c8831de::t_a7910206d7ccfb 43-45
+apps/web/next-env.d.ts
+  s_7cb8e07792fdb3::t_f7058af6f026c7 3
+apps/web/package-lock.json
+  s_7cb8e07792fdb3::t_f7058af6f026c7 25,34,42,533-805,2143-2145,2149-2151,2159-2161,2175-2177,2191-2193,2210-2212,2229-2231,2248-2250,2267-2269,2283-2285,5116-5127,5164-5197,5421-5427,5663-5669,5920-5929,6004-6006,6010,6013,6016-6018,6021,6030-6042,6246-6248,6251-6257,6259,6262,6664-6673,6928-6944,7519-7531,7935-7944,8092-8094,8097,8099,8108,8111-8119,8327-8336,9798-9821,9886-9916,10121-10127,10149-10160
+apps/web/src/app/actions/domains.ts
+  s_00ea0b1c8831de::t_6fcda9a8306d70 86-91
+  s_00ea0b1c8831de::t_36f07bd3ffcd50 5
+  s_00ea0b1c8831de::t_9d583e2fd0af11 8-14
+  s_00ea0b1c8831de::t_5416c3869ba489 75-76
+  s_00ea0b1c8831de::t_79a175aa174254 4,16-25,36-44
+  s_00ea0b1c8831de::t_3156c90d5093cd 45-50,57-58
+  s_00ea0b1c8831de::t_0c06597ccc2245 67-68
+  s_00ea0b1c8831de::t_6e031526250101 33
+  s_00ea0b1c8831de::t_311034d8288a2f 93-124
+  s_00ea0b1c8831de::t_c3eda74fdd6f7d 80-83
+  s_00ea0b1c8831de::t_957e253596e379 29-30
+  s_00ea0b1c8831de::t_80a97c812f5a7d 7
+apps/web/prisma/migrations/20250612160000_platform_pricing/migration.sql
+  s_00ea0b1c8831de::t_ce801f8cafd397 1-18
+apps/web/src/components/domains/dns-status-panel.tsx
+  s_00ea0b1c8831de::t_549ddf7ec8d8c2 1-59
+apps/web/src/components/ui/dropdown-menu.tsx
+  s_00ea0b1c8831de::t_a10a6ba33f28fe 1-58
+apps/web/src/app/actions/tenant.ts
+  s_00ea0b1c8831de::t_6412deee4b4388 1-29
+apps/web/src/app/actions/mailboxes.ts
+  s_00ea0b1c8831de::t_b0aaa841da623d 5
+  s_00ea0b1c8831de::t_46b75cae7d1757 14,16-20,29,32-43,55
+  s_00ea0b1c8831de::t_ccaa83d65540ec 30
+  s_00ea0b1c8831de::t_0dbc0682b94700 4
+  s_00ea0b1c8831de::t_80e22996d57f69 11-12
+apps/web/src/components/layout/dashboard-shell.tsx
+  s_00ea0b1c8831de::t_a1c8682bb30626 41-43,45-49,58
+  s_00ea0b1c8831de::t_a2f83636627080 2-4,30-39,44,50-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3bdba922a8134d088ab9cc44e7befcb3b322323e",
+  "prompts": {},
+  "sessions": {
+    "s_00ea0b1c8831de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a860922-e9f4-4046-b28b-24f34780c59e",
+        "model": "composer-2.5"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_7cb8e07792fdb3": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "eb4c93df-c3a9-409b-9135-521769b9f124",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
