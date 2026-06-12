@@ -1,0 +1,19 @@
+deploy/scripts/update-stack.sh
+  s_00ea0b1c8831de::t_04d627b30435dc 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9d1daf52911f52c7f527ad65488d1c554f841680",
+  "prompts": {},
+  "sessions": {
+    "s_00ea0b1c8831de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a860922-e9f4-4046-b28b-24f34780c59e",
+        "model": "composer-2.5"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
