@@ -1,0 +1,43 @@
+---
+description: Migrations Prisma et seed automatiques en dev (apps/web)
+alwaysApply: true
+---
+
+# Prisma — workflow dev (agent)
+
+L’agent **exécute** les migrations et le seed lui-même. Ne pas se contenter de dire à l’utilisateur de lancer les commandes.
+
+## Après modification du schéma
+
+Répertoire de travail : `apps/web`.
+
+1. Si une migration SQL existe déjà (dossier `prisma/migrations/`) :
+   ```bash
+   cd apps/web && pnpm exec prisma migrate deploy
+   ```
+2. Si l’agent crée ou modifie le schéma et doit générer une migration :
+   ```bash
+   cd apps/web && pnpm exec prisma migrate dev
+   ```
+   (équivalent : `pnpm prisma:migrate`)
+
+Appliquer **proactivement** pendant la session, sans demander confirmation préalable.
+
+## Après modification du seed ou DB vide
+
+```bash
+cd apps/web && pnpm db:seed
+```
+
+## Connexion DB (tunnel)
+
+Si `apps/web/.env.local` pointe vers la DB distante (dev via tunnel) :
+
+- S’appuyer sur la config existante (`DATABASE_URL` dans `.env.local`)
+- Démarrer ou réutiliser le tunnel si nécessaire : `bin/framm db-tunnel`
+- Ne pas inventer de nouvelle URL ni committer de secrets
+
+## Interdictions
+
+- **Ne jamais** relancer le serveur dev (`pnpm dev` / npm) — l’utilisateur le gère
+- **Ne pas** bloquer la tâche en attendant que l’utilisateur migre ou seed manuellement
