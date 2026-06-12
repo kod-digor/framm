@@ -1,5 +1,7 @@
-import { Sidebar } from "@/components/ui/sidebar";
+import { Sidebar, type NavGroup, type NavItem } from "@/components/ui/sidebar";
 import { auth } from "@/lib/auth";
+import { getOrgId } from "@/lib/auth-utils";
+import { prisma } from "@/lib/prisma";
 import { getUserMemberships } from "@/lib/tenant";
 import { TenantSwitcher } from "@/components/layout/tenant-switcher";
 import { getT } from "@/i18n/t";
@@ -15,30 +17,86 @@ export async function DashboardShell({
   const t = await getT("dashboard");
   const tc = await getT("common");
 
-  const sections = [
+  const orgId = session ? getOrgId(session) : null;
+  const mailboxes = orgId
+    ? await prisma.mailbox.findMany({
+        where: { organizationId: orgId },
+        orderBy: { address: "asc" },
+      })
+    : [];
+
+  const overview: NavItem = {
+    id: "overview",
+    href: "/dashboard",
+    label: t("overview"),
+    icon: "overview",
+  };
+
+  const groups: NavGroup[] = [
     {
-      items: [{ href: "/dashboard", label: t("overview") }],
-    },
-    {
-      label: t("sections.messaging"),
+      id: "association",
+      label: t("sections.association"),
       items: [
-        { href: "/dashboard/domains", label: t("domains") },
-        { href: "/dashboard/mailboxes", label: t("mailboxes") },
-        { href: "/dashboard/aliases", label: t("aliases") },
+        {
+          id: "members",
+          href: "/dashboard/members",
+          label: t("members"),
+          icon: "members",
+        },
       ],
     },
     {
-      label: t("sections.billing"),
-      items: [{ href: "/dashboard/usage", label: t("usage") }],
+      id: "accounting",
+      label: t("sections.accounting"),
+      items: [],
+    },
+    {
+      id: "messaging",
+      label: t("sections.messaging"),
+      items: [
+        ...mailboxes.map((mailbox) => ({
+          id: `mailbox-${mailbox.id}`,
+          href: "#",
+          label: mailbox.address,
+          icon: "mail" as const,
+        })),
+        {
+          id: "mailboxes",
+          href: "/dashboard/mailboxes",
+          label: t("mailboxes"),
+          icon: "mail",
+        },
+        {
+          id: "aliases",
+          href: "/dashboard/aliases",
+          label: t("aliases"),
+          icon: "forward",
+        },
+      ],
+    },
+    {
+      id: "platform",
+      label: t("sections.platform"),
+      items: [
+        {
+          id: "domains",
+          href: "/dashboard/domains",
+          label: t("domains"),
+          icon: "globe",
+        },
+        ...(session?.user.role === "BUREAU"
+          ? [
+              {
+                id: "bureau",
+                href: "/bureau",
+                label: t("bureau"),
+                icon: "bureau" as const,
+              },
+            ]
+          : []),
+      ],
     },
   ];
-
-  if (session?.user.role === "BUREAU") {
-    sections.push({
-      label: t("sections.platform"),
-      items: [{ href: "/bureau", label: t("bureau") }],
-    });
-  }
 
   const memberships = session?.user.id
     ? await getUserMemberships(session.user.id)
@@ -52,7 +110,12 @@ export async function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-zinc-50/80">
-      <Sidebar sections={sections} title={tc("appName")} tagline={tc("appTagline")} />
+      <Sidebar
+        overview={overview}
+        groups={groups}
+        title={tc("appName")}
+        tagline={tc("appTagline")}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200/80 bg-white/90 px-6 py-3 backdrop-blur-sm">
           <div className="min-w-0">

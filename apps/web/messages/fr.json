@@ -73,15 +73,17 @@
   },
   "dashboard": {
     "overview": "Vue d'ensemble",
+    "members": "Adhérents",
     "domains": "Domaines",
-    "mailboxes": "Boîtes mail",
+    "mailboxes": "Boîtes email",
     "aliases": "Redirections",
     "usage": "Consommation",
     "bureau": "Administration",
     "welcome": "Bienvenue sur votre espace association",
     "sections": {
+      "association": "Association",
+      "accounting": "Comptabilité",
       "messaging": "Messagerie",
-      "billing": "Compte",
       "platform": "Plateforme"
     }
   },
