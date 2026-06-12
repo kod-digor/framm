@@ -6,9 +6,16 @@ Plateforme multi-associations : site web, messagerie Stalwart, gestion de domain
 
 ## Architecture
 
-- **2 VMs Scaleway** : App (Next.js, PostgreSQL, Grafana) + Mail (Stalwart)
+Architecture cible (migration Kapsule en cours, voir plus bas) :
+
+- **Kubernetes Kapsule** : app web Next.js + worker, déployés en GitOps par **ArgoCD** ; autoscaling des pods (HPA 2→6) et des nœuds (pool DEV1-M 2→4, autohealing) ; Traefik + cert-manager (Let's Encrypt) ; monitoring kube-prometheus-stack
+- **PostgreSQL managée** (DB-DEV-S) : sauvegardes automatiques quotidiennes, rétention 30 j, copie hors région, accès réseau privé uniquement
+- **1 VM Mail** (DEV1-M) : Stalwart — un serveur mail reste volontairement hors cluster (réputation IP stable)
+- **Registre d'images** Scaleway (`rg.fr-par.scw.cloud/framm-kod-digor`)
 - **S3** : uploads, backups, archives froides, tfstate
 - **Domaines plateforme** : `kod-digor.bzh`, `app.bzh` (activable plus tard)
+
+Pendant la transition, la VM App existante continue de servir la prod : la bascule DNS est pilotée par `TF_VAR_k8s_lb_ip` (voir runbook).
 
 ## Prérequis
 
@@ -55,6 +62,18 @@ Le bootstrap enchaîne automatiquement :
 ### HTTPS
 
 Certificats émis automatiquement via **Let's Encrypt** (gratuit, protocole ACME). Aucun compte à créer : certbot s'inscrit tout seul avec l'email `BUREAU_ADMIN_EMAIL`. Renouvellement automatique sur les VMs.
+
+## Migration vers Kapsule — runbook
+
+1. **Provisionner** : `bin/framm bootstrap` (crée cluster, pool, base managée, registre, réseau privé ; écrit `deploy/.generated/kubeconfig`).
+2. **Secret CI** : ajouter `SCW_SECRET_KEY` dans GitHub → Actions secrets, puis pousser sur `main` : le job `build-push` publie les images `web`/`worker` et met à jour `k8s/apps/web/kustomization.yaml`.
+3. **Bootstrap cluster** : `bin/framm k8s-bootstrap` (ArgoCD, secrets applicatifs, ClusterIssuer, monitoring, app-of-apps). ArgoCD synchronise ensuite Traefik, cert-manager et l'app depuis ce dépôt.
+4. **Copier la base** : `bin/framm k8s-migrate-db` (dump VM → base managée).
+5. **Vérifier** l'app via l'IP du load balancer Traefik, puis **basculer le DNS** :
+   `TF_VAR_k8s_lb_ip=<ip> bin/framm bootstrap`
+6. **Décommissionner** la VM App (après quelques jours sereins) : retirer `module.app_vm` et le job CI `deploy-prod` — les backups PostgreSQL passent côté base managée (automatiques).
+
+À tout moment, retour arrière = retirer `TF_VAR_k8s_lb_ip` (le DNS repointe la VM).
 
 ## GitOps (déploiement applicatif)
 

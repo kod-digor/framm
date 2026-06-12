@@ -5,6 +5,7 @@ WEBMAIL_URL=${webmail_url}
 STALWART_URL=${stalwart_url}
 STALWART_API_KEY=${stalwart_api_key}
 DB_PASSWORD=${db_password}
+K8S_DATABASE_URL=${k8s_database_url}
 PRIMARY_PLATFORM_DOMAIN=${primary_domain}
 GRAFANA_ADMIN_PASSWORD=${grafana_password}
 GRAFANA_ROOT_URL=${grafana_root_url}

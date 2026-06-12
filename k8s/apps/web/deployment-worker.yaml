@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  labels:
+    app: framm-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: framm-worker
+  template:
+    metadata:
+      labels:
+        app: framm-worker
+    spec:
+      containers:
+        - name: worker
+          image: rg.fr-par.scw.cloud/framm-kod-digor/worker
+          envFrom:
+            - secretRef:
+                name: framm-env
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi

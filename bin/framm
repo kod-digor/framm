@@ -40,8 +40,14 @@ case "$CMD" in
   db-tunnel)
     exec "${ROOT}/deploy/scripts/db-tunnel.sh"
     ;;
+  k8s-bootstrap)
+    exec "${ROOT}/deploy/scripts/k8s-bootstrap.sh"
+    ;;
+  k8s-migrate-db)
+    exec "${ROOT}/deploy/scripts/migrate-db-to-k8s.sh"
+    ;;
   *)
-    echo "Usage: framm {bootstrap|deploy|status|enable-dns|wait-dns|enable-app-bzh|setup-tls|sync-dev-env|db-tunnel}"
+    echo "Usage: framm {bootstrap|deploy|status|enable-dns|wait-dns|enable-app-bzh|setup-tls|sync-dev-env|db-tunnel|k8s-bootstrap|k8s-migrate-db}"
     exit 1
     ;;
 esac

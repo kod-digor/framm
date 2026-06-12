@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  labels:
+    app: framm-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: framm-web
+  template:
+    metadata:
+      labels:
+        app: framm-web
+    spec:
+      containers:
+        - name: web
+          image: rg.fr-par.scw.cloud/framm-kod-digor/web
+          ports:
+            - containerPort: 3000
+          env:
+            - name: HOSTNAME
+              value: "0.0.0.0"
+          envFrom:
+            - secretRef:
+                name: framm-env
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi

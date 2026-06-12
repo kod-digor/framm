@@ -1,0 +1,22 @@
+# App-of-apps : ArgoCD synchronise tout ce qui est déclaré dans k8s/argocd/.
+# prune désactivé volontairement : les Applications appliquées hors git par
+# le bootstrap (monitoring, qui contient des références secrètes) ne doivent
+# pas être supprimées.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: framm-root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kod-digor/framm
+    targetRevision: main
+    path: k8s/argocd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true

@@ -50,7 +50,7 @@ module "app_vm" {
   source = "../../modules/compute_instance"
 
   name           = "framm-app-${var.environment}"
-  instance_type  = var.environment == "prod" ? "PRO2-S" : "DEV1-M"
+  instance_type  = var.environment == "prod" ? var.app_instance_type : "DEV1-M"
   volume_size_gb = 20
   zone           = var.scw_zone
   inbound_ports  = [22, 80, 443]
@@ -66,7 +66,7 @@ module "mail_vm" {
   source = "../../modules/compute_instance"
 
   name           = "framm-mail-${var.environment}"
-  instance_type  = var.environment == "prod" ? "PRO2-S" : "DEV1-M"
+  instance_type  = var.environment == "prod" ? var.mail_instance_type : "DEV1-M"
   volume_size_gb = 50
   zone           = var.scw_zone
   inbound_ports  = [22, 25, 80, 443, 465, 587, 993]
@@ -90,10 +90,10 @@ module "dns_kod_digor" {
 
   zone_name = var.primary_platform_domain
   records = [
-    { name = "", type = "A", data = module.app_vm.public_ip },
-    { name = "www", type = "A", data = module.app_vm.public_ip },
-    { name = "staging", type = "A", data = module.app_vm.public_ip },
-    { name = "grafana", type = "A", data = module.app_vm.public_ip },
+    { name = "", type = "A", data = local.app_ingress_ip },
+    { name = "www", type = "A", data = local.app_ingress_ip },
+    { name = "staging", type = "A", data = local.app_ingress_ip },
+    { name = "grafana", type = "A", data = local.app_ingress_ip },
     { name = "mail", type = "A", data = module.mail_vm.public_ip },
     { name = "webmail", type = "A", data = module.mail_vm.public_ip },
     { name = "", type = "MX", data = "10 mail.${var.primary_platform_domain}." },
@@ -125,6 +125,7 @@ resource "local_file" "env_production" {
     stalwart_api_key     = random_password.stalwart_api_key.result
     db_password          = random_password.db_password.result
     db_host              = "127.0.0.1"
+    k8s_database_url     = local.k8s_database_url
     grafana_password     = random_password.grafana_password.result
     grafana_root_url     = local.grafana_url
     alert_email          = var.admin_email

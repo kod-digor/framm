@@ -1,0 +1,32 @@
+# Ingress controller. Le Cloud Controller Manager Scaleway crée
+# automatiquement un Load Balancer pour le Service de Traefik.
+# (ingress-nginx est archivé depuis mars 2026 — Traefik est maintenu.)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: 40.3.0
+    helm:
+      valuesObject:
+        deployment:
+          replicas: 2
+        ingressClass:
+          enabled: true
+          isDefaultClass: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
