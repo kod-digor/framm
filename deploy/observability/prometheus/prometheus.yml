@@ -18,6 +18,12 @@ scrape_configs:
   - job_name: node
     static_configs:
       - targets: ['localhost:9100']
+        labels:
+          role: app
+      # Port 9100 ouvert uniquement à l'IP de la VM App (security group Terraform)
+      - targets: ['mail.kod-digor.bzh:9100']
+        labels:
+          role: mail
 
   - job_name: framm-app
     metrics_path: /api/health

@@ -53,3 +53,93 @@ variable "environment" {
   type    = string
   default = "prod"
 }
+
+variable "alert_smtp_host" {
+  type        = string
+  default     = ""
+  description = "Serveur SMTP pour l'envoi des alertes (vide = alertes email désactivées)"
+}
+
+variable "alert_smtp_port" {
+  type    = string
+  default = "587"
+}
+
+variable "alert_smtp_user" {
+  type    = string
+  default = ""
+}
+
+variable "alert_smtp_password" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "alert_smtp_from" {
+  type    = string
+  default = ""
+}
+
+# --- Kubernetes (Kapsule) ---
+
+variable "k8s_version" {
+  type        = string
+  default     = "1.32"
+  description = "Version mineure Kubernetes (vérifier `scw k8s version list`) — patchs gérés par auto_upgrade"
+}
+
+variable "k8s_node_type" {
+  type        = string
+  default     = "DEV1-M"
+  description = "Type des nœuds du pool (DEV1-M : 3 vCPU / 4 Go, suffisant pour démarrer)"
+}
+
+variable "k8s_pool_min" {
+  type    = number
+  default = 2
+}
+
+variable "k8s_pool_max" {
+  type    = number
+  default = 4
+}
+
+variable "k8s_lb_ip" {
+  type        = string
+  default     = ""
+  description = "IP du load balancer créé par Traefik — quand renseignée, bascule le DNS app du VM vers Kapsule (TF_VAR_k8s_lb_ip)"
+}
+
+variable "registry_namespace" {
+  type        = string
+  default     = "framm-kod-digor"
+  description = "Namespace du registre d'images (rg.<region>.scw.cloud/<namespace>)"
+}
+
+# --- Base de données managée ---
+
+variable "rdb_node_type" {
+  type        = string
+  default     = "db-dev-s"
+  description = "db-dev-s (1 vCPU/2 Go, ~11€/mois) suffit pour démarrer ; passer à db-gp-xs ensuite"
+}
+
+variable "rdb_ha" {
+  type    = bool
+  default = false
+}
+
+# --- Tailles des VMs ---
+
+variable "app_instance_type" {
+  type        = string
+  default     = "PRO2-S"
+  description = "VM App — conservée telle quelle jusqu'au décommissionnement post-migration Kapsule"
+}
+
+variable "mail_instance_type" {
+  type        = string
+  default     = "DEV1-M"
+  description = "VM Mail — DEV1-M (3 vCPU/4 Go) largement suffisant pour quelques boîtes. Changer le type recrée la VM : les données mail survivent sur le volume bloc."
+}

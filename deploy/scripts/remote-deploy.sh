@@ -18,6 +18,8 @@ framm_rsync_app
 echo "Synchronisation VM Mail..."
 framm_rsync_mail
 
+framm_push_env
+
 echo "Déploiement stack App (postgres, web, worker, observability)..."
 framm_ssh "$APP_PUBLIC_IP" bash <<'REMOTE'
 set -euo pipefail
@@ -26,6 +28,10 @@ source /opt/framm/deploy/.generated/env.production
 set +a
 # shellcheck source=lib/docker-disk.sh
 source /opt/framm/deploy/scripts/lib/docker-disk.sh
+# shellcheck source=lib/host-setup.sh
+source /opt/framm/deploy/scripts/lib/host-setup.sh
+framm_host_setup app
+framm_host_render_alertmanager
 framm_docker_prepare_build
 
 docker compose -f docker-compose.app.yml -f docker-compose.observability.yml build web
@@ -45,6 +51,10 @@ set -euo pipefail
 set -a
 source /opt/framm/deploy/.generated/env.production
 set +a
+# shellcheck source=lib/host-setup.sh
+source /opt/framm/deploy/scripts/lib/host-setup.sh
+framm_host_setup mail
+framm_host_migrate_stalwart
 cd /opt/framm/deploy/docker
 export COMPOSE_PROJECT_NAME=framm-mail
 docker compose -f docker-compose.mail.yml pull

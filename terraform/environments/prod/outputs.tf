@@ -23,6 +23,22 @@ output "dns_enabled" {
   value = var.dns_enabled
 }
 
+output "k8s_cluster_id" {
+  value = scaleway_k8s_cluster.framm.id
+}
+
+output "kubeconfig_path" {
+  value = local_sensitive_file.kubeconfig.filename
+}
+
+output "registry_endpoint" {
+  value = scaleway_registry_namespace.framm.endpoint
+}
+
+output "rdb_private_ip" {
+  value = scaleway_rdb_instance.main.private_network[0].ip
+}
+
 output "manual_dns_records" {
   description = "Records à configurer manuellement si dns_enabled=false"
   value = var.dns_enabled ? null : {

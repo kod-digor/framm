@@ -14,6 +14,16 @@ module "backups" {
   scaleway_project_id = var.scw_project_id
   scaleway_region     = var.scw_region
   iam_application_name = "framm-backups"
+
+  # 30 backups quotidiens conservés (le versioning du bucket protège en plus
+  # contre l'écrasement ou la suppression accidentelle).
+  lifecycle_rules = [{
+    id              = "expire-old-backups"
+    prefix          = ""
+    enabled         = true
+    transitions     = []
+    expiration_days = 30
+  }]
 }
 
 module "cold_archive" {
@@ -40,7 +50,7 @@ module "app_vm" {
   source = "../../modules/compute_instance"
 
   name           = "framm-app-${var.environment}"
-  instance_type  = var.environment == "prod" ? "PRO2-S" : "DEV1-M"
+  instance_type  = var.environment == "prod" ? var.app_instance_type : "DEV1-M"
   volume_size_gb = 20
   zone           = var.scw_zone
   inbound_ports  = [22, 80, 443]
@@ -56,11 +66,17 @@ module "mail_vm" {
   source = "../../modules/compute_instance"
 
   name           = "framm-mail-${var.environment}"
-  instance_type  = var.environment == "prod" ? "PRO2-S" : "DEV1-M"
+  instance_type  = var.environment == "prod" ? var.mail_instance_type : "DEV1-M"
   volume_size_gb = 50
   zone           = var.scw_zone
   inbound_ports  = [22, 25, 80, 443, 465, 587, 993]
   admin_ips      = var.admin_ips
+
+  # node-exporter scrapé par le Prometheus de la VM App uniquement
+  restricted_inbound_rules = [{
+    port     = 9100
+    ip_range = "${module.app_vm.public_ip}/32"
+  }]
 
   cloud_init = templatefile("${path.module}/../../../deploy/cloud-init/mail.yaml", {
     domain         = var.primary_platform_domain
@@ -74,10 +90,10 @@ module "dns_kod_digor" {
 
   zone_name = var.primary_platform_domain
   records = [
-    { name = "", type = "A", data = module.app_vm.public_ip },
-    { name = "www", type = "A", data = module.app_vm.public_ip },
-    { name = "staging", type = "A", data = module.app_vm.public_ip },
-    { name = "grafana", type = "A", data = module.app_vm.public_ip },
+    { name = "", type = "A", data = local.app_ingress_ip },
+    { name = "www", type = "A", data = local.app_ingress_ip },
+    { name = "staging", type = "A", data = local.app_ingress_ip },
+    { name = "grafana", type = "A", data = local.app_ingress_ip },
     { name = "mail", type = "A", data = module.mail_vm.public_ip },
     { name = "webmail", type = "A", data = module.mail_vm.public_ip },
     { name = "", type = "MX", data = "10 mail.${var.primary_platform_domain}." },
@@ -109,9 +125,15 @@ resource "local_file" "env_production" {
     stalwart_api_key     = random_password.stalwart_api_key.result
     db_password          = random_password.db_password.result
     db_host              = "127.0.0.1"
+    k8s_database_url     = local.k8s_database_url
     grafana_password     = random_password.grafana_password.result
     grafana_root_url     = local.grafana_url
     alert_email          = var.admin_email
+    alert_smtp_host      = local.alert_smtp_host
+    alert_smtp_port      = local.alert_smtp_port
+    alert_smtp_user      = local.alert_smtp_user
+    alert_smtp_password  = local.alert_smtp_password
+    alert_smtp_from      = local.alert_smtp_from
     bureau_admin_email   = var.admin_email
     bureau_admin_password = var.admin_password
     primary_domain       = var.primary_platform_domain

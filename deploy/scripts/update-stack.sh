@@ -18,6 +18,10 @@ echo "Mise à jour stack distante..."
 framm_rsync_app
 framm_rsync_mail
 
+if [[ "${FRAMM_CI:-}" != "true" ]]; then
+  framm_push_env
+fi
+
 framm_ssh "$APP_PUBLIC_IP" bash <<'REMOTE'
 set -euo pipefail
 set -a
@@ -25,6 +29,10 @@ source /opt/framm/deploy/.generated/env.production
 set +a
 # shellcheck source=lib/docker-disk.sh
 source /opt/framm/deploy/scripts/lib/docker-disk.sh
+# shellcheck source=lib/host-setup.sh
+source /opt/framm/deploy/scripts/lib/host-setup.sh
+framm_host_setup app
+framm_host_render_alertmanager
 framm_docker_prepare_build
 docker compose -f docker-compose.app.yml build web
 framm_docker_prune_for_build
@@ -32,6 +40,7 @@ docker compose -f docker-compose.app.yml build worker
 docker compose -f docker-compose.app.yml run --rm worker npx prisma migrate deploy
 docker compose -f docker-compose.app.yml run --rm worker npm run db:seed
 docker compose -f docker-compose.app.yml -f docker-compose.observability.yml up -d --force-recreate web worker
+docker compose -f docker-compose.app.yml -f docker-compose.observability.yml up -d
 framm_docker_prune_for_build
 REMOTE
 
@@ -42,6 +51,10 @@ source /opt/framm/deploy/.generated/env.production
 set +a
 # shellcheck source=lib/stalwart-setup.sh
 source /opt/framm/deploy/scripts/lib/stalwart-setup.sh
+# shellcheck source=lib/host-setup.sh
+source /opt/framm/deploy/scripts/lib/host-setup.sh
+framm_host_setup mail
+framm_host_migrate_stalwart
 cd /opt/framm/deploy/docker
 export COMPOSE_PROJECT_NAME=framm-mail
 docker compose -f docker-compose.mail.yml pull

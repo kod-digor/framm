@@ -19,6 +19,7 @@ deploy/.generated/
 .terraform/
 *.tfstate
 *.tfstate.*
+terraform/environments/*/backend.tf
 *.tfvars
 !*.tfvars.example
 .terraform.lock.hcl
