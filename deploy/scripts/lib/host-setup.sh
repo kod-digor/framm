@@ -2,11 +2,24 @@
 # Configuration de l'hôte (cron backups, outils, alertmanager) — sourcer sur la VM.
 # Idempotent : appelé à chaque déploiement.
 
+framm_host_install_aws_cli_v2() {
+  if command -v aws >/dev/null 2>&1; then
+    return 0
+  fi
+  DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl unzip
+  local aws_tmp
+  aws_tmp="$(mktemp -d)"
+  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "${aws_tmp}/awscliv2.zip"
+  unzip -q "${aws_tmp}/awscliv2.zip" -d "${aws_tmp}"
+  "${aws_tmp}/aws/install" -i /usr/local/aws-cli -b /usr/local/bin --update
+  rm -rf "${aws_tmp}"
+}
+
 framm_host_ensure_tools() {
   mkdir -p /var/lib/node_exporter/textfile_collector
   if ! command -v aws >/dev/null 2>&1; then
-    DEBIAN_FRONTEND=noninteractive apt-get update -qq
-    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq awscli
+    framm_host_install_aws_cli_v2
   fi
 }
 

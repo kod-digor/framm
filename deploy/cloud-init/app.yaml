@@ -11,7 +11,8 @@ packages:
   - unattended-upgrades
   - fail2ban
   - rsync
-  - awscli
+  - curl
+  - unzip
 
 ssh_authorized_keys:
   - ${ssh_public_key}
@@ -22,6 +23,14 @@ write_files:
     permissions: '0644'
 
 runcmd:
+  - |
+    if ! command -v aws >/dev/null 2>&1; then
+      tmp=$(mktemp -d)
+      curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "$tmp/awscliv2.zip"
+      unzip -q "$tmp/awscliv2.zip" -d "$tmp"
+      "$tmp/aws/install" -i /usr/local/aws-cli -b /usr/local/bin --update
+      rm -rf "$tmp"
+    fi
   - systemctl enable docker && systemctl start docker
   - usermod -aG docker root
   - mkdir -p /opt/framm /opt/framm/data/postgres /var/www/acme /var/lib/node_exporter/textfile_collector
