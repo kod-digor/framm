@@ -1,0 +1,41 @@
+apps/web/messages/fr.json
+  s_74a76da0087fa4::t_f821330ab9d704 267-336
+  s_74a76da0087fa4::t_cecc53596d8a8f 85
+apps/web/src/components/admin/health-panel.tsx
+  s_74a76da0087fa4::t_fc3228b5fb31bc 149-152
+  s_74a76da0087fa4::t_17189a0b445c3d 1-148,153-199
+apps/web/src/lib/admin/health-checks.ts
+  s_74a76da0087fa4::t_a950fb411e9074 1-429
+apps/web/src/app/actions/admin-health.ts
+  s_74a76da0087fa4::t_86674a53de1722 19,22-23
+  s_74a76da0087fa4::t_b5f1a982040ec0 1-18,20-21,24-57
+apps/web/src/app/dashboard/admin/health/page.tsx
+  s_74a76da0087fa4::t_41f7558cccb693 10,16-17
+  s_74a76da0087fa4::t_11c7cf44d455cc 1
+  s_74a76da0087fa4::t_3dbb61cf86549f 7
+  s_74a76da0087fa4::t_f49dc8354f552b 2-6,8-9,11-15,18-32
+apps/web/src/components/ui/sidebar.tsx
+  s_74a76da0087fa4::t_9cb04c3ab90f9e 40
+  s_74a76da0087fa4::t_02c81143ef8bfd 8
+  s_74a76da0087fa4::t_0b7726218cde96 24
+apps/web/src/components/layout/dashboard-shell.tsx
+  s_74a76da0087fa4::t_69129e04b5161f 95-100
+.cursor/rules/admin-health-tests.mdc
+  s_74a76da0087fa4::t_e918c92acd1941 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "f19336fe6b9ab602acb9e845d58094569cc43212",
+  "prompts": {},
+  "sessions": {
+    "s_74a76da0087fa4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "94c07255-f583-4eb4-b72a-887208304dfb",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
