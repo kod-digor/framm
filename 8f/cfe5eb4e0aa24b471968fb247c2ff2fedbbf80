@@ -1,0 +1,45 @@
+apps/web/src/app/login/page.tsx
+  s_bfd7df6d234c09::t_5ddb4e13a8eb79 39
+  s_bfd7df6d234c09::t_a0b9a007fd859c 3,9
+  s_bfd7df6d234c09::t_0b41c543370dd0 18
+apps/web/src/components/aliases/create-alias-form.tsx
+  s_bfd7df6d234c09::t_71fb39f1271c51 8
+  s_bfd7df6d234c09::t_94f8c22325f96b 47-62
+apps/web/src/lib/platform-domains.ts
+  s_bfd7df6d234c09::t_6e64ad3106b13a 1-15
+apps/web/src/components/mailboxes/create-mailbox-form.tsx
+  s_bfd7df6d234c09::t_6be99f0c05ef06 8
+  s_bfd7df6d234c09::t_61820b07e0454d 46-61
+apps/web/messages/fr.json
+  s_bfd7df6d234c09::t_baef64d4d87d1b 30-33
+apps/web/src/components/auth/auth-email-field.tsx
+  s_bfd7df6d234c09::t_14ca9a11b3ae28 43
+  s_bfd7df6d234c09::t_953c8a330601ab 1-42,44-49
+apps/web/src/components/ui/email-domain-input.tsx
+  s_bfd7df6d234c09::t_22c34caf5219eb 1-92
+apps/web/src/app/signup/page.tsx
+  s_bfd7df6d234c09::t_b8b4963a192e67 3,9
+  s_bfd7df6d234c09::t_ebce87618aa6bf 18
+  s_bfd7df6d234c09::t_a24ae3d2e006fd 55
+apps/web/src/app/actions/auth.ts
+  s_bfd7df6d234c09::t_3c3c50f424f5f2 18-28
+  s_bfd7df6d234c09::t_307fa8aa817f4f 91
+  s_bfd7df6d234c09::t_babc4d7a83e750 33
+  s_bfd7df6d234c09::t_ea4fba9fca58a6 95-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "8fcfe5eb4e0aa24b471968fb247c2ff2fedbbf80",
+  "prompts": {},
+  "sessions": {
+    "s_bfd7df6d234c09": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "4d5cb8c6-15bd-4f89-8bbd-e033b343c921",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
