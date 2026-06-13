@@ -103,7 +103,7 @@ variable "k8s_node_type" {
 
 variable "k8s_pool_min" {
   type    = number
-  default = 2
+  default = 1
 }
 
 variable "k8s_pool_max" {
@@ -138,14 +138,9 @@ variable "rdb_ha" {
 
 # --- Tailles des VMs ---
 
-variable "app_instance_type" {
-  type        = string
-  default     = "PRO2-S"
-  description = "VM App — conservée telle quelle jusqu'au décommissionnement post-migration Kapsule"
-}
 
 variable "mail_instance_type" {
   type        = string
-  default     = "DEV1-M"
-  description = "VM Mail — DEV1-M (3 vCPU/4 Go) largement suffisant pour quelques boîtes. Changer le type recrée la VM : les données mail survivent sur le volume bloc."
+  default     = "DEV1-S"
+  description = "VM Mail — DEV1-S (2 vCPU/2 Go) phase démarrage asso. Changer le type recrée la VM : les données mail survivent sur le volume bloc."
 }
