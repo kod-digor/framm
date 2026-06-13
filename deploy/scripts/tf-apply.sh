@@ -10,7 +10,8 @@ TF_DIR="${ROOT}/terraform/environments/prod"
 
 framm_load_env
 
-DNS_ENABLED="${DNS_ENABLED:-false}"
+# Prod : true par défaut pour ne pas détruire les records DNS Scaleway au apply
+DNS_ENABLED="${DNS_ENABLED:-true}"
 APP_BZH_ENABLED="${APP_BZH_ENABLED:-false}"
 
 # Le backend s3 lit les identifiants via les variables AWS_*
