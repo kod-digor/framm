@@ -37,6 +37,31 @@ jobs:
       - run: npm run lint
       - run: npm run build -- --webpack
 
+  infra-health-checks:
+    name: Infra health checks
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: test-web
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://kod-digor.bzh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run Stalwart / TEM smoke tests
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          MAIL_PUBLIC_IP: ${{ secrets.MAIL_PUBLIC_IP }}
+          STALWART_URL: https://mail.${{ env.PRIMARY_PLATFORM_DOMAIN }}
+          WEBMAIL_URL: ${{ env.WEBMAIL_URL }}
+          PLATFORM_DOMAINS: ${{ env.PRIMARY_PLATFORM_DOMAIN }}
+          PRIMARY_PLATFORM_DOMAIN: ${{ env.PRIMARY_PLATFORM_DOMAIN }}
+        run: ./deploy/scripts/ci-infra-health-checks.sh
+
   terraform-validate:
     name: Terraform validate
     if: github.event_name == 'pull_request'
@@ -54,7 +79,7 @@ jobs:
   deploy-prod:
     name: Deploy mail VM
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: test-web
+    needs: [test-web, infra-health-checks]
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -75,7 +100,7 @@ jobs:
   build-push:
     name: Build & push images (Kapsule)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: test-web
+    needs: [test-web, infra-health-checks]
     runs-on: ubuntu-latest
     permissions:
       contents: write

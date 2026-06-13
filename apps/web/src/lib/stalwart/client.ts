@@ -552,9 +552,9 @@ export function getMailConfig() {
   };
 }
 
-/** URL JMAP Stalwart (API admin + auth OAuth portail). */
+/** URL JMAP Stalwart (API admin + auth OAuth portail). Bulwark (WEBMAIL_URL) n'expose pas JMAP. */
 export function getStalwartJmapUrl(): string {
-  return (STALWART_URL || process.env.WEBMAIL_URL || "").replace(/\/$/, "");
+  return STALWART_URL.replace(/\/$/, "");
 }
 
 /** URL webmail externe (Bulwark, nouvel onglet). */

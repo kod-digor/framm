@@ -8,6 +8,7 @@ import {
   deleteAccount,
   deleteAlias,
   extractStalwartCreatedId,
+  getStalwartJmapUrl,
   getStalwartStatus,
   getWebmailExternalUrl,
   isStalwartFailure,
@@ -336,7 +337,7 @@ type QueuedRecipientStatus =
   | string;
 
 async function stalwartAdminJmap(methodCalls: JmapMethodCall[], timeoutMs = 15_000) {
-  const base = (process.env.STALWART_URL || process.env.WEBMAIL_URL || "").replace(/\/$/, "");
+  const base = getStalwartJmapUrl();
   const apiKey = process.env.STALWART_API_KEY ?? "";
   if (!base || !apiKey) {
     return { unavailable: true as const };
@@ -673,7 +674,7 @@ async function checkInfraStalwartJmap() {
   const status = await getStalwartStatus();
   if (status === "ok") return { status: "ok" as const, detail: "JMAP ping OK" };
   if (status === "unconfigured") {
-    return { status: "warn" as const, detail: "STALWART_API_KEY / WEBMAIL_URL manquant" };
+    return { status: "warn" as const, detail: "STALWART_URL / STALWART_API_KEY manquant" };
   }
   return { status: "fail" as const, detail: "JMAP injoignable" };
 }

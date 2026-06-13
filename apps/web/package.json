@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint . && node scripts/check-i18n.mjs",
     "i18n:check": "node scripts/check-i18n.mjs",
+    "health-checks:infra": "node scripts/run-infra-health-checks.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
