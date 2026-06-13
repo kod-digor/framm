@@ -1,0 +1,30 @@
+deploy/docker/docker-compose.mail.yml
+  s_f8b96c78ca8217::t_ab64784e9bc1e9 14
+  s_f8b96c78ca8217::t_26dcd52dd7213a 23-25,29,32
+k8s/apps/web/kustomization.yaml
+  s_f8b96c78ca8217::t_4a05f7459570c9 14,16
+.github/workflows/deploy.yml
+  s_f8b96c78ca8217::t_f72e20fd6b8b82 109,119
+apps/web/src/components/ui/sidebar.tsx
+  s_f8b96c78ca8217::t_f66163f2b5506a 86-91
+  s_f8b96c78ca8217::t_17b4eed23a2b81 6
+deploy/scripts/lib/host-setup.sh
+  s_f8b96c78ca8217::t_9eeeabc40254d5 102-107
+  s_f8b96c78ca8217::t_d276bef973fec2 111-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "d3d74e1f725101a089e57e04b33a4708207f2c0e",
+  "prompts": {},
+  "sessions": {
+    "s_f8b96c78ca8217": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "73ce477b-455f-4eee-bd82-8ec609a40f42",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
