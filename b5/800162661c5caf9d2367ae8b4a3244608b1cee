@@ -1,0 +1,20 @@
+apps/web/src/lib/stalwart/webmail-auth.ts
+  s_00ea0b1c8831de::t_1c7fe3cf1195f1 16
+  s_00ea0b1c8831de::t_288bf9a93cdd4a 66-68,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b5800162661c5caf9d2367ae8b4a3244608b1cee",
+  "prompts": {},
+  "sessions": {
+    "s_00ea0b1c8831de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a860922-e9f4-4046-b28b-24f34780c59e",
+        "model": "composer-2.5"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
