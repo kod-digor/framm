@@ -12,6 +12,33 @@ framm_mail_has_cert() {
   [[ -f "$(framm_mail_le_dir "$host" "$domain")/fullchain.pem" ]]
 }
 
+# Proxy JMAP Stalwart sur le vhost webmail (même origine que Bulwark → pas de CORS navigateur).
+framm_mail_nginx_jmap_locations() {
+  local proto="$1"
+  cat <<EOF
+    location = /.well-known/jmap {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${proto};
+    }
+
+    location /jmap {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${proto};
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+EOF
+}
+
 framm_mail_write_nginx_site() {
   local domain="${1:?domain requis}"
   local out="${2:-/etc/nginx/sites-available/framm-mail}"
@@ -36,6 +63,8 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/webmail.${domain}/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers off;
+
+$(framm_mail_nginx_jmap_locations https)
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -87,17 +116,19 @@ server {
         root /var/www/acme;
     }
 
-    location / {
 EOF
   if $webmail_ssl; then
     cat >> "$out" <<'EOF'
+    location / {
         return 301 https://$host$request_uri;
     }
 }
 
 EOF
   else
+    framm_mail_nginx_jmap_locations '$scheme' >> "$out"
     cat >> "$out" <<'EOF'
+    location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;

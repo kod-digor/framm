@@ -161,6 +161,44 @@ framm_stalwart_ensure_api_key() {
   framm_stalwart_create_api_key
 }
 
+framm_stalwart_ensure_cors() {
+  local api_key="${STALWART_API_KEY:-}"
+  framm_stalwart_recovery_auth
+  if framm_stalwart_api_key_valid; then
+    api_key="${STALWART_API_KEY}"
+  elif [[ -n "${RECOVERY_PASS:-}" ]]; then
+    api_key="${RECOVERY_PASS}"
+  fi
+  [[ -n "$api_key" ]] || return 0
+
+  STALWART_API_KEY="$api_key" python3 <<'PY'
+import json, os, urllib.request
+
+api_key = os.environ["STALWART_API_KEY"]
+
+def jmap(calls):
+    body = {"using": ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"], "methodCalls": calls}
+    req = urllib.request.Request(
+        "http://127.0.0.1:8080/jmap",
+        data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode())
+
+state = jmap([["x:Http/get", {"ids": ["singleton"]}, "g1"]])["methodResponses"][0][1]["list"][0]
+if state.get("usePermissiveCors"):
+    print("Stalwart CORS permissif déjà activé")
+    raise SystemExit(0)
+
+jmap([
+    ["x:Http/set", {"update": {"singleton": {"usePermissiveCors": True}}}, "s1"],
+    ["x:Action/set", {"create": {"framm-cors": {"@type": "ReloadSettings"}}}, "a1"],
+])
+print("Stalwart usePermissiveCors activé (JMAP cross-origin)")
+PY
+}
+
 framm_stalwart_ensure_ready() {
   set -a
   # shellcheck source=/dev/null
@@ -176,6 +214,8 @@ framm_stalwart_ensure_ready() {
     echo "Clé API Stalwart invalide après création"
     return 1
   }
+
+  framm_stalwart_ensure_cors || true
 
   local code
   code="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/login)"

@@ -40,7 +40,8 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     environment:
-      - JMAP_SERVER_URL=https://mail.${PRIMARY_PLATFORM_DOMAIN}
+      # Même origine que Bulwark (nginx proxy /jmap → Stalwart). Évite CORS navigateur.
+      - JMAP_SERVER_URL=${WEBMAIL_URL}
       - STALWART_FEATURES=true
       - SESSION_SECRET=${BULWARK_SESSION_SECRET}
       - APP_NAME=Framm Webmail
