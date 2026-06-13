@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/action-result";
-import { createAccount, isStalwartFailure } from "@/lib/stalwart/client";
+import {
+  createAccount,
+  extractStalwartCreatedId,
+  isStalwartFailure,
+  resolveStalwartDomainId,
+} from "@/lib/stalwart/client";
 
 export async function createMailboxAction(
   _prev: ActionResult,
@@ -33,21 +38,27 @@ export async function createMailboxAction(
   const existing = await prisma.mailbox.findUnique({ where: { address } });
   if (existing) return { ok: false, message: "exists" };
 
-  const stalwartRes = await createAccount(
-    address,
-    domain.stalwartDomainId ?? domain.id,
-    password
+  const domainResolved = await resolveStalwartDomainId(
+    domain.fqdn,
+    domain.stalwartDomainId
   );
+  if (domainResolved.unavailable || !domainResolved.id) {
+    return { ok: false, message: "stalwartError" };
+  }
+
+  const stalwartRes = await createAccount(localPart, domainResolved.id, password);
   if (isStalwartFailure(stalwartRes)) {
     return { ok: false, message: "stalwartError" };
   }
+
+  const stalwartAccountId = extractStalwartCreatedId(stalwartRes);
 
   await prisma.mailbox.create({
     data: {
       organizationId: orgId,
       domainId: domain.id,
       address,
-      stalwartAccountId: address,
+      stalwartAccountId,
     },
   });
 

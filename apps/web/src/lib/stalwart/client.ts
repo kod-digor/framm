@@ -118,7 +118,7 @@ export async function createDomain(fqdn: string) {
   ]);
 }
 
-export async function createAccount(email: string, domainId: string, password: string) {
+export async function createAccount(localPart: string, domainId: string, password: string) {
   const id = `account-${Date.now()}`;
   return jmapCall([
     [
@@ -127,9 +127,19 @@ export async function createAccount(email: string, domainId: string, password: s
         create: {
           [id]: {
             "@type": "User",
-            name: email,
+            name: parseEmailLocalPart(localPart),
             domainId,
-            secrets: [{ type: "password", value: password }],
+            credentials: {
+              "0": {
+                "@type": "Password",
+                secret: password,
+              },
+            },
+            roles: { "@type": "User" },
+            permissions: { "@type": "Inherit" },
+            aliases: {},
+            quotas: {},
+            encryptionAtRest: { "@type": "Disabled" },
           },
         },
       },
