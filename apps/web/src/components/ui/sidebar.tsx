@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   ChevronRight,
   Forward,
@@ -75,6 +75,14 @@ function getStoredSectionOpen(groupId: string): boolean | null {
   return stored === "true";
 }
 
+function subscribeToSectionStorage(onStoreChange: () => void) {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key?.startsWith(STORAGE_PREFIX)) onStoreChange();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => window.removeEventListener("storage", onStorage);
+}
+
 function CollapsibleGroup({
   group,
   pathname,
@@ -83,18 +91,17 @@ function CollapsibleGroup({
   pathname: string;
 }) {
   const hasActiveChild = group.items.some((item) => isNavActive(pathname, item.href));
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const stored = getStoredSectionOpen(group.id);
-    if (stored !== null) setOpen(stored);
-  }, [group.id]);
-
-  const isOpen = open || hasActiveChild;
+  const persistedOpen = useSyncExternalStore(
+    subscribeToSectionStorage,
+    () => getStoredSectionOpen(group.id) ?? false,
+    () => false,
+  );
+  const [overrideOpen, setOverrideOpen] = useState<boolean | null>(null);
+  const isOpen = hasActiveChild || (overrideOpen !== null ? overrideOpen : persistedOpen);
 
   const toggle = () => {
     const next = !isOpen;
-    setOpen(next);
+    setOverrideOpen(next);
     sessionStorage.setItem(`${STORAGE_PREFIX}${group.id}`, String(next));
   };
 

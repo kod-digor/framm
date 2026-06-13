@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,13 +24,12 @@ function SubmitButton() {
   );
 }
 
-export function CreateMailboxForm({
+function CreateMailboxFields({
   domains,
 }: {
   domains: { id: string; fqdn: string }[];
 }) {
   const t = useTranslations("mailboxes");
-  const [state, formAction] = useActionState(createMailboxAction, INITIAL_ACTION_RESULT);
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
   const [password, setPassword] = useState("");
@@ -41,17 +40,8 @@ export function CreateMailboxForm({
     return selectedDomain ? `${part}@${selectedDomain.fqdn}` : part;
   }, [localPart, selectedDomain]);
 
-  useEffect(() => {
-    if (state?.ok && state.message === "created") {
-      setLocalPart("");
-      setPassword("");
-    }
-  }, [state]);
-
   return (
-    <form action={formAction} className="space-y-5">
-      <FormFeedback state={state} namespace="mailboxes" paramKey="address" />
-
+    <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="localPart">{t("localPart")}</Label>
@@ -97,7 +87,25 @@ export function CreateMailboxForm({
           <code className="rounded bg-white px-2 py-0.5 font-mono text-zinc-900">{preview}</code>
         </p>
       </div>
+    </>
+  );
+}
 
+export function CreateMailboxForm({
+  domains,
+}: {
+  domains: { id: string; fqdn: string }[];
+}) {
+  const [state, formAction] = useActionState(createMailboxAction, INITIAL_ACTION_RESULT);
+  const fieldsKey =
+    state?.ok && state.message === "created" && state.detail
+      ? `created-${state.detail}`
+      : "idle";
+
+  return (
+    <form action={formAction} className="space-y-5">
+      <FormFeedback state={state} namespace="mailboxes" paramKey="address" />
+      <CreateMailboxFields key={fieldsKey} domains={domains} />
       <SubmitButton />
     </form>
   );

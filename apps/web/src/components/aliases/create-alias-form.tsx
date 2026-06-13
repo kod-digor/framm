@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,28 +24,18 @@ function SubmitButton() {
   );
 }
 
-export function CreateAliasForm({
+function CreateAliasFields({
   domains,
 }: {
   domains: { id: string; fqdn: string }[];
 }) {
   const t = useTranslations("aliases");
-  const [state, formAction] = useActionState(createAliasAction, INITIAL_ACTION_RESULT);
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
   const [destination, setDestination] = useState("");
 
-  useEffect(() => {
-    if (state?.ok && state.message === "created") {
-      setLocalPart("");
-      setDestination("");
-    }
-  }, [state]);
-
   return (
-    <form action={formAction} className="space-y-5">
-      <FormFeedback state={state} namespace="aliases" paramKey="source" />
-
+    <>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="localPart">{t("sourceLocal")}</Label>
@@ -81,7 +71,25 @@ export function CreateAliasForm({
           <p className="text-xs text-zinc-500">{t("destinationHint")}</p>
         </div>
       </div>
+    </>
+  );
+}
 
+export function CreateAliasForm({
+  domains,
+}: {
+  domains: { id: string; fqdn: string }[];
+}) {
+  const [state, formAction] = useActionState(createAliasAction, INITIAL_ACTION_RESULT);
+  const fieldsKey =
+    state?.ok && state.message === "created" && state.detail
+      ? `created-${state.detail}`
+      : "idle";
+
+  return (
+    <form action={formAction} className="space-y-5">
+      <FormFeedback state={state} namespace="aliases" paramKey="source" />
+      <CreateAliasFields key={fieldsKey} domains={domains} />
       <SubmitButton />
     </form>
   );
