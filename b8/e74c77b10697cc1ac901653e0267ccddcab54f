@@ -1,0 +1,34 @@
+apps/web/src/lib/admin/health-checks.ts
+  s_8515dbee2f9988::t_8123c7c9cfcaa9 2
+  s_8515dbee2f9988::t_e548a153f706fd 223-266,268-481,493-501,507,536,541,544-545
+  s_8515dbee2f9988::t_aeb0c4c4bcbb2c 267
+  s_8515dbee2f9988::t_f499b44783e345 482-489,519-531,534-535,537-540,542-543,546-556
+apps/web/messages/fr.json
+  s_8515dbee2f9988::t_9c67debde9cc1f 307
+  s_8515dbee2f9988::t_439dc9de9af1ec 275
+apps/web/package.json
+  s_8515dbee2f9988::t_cad27aac8739ce 34
+  s_8515dbee2f9988::t_ca063761d95b20 47
+.cursor/rules/admin-health-tests.mdc
+  s_8515dbee2f9988::t_e7b2657b06a98a 21,24-36
+apps/web/pnpm-lock.yaml
+  s_8515dbee2f9988::t_859c63b3a36003 1-6864
+apps/web/src/components/admin/health-panel.tsx
+  s_8515dbee2f9988::t_d8d60d9658f162 22-23,37,46-54,101,137-138,144-149,155-158,160-174,177,179,184,190-195,197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b8e74c77b10697cc1ac901653e0267ccddcab54f",
+  "prompts": {},
+  "sessions": {
+    "s_8515dbee2f9988": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "56cbade5-65e9-4387-baac-3dc3be013aab",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
