@@ -1,0 +1,21 @@
+terraform/environments/prod/kapsule.tf
+  s_6ca4bd65e878a3::t_401e110975f0ca 17-19
+terraform/environments/prod/variables.tf
+  s_6ca4bd65e878a3::t_730e7111c98855 94-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "424b93322628e546b3b48a312151c67672e193ec",
+  "prompts": {},
+  "sessions": {
+    "s_6ca4bd65e878a3": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "237ef54f-3ca0-4da5-b6ff-1964ffe91a67",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
