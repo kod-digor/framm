@@ -79,7 +79,7 @@ function CreateMailboxFields({
             minLength={8}
             required
             autoComplete="new-password"
-            placeholder="••••••••"
+            placeholder={t("passwordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />

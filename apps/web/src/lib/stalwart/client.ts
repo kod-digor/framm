@@ -11,6 +11,7 @@ export type StalwartStatus = "ok" | "unconfigured" | "unreachable";
 
 export type StalwartSetIssue = {
   type: string;
+  description?: string;
   properties?: string[];
   objectId?: { object: string; id: string };
 };
@@ -87,6 +88,27 @@ export function extractStalwartOrphanAccountId(
 
 export function isStalwartAliasConflict(issue: StalwartSetIssue | null): boolean {
   return issue?.type === "primaryKeyViolation" && issue.objectId?.object === "MailingList";
+}
+
+/** Mot de passe refusé par Stalwart (règles de robustesse, pas seulement la longueur). */
+export function isStalwartPasswordIssue(issue: StalwartSetIssue | null): boolean {
+  return (
+    issue?.type === "invalidProperties" &&
+    (issue.properties?.includes("secret") ?? false)
+  );
+}
+
+export function isStalwartDomainIssue(issue: StalwartSetIssue | null): boolean {
+  return issue?.type === "invalidForeignKey" && issue.objectId?.object === "Domain";
+}
+
+export function isStalwartTransportIssue(issue: StalwartSetIssue | null): boolean {
+  if (!issue) return false;
+  return (
+    issue.type === "unavailable" ||
+    issue.type.startsWith("Stalwart ") ||
+    issue.type === "jmapError"
+  );
 }
 
 export async function getStalwartStatus(): Promise<StalwartStatus> {

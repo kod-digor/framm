@@ -12,7 +12,10 @@ import {
   extractStalwartOrphanAccountId,
   extractStalwartSetIssue,
   isStalwartAliasConflict,
+  isStalwartDomainIssue,
   isStalwartFailure,
+  isStalwartPasswordIssue,
+  isStalwartTransportIssue,
   resolveStalwartAccountId,
   resolveStalwartDomainId,
   updateAccount,
@@ -61,7 +64,7 @@ export async function createMailboxAction(
     return { ok: false, message: "stalwartUnavailable" };
   }
   if (!domainResolved.id) {
-    return { ok: false, message: "stalwartError" };
+    return { ok: false, message: "domainNotSynced" };
   }
 
   const persistDomainId = !domain.stalwartDomainId
@@ -88,12 +91,28 @@ export async function createMailboxAction(
       return { ok: false, message: "existsAsAlias" };
     }
 
+    if (isStalwartPasswordIssue(issue)) {
+      return { ok: false, message: "passwordWeak" };
+    }
+
+    if (isStalwartDomainIssue(issue)) {
+      return { ok: false, message: "domainNotSynced" };
+    }
+
+    if (isStalwartTransportIssue(issue)) {
+      return { ok: false, message: "stalwartUnavailable" };
+    }
+
     const orphanId = extractStalwartOrphanAccountId(issue);
 
     if (orphanId) {
       const pwdRes = await updateAccountPassword(orphanId, password);
       if (isStalwartFailure(pwdRes)) {
-        console.error("[createMailbox] orphan password update failed:", orphanId, pwdRes);
+        const pwdIssue = extractStalwartSetIssue(pwdRes);
+        console.error("[createMailbox] orphan password update failed:", orphanId, pwdIssue ?? pwdRes);
+        if (isStalwartPasswordIssue(pwdIssue)) {
+          return { ok: false, message: "passwordWeak" };
+        }
         return { ok: false, message: "stalwartError" };
       }
       if (displayName) {
@@ -124,8 +143,8 @@ export async function createMailboxAction(
 
     console.error(
       "[createMailbox] Stalwart create failed:",
-      issue?.objectId?.object ?? "unknown",
-      issue ?? stalwartRes
+      issue?.type ?? "unknown",
+      issue?.description ?? issue ?? stalwartRes
     );
     return { ok: false, message: "stalwartError" };
   }
@@ -192,6 +211,13 @@ export async function updateMailboxAction(
 
     const stalwartRes = await updateAccount(resolved.id, patch);
     if (isStalwartFailure(stalwartRes)) {
+      const issue = extractStalwartSetIssue(stalwartRes);
+      if (isStalwartPasswordIssue(issue)) {
+        return { ok: false, message: "passwordWeak" };
+      }
+      if (isStalwartTransportIssue(issue)) {
+        return { ok: false, message: "stalwartUnavailable" };
+      }
       return { ok: false, message: "stalwartError" };
     }
   }
