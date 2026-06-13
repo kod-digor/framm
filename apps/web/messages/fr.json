@@ -27,7 +27,10 @@
     "signupPending": "Votre demande a été envoyée. Le bureau Kod Digor la validera sous peu.",
     "signupExistingHint": "Vous avez déjà un compte ? Utilisez le même e-mail et mot de passe pour inscrire une nouvelle association.",
     "invalidCredentials": "Identifiants incorrects",
-    "sessionExpired": "Votre session n'est plus valide pour cette base de données. Reconnectez-vous."
+    "sessionExpired": "Votre session n'est plus valide pour cette base de données. Reconnectez-vous.",
+    "emailLocalPlaceholder": "prenom.nom",
+    "emailDomainLabel": "Domaine e-mail",
+    "emailHint": "Utilisez une adresse @{domain} fournie par Kod Digor."
   },
   "bureau": {
     "title": "Administration",

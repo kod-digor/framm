@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { signupAction } from "@/app/actions/auth";
+import { AuthEmailField } from "@/components/auth/auth-email-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
+import { getPlatformEmailDomains } from "@/lib/platform-domains";
 
 export default async function SignupPage({
   searchParams,
@@ -13,6 +15,7 @@ export default async function SignupPage({
 }) {
   const t = await getT("auth");
   const params = await searchParams;
+  const emailDomains = getPlatformEmailDomains();
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-8">
@@ -49,10 +52,7 @@ export default async function SignupPage({
               />
               <p className="mt-1 text-xs text-zinc-500">{t("presentationHint")}</p>
             </div>
-            <div>
-              <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" name="email" type="email" required />
-            </div>
+            <AuthEmailField domains={emailDomains} />
             <div>
               <Label htmlFor="password">{t("password")}</Label>
               <Input id="password" name="password" type="password" minLength={8} required />

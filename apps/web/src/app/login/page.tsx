@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { loginAction } from "@/app/actions/auth";
+import { AuthEmailField } from "@/components/auth/auth-email-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
+import { getPlatformEmailDomains } from "@/lib/platform-domains";
 
 export default async function LoginPage({
   searchParams,
@@ -13,6 +15,7 @@ export default async function LoginPage({
 }) {
   const t = await getT("auth");
   const params = await searchParams;
+  const emailDomains = getPlatformEmailDomains();
   const callbackUrl =
     typeof params.callbackUrl === "string" ? params.callbackUrl : "";
 
@@ -33,10 +36,7 @@ export default async function LoginPage({
             {callbackUrl ? (
               <input type="hidden" name="callbackUrl" value={callbackUrl} />
             ) : null}
-            <div>
-              <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" name="email" type="email" required />
-            </div>
+            <AuthEmailField domains={emailDomains} />
             <div>
               <Label htmlFor="password">{t("password")}</Label>
               <Input id="password" name="password" type="password" required />

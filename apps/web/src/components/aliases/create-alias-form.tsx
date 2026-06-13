@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { EmailDomainInput } from "@/components/ui/email-domain-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -43,34 +44,22 @@ export function CreateAliasForm({
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="localPart">{t("sourceLocal")}</Label>
-          <div className="flex rounded-md border border-zinc-200 bg-white focus-within:ring-2 focus-within:ring-zinc-900 focus-within:ring-offset-2">
-            <Input
-              id="localPart"
-              name="localPart"
-              placeholder="info"
-              required
-              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              value={localPart}
-              onChange={(e) => setLocalPart(e.target.value)}
-            />
-            <span className="flex items-center border-l border-zinc-200 px-3 text-sm text-zinc-500">
-              @
-            </span>
-            <select
-              id="domainId"
-              name="domainId"
-              required
-              value={domainId}
-              onChange={(e) => setDomainId(e.target.value)}
-              className="min-w-0 flex-1 rounded-r-md border-0 bg-transparent px-2 text-sm outline-none"
-            >
-              {domains.map((domain) => (
-                <option key={domain.id} value={domain.id}>
-                  {domain.fqdn}
-                </option>
-              ))}
-            </select>
-          </div>
+          <EmailDomainInput
+            localPart={localPart}
+            onLocalPartChange={setLocalPart}
+            localPartName="localPart"
+            localPartId="localPart"
+            localPartPlaceholder="info"
+            domainValue={domainId}
+            onDomainChange={setDomainId}
+            domainName="domainId"
+            domainId="domainId"
+            domains={domains.map((domain) => ({
+              value: domain.id,
+              label: domain.fqdn,
+            }))}
+            domainAriaLabel={t("sourceLocal")}
+          />
         </div>
 
         <div className="space-y-2">

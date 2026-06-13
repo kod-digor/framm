@@ -15,11 +15,22 @@ const signupSchema = z.object({
   password: z.string().min(8),
 });
 
+function resolveAuthEmail(formData: FormData) {
+  const composed = (formData.get("email") as string | null)?.trim().toLowerCase();
+  if (composed) return composed;
+
+  const localPart = (formData.get("emailLocal") as string | null)?.trim().toLowerCase();
+  const domain = (formData.get("emailDomain") as string | null)?.trim().toLowerCase();
+  if (localPart && domain) return `${localPart}@${domain}`;
+
+  return "";
+}
+
 export async function signupAction(formData: FormData) {
   const parsed = signupSchema.safeParse({
     orgName: formData.get("orgName"),
     presentation: formData.get("presentation"),
-    email: formData.get("email"),
+    email: resolveAuthEmail(formData),
     password: formData.get("password"),
   });
 
@@ -77,9 +88,11 @@ export async function signupAction(formData: FormData) {
 }
 
 export async function loginAction(formData: FormData) {
-  const email = (formData.get("email") as string).toLowerCase().trim();
+  const email = resolveAuthEmail(formData);
   const password = formData.get("password") as string;
   const callbackUrl = (formData.get("callbackUrl") as string | null)?.trim();
+
+  if (!email || !password) redirect("/login?error=invalid");
 
   const result = await signIn("credentials", {
     email,
