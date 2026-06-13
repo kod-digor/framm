@@ -43,9 +43,18 @@ if ! kubectl -n framm get pod "$TUNNEL_POD" >/dev/null 2>&1; then
     --restart=Always \
     --image=alpine/socat \
     --port=5432 \
-    -- socat "tcp-listen:5432,fork,reuseaddr" "tcp:${RDB_HOST}:${RDB_PORT}"
+    -- tcp-listen:5432,fork,reuseaddr "tcp:${RDB_HOST}:${RDB_PORT}"
+  kubectl -n framm wait --for=condition=Ready "pod/${TUNNEL_POD}" --timeout=120s
+elif ! kubectl -n framm wait --for=condition=Ready "pod/${TUNNEL_POD}" --timeout=5s >/dev/null 2>&1; then
+  echo "Pod ${TUNNEL_POD} défaillant — recréation..."
+  kubectl -n framm delete pod "$TUNNEL_POD" --wait=true
+  kubectl -n framm run "$TUNNEL_POD" \
+    --restart=Always \
+    --image=alpine/socat \
+    --port=5432 \
+    -- tcp-listen:5432,fork,reuseaddr "tcp:${RDB_HOST}:${RDB_PORT}"
   kubectl -n framm wait --for=condition=Ready "pod/${TUNNEL_POD}" --timeout=120s
 fi
 
 echo "Tunnel DB prod: ${LOCAL_BIND}:${TUNNEL_PORT} → RDB via Kapsule"
-exec kubectl -n framm port-forward "pod/${TUNNEL_POD}" "${LOCAL_BIND}:${TUNNEL_PORT}:5432"
+exec kubectl -n framm port-forward --address="${LOCAL_BIND}" "pod/${TUNNEL_POD}" "${TUNNEL_PORT}:5432"

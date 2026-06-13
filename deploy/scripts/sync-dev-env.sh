@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Génère apps/web/.env.local pour le dev avec la DB prod (tunnel SSH requis)
+# Génère apps/web/.env.local pour le dev avec la DB prod (tunnel K8s requis)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
