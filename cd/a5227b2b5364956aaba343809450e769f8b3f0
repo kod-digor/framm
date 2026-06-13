@@ -1,0 +1,74 @@
+deploy/scripts/setup-tls.sh
+  s_9c1c325689eb9d::t_24a9886c43483a 44
+deploy/scripts/health-check.sh
+  s_9c1c325689eb9d::t_54decf92b40041 69,71,73-79
+deploy/docker/docker-compose.mail.yml
+  s_9c1c325689eb9d::t_4e0c50ac27f1c3 34-56
+terraform/environments/prod/secrets.tf
+  s_9c1c325689eb9d::t_e8562c27865f59 20-24
+apps/web/src/lib/mail/jmap-proxy.ts
+  s_9c1c325689eb9d::t_fe3d4248599c44 1
+  s_9c1c325689eb9d::t_e9cf69066420d5 12
+terraform/environments/prod/locals.tf
+  s_9c1c325689eb9d::t_2495a36f0c8807 11
+apps/web/src/app/webmail/[mailboxId]/[[...path]]/route.ts
+  s_9c1c325689eb9d::t_2c8a9eb96f8097 1-17
+deploy/nginx/mail-ssl.conf
+  s_9c1c325689eb9d::t_0cc94e130fd6f3 11-19,21-31,56-60
+apps/web/src/lib/stalwart/webmail-proxy.ts
+  s_9c1c325689eb9d::t_51c00963e4f22a 2,9,24-31,37,42-43,47,57,60,72-76,78,82-100,105-106,109-114,116,133-204,210-213,219-223,251-252,254,260-263,265-279,291,321-325,330,332,334-337,339-342,346-350,367,381,383
+  s_9c1c325689eb9d::t_258e845a480b1e 115,117
+  s_9c1c325689eb9d::t_b9b484f4ea0888 264
+terraform/environments/prod/templates/env.production.tpl
+  s_9c1c325689eb9d::t_735bdd76fce587 7
+deploy/cloud-init/mail.yaml
+  s_9c1c325689eb9d::t_dfb4480ae24a36 53
+deploy/nginx/mail-http.conf
+  s_9c1c325689eb9d::t_abbc1468e83e22 10-28
+apps/web/src/lib/stalwart/client.ts
+  s_9c1c325689eb9d::t_a36bbae30cb58b 20
+  s_9c1c325689eb9d::t_ac4764a88cbf19 115
+  s_9c1c325689eb9d::t_ccc512710c5945 543,555-560
+apps/web/src/lib/admin/health-checks.ts
+  s_9c1c325689eb9d::t_9070c52328b777 339
+apps/web/src/app/dashboard/mail/[mailboxId]/page.tsx
+  s_9c1c325689eb9d::t_175783a2743004 4,30,60-72
+deploy/scripts/sync-dev-env.sh
+  s_9c1c325689eb9d::t_660225d329a016 35
+apps/web/src/lib/stalwart/webmail-auth.ts
+  s_9c1c325689eb9d::t_aee6296e331392 1
+  s_9c1c325689eb9d::t_1cb3b734ac905d 33,35
+apps/web/src/lib/mail/mailbox-access.ts
+  s_9c1c325689eb9d::t_ece45955ab2548 35
+apps/web/env.example
+  s_9c1c325689eb9d::t_572ee2c50f198e 11-12
+apps/web/src/components/mail/webmail-frame.tsx
+  s_9c1c325689eb9d::t_817d0b0f7f56b0 1-16,18-42
+  s_9c1c325689eb9d::t_fbbd06cda7b9ee 17
+apps/web/messages/fr.json
+  s_9c1c325689eb9d::t_688451af478be2 325,329
+  s_9c1c325689eb9d::t_038a031b13f457 353
+  s_9c1c325689eb9d::t_67fdfef5e3cccb 241-242
+.gitmodules
+  s_9c1c325689eb9d::t_a0106ca4c6acd5 1-4
+deploy/scripts/ci-deploy-mail.sh
+  s_9c1c325689eb9d::t_1f55ce43e5c013 34
+terraform/environments/prod/main.tf
+  s_9c1c325689eb9d::t_ac4fd9e7905484 105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "cda5227b2b5364956aaba343809450e769f8b3f0",
+  "prompts": {},
+  "sessions": {
+    "s_9c1c325689eb9d": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "fc623637-76cb-4e0c-b8c2-a21170c1475a",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
