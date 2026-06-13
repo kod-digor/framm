@@ -1,0 +1,31 @@
+apps/web/src/app/actions/mailboxes.ts
+  s_33cc1bed6cc6bc::t_61d12788ab4d78 146-147
+  s_33cc1bed6cc6bc::t_69b9b276bd0966 214-220
+  s_33cc1bed6cc6bc::t_7b965ace5b6ff5 67
+  s_33cc1bed6cc6bc::t_ee984117f8e3f1 15,17-18
+  s_33cc1bed6cc6bc::t_80cd151817f229 94-105,111-115
+apps/web/messages/fr.json
+  s_33cc1bed6cc6bc::t_695c740bac66ee 147,149-150
+  s_33cc1bed6cc6bc::t_5eabc4a9577ac3 144
+apps/web/src/components/mailboxes/create-mailbox-form.tsx
+  s_33cc1bed6cc6bc::t_4f3399c5abcbe4 82
+apps/web/src/lib/stalwart/client.ts
+  s_33cc1bed6cc6bc::t_42b678ab62823b 14
+  s_33cc1bed6cc6bc::t_32694f34dd5c32 93-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "dbbc9c8465a9accb49a3a5f736aba5767076c6bb",
+  "prompts": {},
+  "sessions": {
+    "s_33cc1bed6cc6bc": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ce0d776f-7da6-498d-a125-5824322180d5",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
