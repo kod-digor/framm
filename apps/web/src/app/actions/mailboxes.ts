@@ -4,9 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import type { ActionResult } from "@/lib/action-result";
 import { createAccount, isStalwartFailure } from "@/lib/stalwart/client";
 
-export async function createMailboxAction(formData: FormData) {
+export async function createMailboxAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
   if (!orgId) redirect("/login?error=session");
@@ -16,18 +20,18 @@ export async function createMailboxAction(formData: FormData) {
   const password = (formData.get("password") as string) ?? "";
 
   if (!localPart || password.length < 8) {
-    redirect("/dashboard/mailboxes?error=password");
+    return { ok: false, message: "passwordError" };
   }
 
   const domain = await prisma.domain.findFirst({
     where: { id: domainId, organizationId: orgId, status: { in: ["VERIFIED", "ACTIVE"] } },
   });
-  if (!domain) return;
+  if (!domain) return null;
 
   const address = `${localPart}@${domain.fqdn}`;
 
   const existing = await prisma.mailbox.findUnique({ where: { address } });
-  if (existing) redirect("/dashboard/mailboxes?error=exists");
+  if (existing) return { ok: false, message: "exists" };
 
   const stalwartRes = await createAccount(
     address,
@@ -35,7 +39,7 @@ export async function createMailboxAction(formData: FormData) {
     password
   );
   if (isStalwartFailure(stalwartRes)) {
-    redirect("/dashboard/mailboxes?error=stalwart");
+    return { ok: false, message: "stalwartError" };
   }
 
   await prisma.mailbox.create({
@@ -48,5 +52,5 @@ export async function createMailboxAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/mailboxes");
-  redirect(`/dashboard/mailboxes?created=${encodeURIComponent(address)}`);
+  return { ok: true, message: "created", detail: address };
 }

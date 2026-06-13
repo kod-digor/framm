@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { updateAliasAction } from "@/app/actions/aliases";
 import { AliasEmailBadge } from "@/components/aliases/alias-email-badge";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -21,17 +24,16 @@ function SaveButton() {
 }
 
 export function EditAliasDestination({
-  action,
   aliasId,
   source,
   destination,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
   aliasId: string;
   source: string;
   destination: string;
 }) {
   const t = useTranslations("aliases");
+  const [state, formAction] = useActionState(updateAliasAction, INITIAL_ACTION_RESULT);
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(destination);
 
@@ -55,11 +57,12 @@ export function EditAliasDestination({
 
   return (
     <form
-      action={action}
+      action={formAction}
       className="flex flex-col gap-2"
       onSubmit={() => setEditing(false)}
     >
       <input type="hidden" name="aliasId" value={aliasId} />
+      <FormFeedback state={state} namespace="aliases" paramKey="source" />
       <Input
         name="destination"
         type="email"
@@ -91,17 +94,16 @@ export function EditAliasDestination({
 }
 
 export function EditAliasForm({
-  action,
   aliasId,
   source,
   destination,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
   aliasId: string;
   source: string;
   destination: string;
 }) {
   const t = useTranslations("aliases");
+  const [state, formAction] = useActionState(updateAliasAction, INITIAL_ACTION_RESULT);
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(destination);
 
@@ -122,11 +124,12 @@ export function EditAliasForm({
 
   return (
     <form
-      action={action}
+      action={formAction}
       className="flex min-w-0 flex-col gap-2"
       onSubmit={() => setEditing(false)}
     >
       <input type="hidden" name="aliasId" value={aliasId} />
+      <FormFeedback state={state} namespace="aliases" paramKey="source" />
       <Input
         name="destination"
         type="email"

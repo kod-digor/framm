@@ -93,6 +93,7 @@
   "domains": {
     "title": "Vos domaines",
     "add": "Ajouter un domaine",
+    "adding": "Ajout en cours…",
     "fqdn": "Nom de domaine",
     "verify": "Vérifier le DNS",
     "verifying": "Vérification en cours…",

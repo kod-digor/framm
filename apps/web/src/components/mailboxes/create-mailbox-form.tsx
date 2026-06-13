@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { createMailboxAction } from "@/app/actions/mailboxes";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { EmailDomainInput } from "@/components/ui/email-domain-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -22,15 +25,15 @@ function SubmitButton() {
 }
 
 export function CreateMailboxForm({
-  action,
   domains,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
   domains: { id: string; fqdn: string }[];
 }) {
   const t = useTranslations("mailboxes");
+  const [state, formAction] = useActionState(createMailboxAction, INITIAL_ACTION_RESULT);
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
+  const [password, setPassword] = useState("");
 
   const selectedDomain = domains.find((d) => d.id === domainId);
   const preview = useMemo(() => {
@@ -38,8 +41,17 @@ export function CreateMailboxForm({
     return selectedDomain ? `${part}@${selectedDomain.fqdn}` : part;
   }, [localPart, selectedDomain]);
 
+  useEffect(() => {
+    if (state?.ok && state.message === "created") {
+      setLocalPart("");
+      setPassword("");
+    }
+  }, [state]);
+
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
+      <FormFeedback state={state} namespace="mailboxes" paramKey="address" />
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="localPart">{t("localPart")}</Label>
@@ -71,6 +83,8 @@ export function CreateMailboxForm({
             required
             autoComplete="new-password"
             placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
           <p className="text-xs text-zinc-500">{t("passwordHint")}</p>
         </div>

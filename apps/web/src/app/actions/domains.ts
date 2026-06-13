@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import type { ActionResult } from "@/lib/action-result";
 import { createDomain, deleteDomain as deleteStalwartDomain, isStalwartFailure } from "@/lib/stalwart/client";
 import {
   expectedRecords,
@@ -24,12 +25,17 @@ function extractStalwartDomainId(
   return first?.id ?? null;
 }
 
-export async function addDomainAction(formData: FormData) {
+export async function addDomainAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
   if (!orgId) redirect("/login?error=session");
 
   const fqdn = (formData.get("fqdn") as string).toLowerCase().trim();
+  if (!fqdn) return null;
+
   const platformHost = getPlatformMailHost();
 
   const stalwartRes = await createDomain(fqdn);
@@ -54,21 +60,26 @@ export async function addDomainAction(formData: FormData) {
 
   revalidatePath("/dashboard/domains");
   if (stalwartFailed) {
-    redirect(
-      `/dashboard/domains?stalwart=sync&domain=${encodeURIComponent(fqdn)}`
-    );
+    return { ok: false, message: "stalwartSyncFailed", detail: fqdn, warning: true };
   }
+  return null;
 }
 
-export async function verifyDomainAction(domainId: string) {
+export async function verifyDomainAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
   if (!orgId) redirect("/login?error=session");
 
+  const domainId = formData.get("domainId") as string;
+  if (!domainId) return null;
+
   const domain = await prisma.domain.findFirst({
     where: { id: domainId, organizationId: orgId },
   });
-  if (!domain) return;
+  if (!domain) return null;
 
   const platformHost = getPlatformMailHost();
   const check = await verifyDomainDns(domain.fqdn, platformHost);
@@ -82,32 +93,35 @@ export async function verifyDomainAction(domainId: string) {
   });
 
   revalidatePath("/dashboard/domains", "page");
-  redirect(
-    check.verified
-      ? `/dashboard/domains?verified=1&domain=${encodeURIComponent(domain.fqdn)}`
-      : `/dashboard/domains?verified=0&domain=${encodeURIComponent(domain.fqdn)}`
-  );
+  if (check.verified) {
+    return { ok: true, message: "verifySuccess", detail: domain.fqdn };
+  }
+  return { ok: false, message: "verifyStillPending", detail: domain.fqdn, warning: true };
 }
 
-export async function deleteDomainAction(domainId: string) {
+export async function deleteDomainAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
   if (!orgId) redirect("/login?error=session");
 
+  const domainId = formData.get("domainId") as string;
+  if (!domainId) return null;
+
   const domain = await prisma.domain.findFirst({
     where: { id: domainId, organizationId: orgId },
   });
-  if (!domain) return;
+  if (!domain) return null;
 
   if (isPlatformDomain(domain.fqdn)) {
-    redirect("/dashboard/domains?delete=platform");
+    return { ok: false, message: "deletePlatform" };
   }
 
   const mailboxCount = await prisma.mailbox.count({ where: { domainId } });
   if (mailboxCount > 0) {
-    redirect(
-      `/dashboard/domains?delete=mailboxes&domain=${encodeURIComponent(domain.fqdn)}`
-    );
+    return { ok: false, message: "deleteMailboxes", detail: domain.fqdn };
   }
 
   if (domain.stalwartDomainId) {
@@ -117,7 +131,5 @@ export async function deleteDomainAction(domainId: string) {
   await prisma.domain.delete({ where: { id: domainId } });
 
   revalidatePath("/dashboard/domains", "page");
-  redirect(
-    `/dashboard/domains?deleted=1&domain=${encodeURIComponent(domain.fqdn)}`
-  );
+  return { ok: true, message: "deleteSuccess", detail: domain.fqdn };
 }

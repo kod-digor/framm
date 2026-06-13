@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import type { ActionResult } from "@/lib/action-result";
 import {
   createAlias,
   deleteAlias,
@@ -13,7 +14,10 @@ import {
   updateAlias,
 } from "@/lib/stalwart/client";
 
-export async function createAliasAction(formData: FormData) {
+export async function createAliasAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
   if (!orgId) redirect("/login?error=session");
@@ -22,23 +26,23 @@ export async function createAliasAction(formData: FormData) {
   const domainId = formData.get("domainId") as string;
   const destination = (formData.get("destination") as string).trim().toLowerCase();
 
-  if (!localPart || !destination) return;
+  if (!localPart || !destination) return null;
 
   const domain = await prisma.domain.findFirst({
     where: { id: domainId, organizationId: orgId, status: { in: ["VERIFIED", "ACTIVE"] } },
   });
-  if (!domain) return;
+  if (!domain) return null;
 
   const source = `${localPart}@${domain.fqdn}`;
 
   const existing = await prisma.emailAlias.findUnique({
     where: { organizationId_source: { organizationId: orgId, source } },
   });
-  if (existing) redirect("/dashboard/aliases?error=exists");
+  if (existing) return { ok: false, message: "exists" };
 
   const stalwartRes = await createAlias(source, destination);
   if (isStalwartFailure(stalwartRes)) {
-    redirect("/dashboard/aliases?error=stalwart");
+    return { ok: false, message: "stalwartError" };
   }
 
   const stalwartAliasId = extractStalwartCreatedId(stalwartRes);
@@ -48,10 +52,13 @@ export async function createAliasAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/aliases");
-  redirect(`/dashboard/aliases?created=${encodeURIComponent(source)}`);
+  return { ok: true, message: "created", detail: source };
 }
 
-export async function updateAliasAction(formData: FormData) {
+export async function updateAliasAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
   if (!orgId) redirect("/login?error=session");
@@ -59,26 +66,26 @@ export async function updateAliasAction(formData: FormData) {
   const aliasId = formData.get("aliasId") as string;
   const destination = (formData.get("destination") as string).trim().toLowerCase();
 
-  if (!aliasId || !destination) return;
+  if (!aliasId || !destination) return null;
 
   const alias = await prisma.emailAlias.findFirst({
     where: { id: aliasId, organizationId: orgId },
   });
-  if (!alias) redirect("/dashboard/aliases?error=notfound");
+  if (!alias) return { ok: false, message: "notfound" };
 
   if (alias.destination === destination) {
     revalidatePath("/dashboard/aliases");
-    return;
+    return null;
   }
 
   const resolved = await resolveEmailAliasStalwartId(alias.stalwartAliasId, alias.source);
   if (resolved.unavailable || !resolved.id) {
-    redirect("/dashboard/aliases?error=stalwart");
+    return { ok: false, message: "stalwartError" };
   }
 
   const stalwartRes = await updateAlias(resolved.id, destination);
   if (isStalwartFailure(stalwartRes)) {
-    redirect("/dashboard/aliases?error=stalwart");
+    return { ok: false, message: "stalwartError" };
   }
 
   await prisma.emailAlias.update({
@@ -87,36 +94,39 @@ export async function updateAliasAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/aliases");
-  redirect(`/dashboard/aliases?updated=${encodeURIComponent(alias.source)}`);
+  return { ok: true, message: "updated", detail: alias.source };
 }
 
-export async function deleteAliasAction(formData: FormData) {
+export async function deleteAliasAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
   if (!orgId) redirect("/login?error=session");
 
   const aliasId = formData.get("aliasId") as string;
-  if (!aliasId) return;
+  if (!aliasId) return null;
 
   const alias = await prisma.emailAlias.findFirst({
     where: { id: aliasId, organizationId: orgId },
   });
-  if (!alias) redirect("/dashboard/aliases?error=notfound");
+  if (!alias) return { ok: false, message: "notfound" };
 
   const resolved = await resolveEmailAliasStalwartId(alias.stalwartAliasId, alias.source);
   if (resolved.unavailable) {
-    redirect("/dashboard/aliases?error=stalwart");
+    return { ok: false, message: "stalwartError" };
   }
 
   if (resolved.id) {
     const stalwartRes = await deleteAlias(resolved.id);
     if (isStalwartFailure(stalwartRes)) {
-      redirect("/dashboard/aliases?error=stalwart");
+      return { ok: false, message: "stalwartError" };
     }
   }
 
   await prisma.emailAlias.delete({ where: { id: aliasId } });
 
   revalidatePath("/dashboard/aliases");
-  redirect(`/dashboard/aliases?deleted=${encodeURIComponent(alias.source)}`);
+  return { ok: true, message: "deleted", detail: alias.source };
 }

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { createMailboxAction } from "@/app/actions/mailboxes";
 import { CreateMailboxForm } from "@/components/mailboxes/create-mailbox-form";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Button } from "@/components/ui/button";
@@ -9,15 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
 import { formatBytes } from "@/lib/utils";
 
-export default async function MailboxesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; created?: string }>;
-}) {
+export default async function MailboxesPage() {
   const session = await requireOrgAdmin();
   const orgId = getOrgId(session)!;
   const t = await getT("mailboxes");
-  const params = await searchParams;
 
   const [mailboxes, domains] = await Promise.all([
     prisma.mailbox.findMany({
@@ -37,30 +31,6 @@ export default async function MailboxesPage({
 
       <StalwartStatusBanner namespace="mailboxes" />
 
-      {params.error === "password" && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {t("passwordError")}
-        </p>
-      )}
-
-      {params.error === "exists" && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {t("exists")}
-        </p>
-      )}
-
-      {params.error === "stalwart" && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {t("stalwartError")}
-        </p>
-      )}
-
-      {params.created && (
-        <p className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {t("created", { address: params.created })}
-        </p>
-      )}
-
       {domains.length > 0 ? (
         <Card>
           <CardHeader className="pb-3">
@@ -68,7 +38,6 @@ export default async function MailboxesPage({
           </CardHeader>
           <CardContent>
             <CreateMailboxForm
-              action={createMailboxAction}
               domains={domains.map((d) => ({ id: d.id, fqdn: d.fqdn }))}
             />
           </CardContent>

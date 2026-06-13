@@ -1,9 +1,14 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
-import { deleteAliasAction, updateAliasAction } from "@/app/actions/aliases";
+import { useActionState } from "react";
+import { deleteAliasAction } from "@/app/actions/aliases";
 import { AliasEmailBadge } from "@/components/aliases/alias-email-badge";
 import { AliasStatusBadge } from "@/components/aliases/alias-status-badge";
 import { DeleteAliasForm } from "@/components/aliases/delete-alias-form";
 import { EditAliasDestination, EditAliasForm } from "@/components/aliases/edit-alias-form";
+import { FormFeedback } from "@/components/ui/form-feedback";
+import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 
 export type AliasRow = {
   id: string;
@@ -33,9 +38,11 @@ function AliasMetric({ label, value }: { label: string; value: React.ReactNode }
 function AliasMobileCard({
   alias,
   labels,
+  deleteAction,
 }: {
   alias: AliasRow;
   labels: AliasListLabels;
+  deleteAction: (formData: FormData) => void | Promise<void>;
 }) {
   return (
     <article className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
@@ -71,13 +78,12 @@ function AliasMobileCard({
         </p>
         <div className="flex items-center gap-1">
           <EditAliasForm
-            action={updateAliasAction}
             aliasId={alias.id}
             source={alias.source}
             destination={alias.destination}
           />
           <DeleteAliasForm
-            action={deleteAliasAction}
+            action={deleteAction}
             aliasId={alias.id}
             source={alias.source}
           />
@@ -94,11 +100,20 @@ export function AliasList({
   aliases: AliasRow[];
   labels: AliasListLabels;
 }) {
+  const [deleteState, deleteAction] = useActionState(deleteAliasAction, INITIAL_ACTION_RESULT);
+
   return (
     <>
+      <FormFeedback state={deleteState} namespace="aliases" paramKey="source" />
+
       <div className="space-y-4 lg:hidden">
         {aliases.map((alias) => (
-          <AliasMobileCard key={alias.id} alias={alias} labels={labels} />
+          <AliasMobileCard
+            key={alias.id}
+            alias={alias}
+            labels={labels}
+            deleteAction={deleteAction}
+          />
         ))}
       </div>
 
@@ -121,7 +136,6 @@ export function AliasList({
                 </td>
                 <td className="max-w-sm py-3 pr-4">
                   <EditAliasDestination
-                    action={updateAliasAction}
                     aliasId={alias.id}
                     source={alias.source}
                     destination={alias.destination}
@@ -133,7 +147,7 @@ export function AliasList({
                 </td>
                 <td className="py-3">
                   <DeleteAliasForm
-                    action={deleteAliasAction}
+                    action={deleteAction}
                     aliasId={alias.id}
                     source={alias.source}
                   />

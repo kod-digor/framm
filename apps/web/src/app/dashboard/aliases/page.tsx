@@ -1,6 +1,5 @@
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { createAliasAction } from "@/app/actions/aliases";
 import { AliasList } from "@/components/aliases/alias-list";
 import { CreateAliasForm } from "@/components/aliases/create-alias-form";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
@@ -13,20 +12,10 @@ function domainFromSource(source: string) {
   return at >= 0 ? source.slice(at + 1) : "—";
 }
 
-export default async function AliasesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    created?: string;
-    updated?: string;
-    deleted?: string;
-    error?: string;
-  }>;
-}) {
+export default async function AliasesPage() {
   const session = await requireOrgAdmin();
   const orgId = getOrgId(session)!;
   const t = await getT("aliases");
-  const params = await searchParams;
 
   const [aliases, domains] = await Promise.all([
     prisma.emailAlias.findMany({
@@ -61,42 +50,6 @@ export default async function AliasesPage({
 
       <StalwartStatusBanner namespace="aliases" />
 
-      {params.created && (
-        <p className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {t("created", { source: params.created })}
-        </p>
-      )}
-
-      {params.updated && (
-        <p className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {t("updated", { source: params.updated })}
-        </p>
-      )}
-
-      {params.deleted && (
-        <p className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {t("deleted", { source: params.deleted })}
-        </p>
-      )}
-
-      {params.error === "exists" && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {t("exists")}
-        </p>
-      )}
-
-      {params.error === "notfound" && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {t("notfound")}
-        </p>
-      )}
-
-      {params.error === "stalwart" && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {t("stalwartError")}
-        </p>
-      )}
-
       {domains.length > 0 ? (
         <Card>
           <CardHeader className="pb-3">
@@ -104,7 +57,6 @@ export default async function AliasesPage({
           </CardHeader>
           <CardContent>
             <CreateAliasForm
-              action={createAliasAction}
               domains={domains.map((d) => ({ id: d.id, fqdn: d.fqdn }))}
             />
           </CardContent>

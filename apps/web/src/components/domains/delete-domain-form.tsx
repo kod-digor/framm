@@ -29,9 +29,11 @@ function DeleteSubmitButton() {
 
 export function DeleteDomainForm({
   action,
+  domainId,
   fqdn,
 }: {
   action: (formData: FormData) => void | Promise<void>;
+  domainId: string;
   fqdn: string;
 }) {
   const t = useTranslations("domains");
@@ -45,6 +47,7 @@ export function DeleteDomainForm({
         }
       }}
     >
+      <input type="hidden" name="domainId" value={domainId} />
       <DeleteSubmitButton />
     </form>
   );

@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { createAliasAction } from "@/app/actions/aliases";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { EmailDomainInput } from "@/components/ui/email-domain-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -22,19 +25,27 @@ function SubmitButton() {
 }
 
 export function CreateAliasForm({
-  action,
   domains,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
   domains: { id: string; fqdn: string }[];
 }) {
   const t = useTranslations("aliases");
+  const [state, formAction] = useActionState(createAliasAction, INITIAL_ACTION_RESULT);
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
   const [destination, setDestination] = useState("");
 
+  useEffect(() => {
+    if (state?.ok && state.message === "created") {
+      setLocalPart("");
+      setDestination("");
+    }
+  }, [state]);
+
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
+      <FormFeedback state={state} namespace="aliases" paramKey="source" />
+
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="localPart">{t("sourceLocal")}</Label>
