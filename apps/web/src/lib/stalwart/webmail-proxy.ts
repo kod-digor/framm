@@ -72,6 +72,13 @@ try{
 function rw(u){
   if(typeof u!=="string")return u;
   if(u.indexOf(P)===0)return u;
+  try{
+    var parsed=new URL(u,location.origin);
+    if(parsed.origin===location.origin){
+      var path=parsed.pathname+parsed.search+parsed.hash;
+      if(path.indexOf("/api/")===0||path.indexOf("/jmap")===0||path.indexOf("/auth/")===0)return P+path;
+    }
+  }catch(e){}
   if(u.indexOf("/api/")===0||u.indexOf("/jmap")===0||u.indexOf("/auth/")===0)return P+u;
   if(u.indexOf(O)===0)return P+u.slice(O.length);
   return u;
