@@ -1,0 +1,32 @@
+.github/workflows/deploy.yml
+  s_1d7bde15f32afb::t_95a1e180111d6b 38
+apps/web/.dockerignore
+  s_446d5652b91c2f::t_56977b099560dc 1-7
+  s_1d7bde15f32afb::t_9fc1245629d585 8-11
+apps/web/Dockerfile
+  s_1d7bde15f32afb::t_7e54d8120c3f7d 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e45991c125cbb2a23dc7784cd214951659f28dbd",
+  "prompts": {},
+  "sessions": {
+    "s_1d7bde15f32afb": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "47a1cd1a-bcd6-46be-bdfc-42d5ebf08297",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_446d5652b91c2f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "24b7be95-ab0a-4e45-b930-460847017c39",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
