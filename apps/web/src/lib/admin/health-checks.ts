@@ -16,7 +16,11 @@ import {
 } from "@/lib/stalwart/client";
 import { getPlatformEmailDomains } from "@/lib/platform-domains";
 import { obtainStalwartSession } from "@/lib/stalwart/webmail-auth";
-import { fetchJmapSession } from "@/lib/mail/jmap-proxy";
+import {
+  fetchJmapSession,
+  proxyJmapCall,
+  resolveMailAccountId,
+} from "@/lib/mail/jmap-proxy";
 
 export type HealthCheckStatus = "ok" | "fail" | "warn";
 
@@ -329,12 +333,11 @@ type SmtpRelayConfig = {
   pass: string;
 };
 
-type QueuedRecipientStatus =
-  | "Scheduled"
-  | "Completed"
-  | "TemporaryFailure"
-  | "PermanentFailure"
-  | string;
+const MAIL_JMAP_USING = [
+  "urn:ietf:params:jmap:core",
+  "urn:ietf:params:jmap:mail",
+  "urn:ietf:params:jmap:submission",
+] as const;
 
 async function stalwartAdminJmap(methodCalls: JmapMethodCall[], timeoutMs = 15_000) {
   const base = getStalwartJmapUrl();
@@ -423,131 +426,6 @@ async function sendHealthCheckEmail(options: {
   }
 }
 
-function extractQueuedMessageList(res: unknown): {
-  id: string;
-  recipients?: Record<string, { status?: QueuedRecipientStatus }>;
-}[] {
-  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
-  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
-  if (!body || typeof body !== "object" || !("list" in body)) return [];
-  const list = (body as { list: unknown }).list;
-  if (!Array.isArray(list)) return [];
-  return list.filter(
-    (item): item is { id: string; recipients?: Record<string, { status?: QueuedRecipientStatus }> } =>
-      typeof item === "object" && item !== null && "id" in item
-  );
-}
-
-function recipientDeliveryStatus(
-  recipients: Record<string, { status?: QueuedRecipientStatus }> | undefined,
-  destination: string
-): QueuedRecipientStatus | null {
-  if (!recipients) return null;
-
-  const normalized = destination.toLowerCase();
-  for (const [address, meta] of Object.entries(recipients)) {
-    if (address.toLowerCase() === normalized || address.toLowerCase().includes(normalized)) {
-      return meta.status ?? null;
-    }
-  }
-
-  return Object.values(recipients)[0]?.status ?? null;
-}
-
-async function waitForQueuedDelivery(
-  destination: string,
-  subjectToken: string,
-  timeoutMs = 30_000
-): Promise<
-  | { outcome: "completed"; detail: string }
-  | { outcome: "failed"; detail: string }
-  | { outcome: "timeout"; detail: string }
-  | { outcome: "unavailable"; detail: string }
-> {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    const queryRes = await stalwartAdminJmap([
-      ["x:QueuedMessage/query", { filter: { to: destination } }, "q1"],
-    ]);
-
-    if ("unavailable" in queryRes || "error" in queryRes) {
-      return {
-        outcome: "unavailable",
-        detail:
-          "error" in queryRes
-            ? String(queryRes.error)
-            : "JMAP indisponible pour x:QueuedMessage/query",
-      };
-    }
-
-    const ids = extractJmapQueryIds(queryRes);
-    if (ids.length > 0) {
-      const getRes = await stalwartAdminJmap([
-        ["x:QueuedMessage/get", { ids, properties: ["recipients", "returnPath"] }, "g1"],
-      ]);
-
-      if (!("unavailable" in getRes) && !("error" in getRes)) {
-        for (const message of extractQueuedMessageList(getRes)) {
-          const status = recipientDeliveryStatus(message.recipients, destination);
-          if (status === "Completed") {
-            return { outcome: "completed", detail: `Queue Completed → ${destination}` };
-          }
-          if (status === "PermanentFailure") {
-            return {
-              outcome: "failed",
-              detail: `Queue PermanentFailure → ${destination}`,
-            };
-          }
-        }
-      }
-    }
-
-    const textQueryRes = await stalwartAdminJmap([
-      ["x:QueuedMessage/query", { filter: { text: subjectToken } }, "q2"],
-    ]);
-
-    if (!("unavailable" in textQueryRes) && !("error" in textQueryRes)) {
-      const textIds = extractJmapQueryIds(textQueryRes);
-      if (textIds.length > 0) {
-        const getRes = await stalwartAdminJmap([
-          ["x:QueuedMessage/get", { ids: textIds, properties: ["recipients"] }, "g2"],
-        ]);
-
-        if (!("unavailable" in getRes) && !("error" in getRes)) {
-          for (const message of extractQueuedMessageList(getRes)) {
-            const status = recipientDeliveryStatus(message.recipients, destination);
-            if (status === "Completed") {
-              return { outcome: "completed", detail: `Queue Completed (sujet) → ${destination}` };
-            }
-            if (status === "PermanentFailure") {
-              return {
-                outcome: "failed",
-                detail: `Queue PermanentFailure (sujet) → ${destination}`,
-              };
-            }
-          }
-        }
-      }
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
-  }
-
-  return {
-    outcome: "timeout",
-    detail: `Timeout ${timeoutMs / 1000}s — livraison non confirmée vers ${destination}`,
-  };
-}
-
-function extractJmapQueryIds(res: unknown): string[] {
-  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
-  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
-  if (!body || typeof body !== "object" || !("ids" in body)) return [];
-  const ids = (body as { ids: unknown }).ids;
-  return Array.isArray(ids) ? (ids as string[]) : [];
-}
-
 async function deleteMailingListSafe(listId: string): Promise<string | null> {
   const destroyRes = await deleteAlias(listId);
   if (isStalwartFailure(destroyRes)) {
@@ -556,54 +434,156 @@ async function deleteMailingListSafe(listId: string): Promise<string | null> {
   return null;
 }
 
+function extractProxyQueryIds(res: unknown, callId: string): string[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const responses = (res as { methodResponses: unknown[][] }).methodResponses;
+  const entry = responses?.find(([, , id]) => id === callId);
+  if (!entry || !entry[1] || typeof entry[1] !== "object") return [];
+  const ids = (entry[1] as { ids?: unknown }).ids;
+  return Array.isArray(ids) ? (ids as string[]) : [];
+}
+
+async function waitForRedirectedEmailInMailbox(
+  targetEmail: string,
+  subjectToken: string,
+  timeoutMs = 30_000
+): Promise<
+  | { outcome: "found"; detail: string }
+  | { outcome: "timeout"; detail: string }
+  | { outcome: "failed"; detail: string }
+> {
+  let tokens;
+  try {
+    tokens = await obtainStalwartSession(targetEmail, TEST_PASSWORD);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    return { outcome: "failed", detail: `OAuth boîte cible : ${detail}` };
+  }
+
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    try {
+      const session = await fetchJmapSession(tokens);
+      const accountId = resolveMailAccountId(session);
+      const queryRes = await proxyJmapCall(tokens, {
+        using: [...MAIL_JMAP_USING],
+        methodCalls: [
+          [
+            "Email/query",
+            {
+              accountId,
+              filter: { text: subjectToken },
+              limit: 1,
+            },
+            "rq0",
+          ],
+        ],
+      });
+
+      const emailIds = extractProxyQueryIds(queryRes, "rq0");
+      if (emailIds.length > 0) {
+        return {
+          outcome: "found",
+          detail: `JMAP Email/query → ${targetEmail}`,
+        };
+      }
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      return { outcome: "failed", detail: `JMAP boîte cible : ${detail}` };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+
+  return {
+    outcome: "timeout",
+    detail: `Timeout ${timeoutMs / 1000}s — message non reçu dans ${targetEmail}`,
+  };
+}
+
+async function cleanupRedirectTestResources(
+  listId: string | null,
+  accountId: string | null
+): Promise<string | null> {
+  const errors: string[] = [];
+  if (listId) {
+    const listErr = await deleteMailingListSafe(listId);
+    if (listErr) errors.push(listErr);
+  }
+  if (accountId) {
+    const accountErr = await deleteAccountSafe(accountId);
+    if (accountErr) errors.push(accountErr);
+  }
+  return errors.length > 0 ? errors.join(" — ") : null;
+}
+
 async function checkEmailRedirect() {
   const domainId = await resolvePlatformStalwartDomainId();
   if (!domainId) {
     return { status: "fail" as const, detail: "Domaine plateforme absent dans Stalwart" };
   }
 
-  const destination = process.env.BUREAU_ADMIN_EMAIL;
-  if (!destination) {
-    return {
-      status: "fail" as const,
-      detail: "BUREAU_ADMIN_EMAIL requis pour tester la redirection SMTP",
-    };
-  }
-
   const platformDomain = getPlatformEmailDomains()[0];
-  const localPart = `health-redirect-${Date.now()}`;
-  const source = `${localPart}@${platformDomain}`;
-  const subject = `Framm health redirect ${Date.now()}`;
-
-  const res = await createAlias(source, destination, domainId);
-  if (isStalwartFailure(res)) {
-    return { status: "fail" as const, detail: "x:MailingList/set échoué" };
+  if (!platformDomain) {
+    return { status: "fail" as const, detail: "Aucun domaine plateforme configuré" };
   }
 
-  const listId = extractStalwartCreatedId(res);
+  const ts = Date.now();
+  const targetLocal = `health-redirect-target-${ts}`;
+  const aliasLocal = `health-redirect-${ts}`;
+  const targetEmail = `${targetLocal}@${platformDomain}`;
+  const aliasEmail = `${aliasLocal}@${platformDomain}`;
+  const subject = `Framm health redirect ${ts}`;
+
+  const createAccRes = await createAccount(
+    targetLocal,
+    domainId,
+    TEST_PASSWORD,
+    "Health Redirect Target"
+  );
+  if (isStalwartFailure(createAccRes)) {
+    return { status: "fail" as const, detail: "x:Account/set (boîte cible) échoué" };
+  }
+
+  const accountId = extractStalwartCreatedId(createAccRes);
+  if (!accountId) {
+    return { status: "fail" as const, detail: "Boîte cible créée sans ID" };
+  }
+
+  const aliasRes = await createAlias(aliasEmail, targetEmail, domainId);
+  if (isStalwartFailure(aliasRes)) {
+    const cleanupErr = await cleanupRedirectTestResources(null, accountId);
+    const suffix = cleanupErr ? ` — ${cleanupErr}` : "";
+    return { status: "fail" as const, detail: `x:MailingList/set échoué${suffix}` };
+  }
+
+  const listId = extractStalwartCreatedId(aliasRes);
   if (!listId) {
-    return { status: "fail" as const, detail: "MailingList créée sans ID" };
+    const cleanupErr = await cleanupRedirectTestResources(null, accountId);
+    const suffix = cleanupErr ? ` — ${cleanupErr}` : "";
+    return { status: "fail" as const, detail: `MailingList créée sans ID${suffix}` };
   }
 
   const sendResult = await sendHealthCheckEmail({
     from: `health-check@${platformDomain}`,
-    to: source,
+    to: aliasEmail,
     subject,
-    text: `Test redirection Framm → ${destination}`,
+    text: `Test redirection Framm ${aliasEmail} → ${targetEmail}`,
   });
 
   if (!sendResult.ok) {
-    const cleanupErr = await deleteMailingListSafe(listId);
+    const cleanupErr = await cleanupRedirectTestResources(listId, accountId);
     const detail = cleanupErr
       ? `Envoi SMTP impossible : ${sendResult.detail} — ${cleanupErr}`
       : `Envoi SMTP impossible : ${sendResult.detail}`;
     return { status: "fail" as const, detail };
   }
 
-  const delivery = await waitForQueuedDelivery(destination, subject);
-  const cleanupErr = await deleteMailingListSafe(listId);
+  const delivery = await waitForRedirectedEmailInMailbox(targetEmail, subject);
+  const cleanupErr = await cleanupRedirectTestResources(listId, accountId);
 
-  if (delivery.outcome === "completed") {
+  if (delivery.outcome === "found") {
     if (cleanupErr) {
       return { status: "fail" as const, detail: `${delivery.detail} — ${cleanupErr}` };
     }
@@ -613,11 +593,7 @@ async function checkEmailRedirect() {
     };
   }
 
-  const deliveryDetail =
-    delivery.outcome === "unavailable"
-      ? `vérification queue impossible : ${delivery.detail}`
-      : delivery.detail;
-
+  const deliveryDetail = delivery.detail;
   const detail = cleanupErr
     ? `SMTP OK (${sendResult.via}) — ${deliveryDetail} — ${cleanupErr}`
     : `SMTP OK (${sendResult.via}) — ${deliveryDetail}`;

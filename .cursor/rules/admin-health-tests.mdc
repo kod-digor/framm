@@ -24,16 +24,17 @@ Page : `/dashboard/admin/health` — **accès BUREAU uniquement** (`requireAuth(
 
 ## Test redirection e-mail (`email-redirect`)
 
-Ce test envoie un **e-mail SMTP réel** :
+Ce test envoie un **e-mail SMTP réel** sans dépendre d'une boîte externe :
 
-1. Crée une MailingList éphémère vers `BUREAU_ADMIN_EMAIL`.
-2. Envoie un message via `OUTBOUND_SMTP_RELAY_*` (TEM, port 2587) ou SMTP Stalwart (:587/:25).
-3. Vérifie la livraison via `x:QueuedMessage/query` + statut `Completed`.
-4. Supprime la MailingList après le test.
+1. Crée un compte Stalwart éphémère (boîte cible) sur le domaine plateforme.
+2. Crée une MailingList éphémère (alias) redirigeant vers cette boîte cible.
+3. Envoie un message via `OUTBOUND_SMTP_RELAY_*` (TEM, port 2587) vers l'alias.
+4. Vérifie la réception via `Email/query` JMAP (OAuth sur la boîte cible) — pas de vérification inbox externe.
+5. Supprime la MailingList et le compte cible après le test.
 
 Si l'envoi SMTP est impossible (relais non configuré ou injoignable) → **`fail`** avec détail explicite, jamais de `warn` silencieux.
 
-Variables requises pour un test complet : `BUREAU_ADMIN_EMAIL`, `OUTBOUND_SMTP_RELAY_HOST/PORT/USER/SECRET` (ou SMTP Stalwart accessible), `STALWART_API_KEY`.
+Variables requises pour un test complet : `OUTBOUND_SMTP_RELAY_HOST/PORT/USER/SECRET`, `STALWART_API_KEY`, `STALWART_URL`, domaine plateforme synchronisé dans Stalwart.
 
 ## Test connexion SSO webmail (`webmail-sso-login`)
 
