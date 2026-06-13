@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { ArrowRight, Loader2, Mail } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { EmailDomainInput } from "@/components/ui/email-domain-input";
@@ -32,12 +32,6 @@ export function CreateAliasForm({
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
   const [destination, setDestination] = useState("");
-
-  const selectedDomain = domains.find((d) => d.id === domainId);
-  const sourcePreview = useMemo(() => {
-    const part = localPart.trim() || "info";
-    return selectedDomain ? `${part}@${selectedDomain.fqdn}` : part;
-  }, [localPart, selectedDomain]);
 
   return (
     <form action={action} className="space-y-5">
@@ -75,13 +69,6 @@ export function CreateAliasForm({
           />
           <p className="text-xs text-zinc-500">{t("destinationHint")}</p>
         </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm">
-        <Mail className="size-4 shrink-0 text-zinc-400" />
-        <code className="rounded bg-white px-2 py-0.5 font-mono text-zinc-900">{sourcePreview}</code>
-        <ArrowRight className="size-4 text-zinc-400" />
-        <span className="text-zinc-600">{destination || t("destinationPlaceholder")}</span>
       </div>
 
       <SubmitButton />
