@@ -11,6 +11,7 @@ import {
   extractStalwartCreatedId,
   isStalwartFailure,
   resolveEmailAliasStalwartId,
+  resolveStalwartDomainId,
   updateAlias,
 } from "@/lib/stalwart/client";
 
@@ -40,7 +41,15 @@ export async function createAliasAction(
   });
   if (existing) return { ok: false, message: "exists" };
 
-  const stalwartRes = await createAlias(source, destination);
+  const domainResolved = await resolveStalwartDomainId(
+    domain.fqdn,
+    domain.stalwartDomainId
+  );
+  if (domainResolved.unavailable || !domainResolved.id) {
+    return { ok: false, message: "stalwartError" };
+  }
+
+  const stalwartRes = await createAlias(source, destination, domainResolved.id);
   if (isStalwartFailure(stalwartRes)) {
     return { ok: false, message: "stalwartError" };
   }
@@ -83,7 +92,7 @@ export async function updateAliasAction(
     return { ok: false, message: "stalwartError" };
   }
 
-  const stalwartRes = await updateAlias(resolved.id, destination);
+  const stalwartRes = await updateAlias(resolved.id, destination, alias.destination);
   if (isStalwartFailure(stalwartRes)) {
     return { ok: false, message: "stalwartError" };
   }

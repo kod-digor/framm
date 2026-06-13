@@ -14,12 +14,35 @@ function stalwartJmapUrl() {
   return `${base}/jmap`;
 }
 
+function firstMethodResponse(res: unknown): unknown[] | null {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return null;
+  const responses = (res as { methodResponses: unknown[][] }).methodResponses;
+  return responses?.[0] ?? null;
+}
+
 export function isStalwartFailure(res: unknown): res is StalwartFailure {
-  return (
-    typeof res === "object" &&
-    res !== null &&
-    ("unavailable" in res || "error" in res)
-  );
+  if (typeof res === "object" && res !== null && ("unavailable" in res || "error" in res)) {
+    return true;
+  }
+
+  const first = firstMethodResponse(res);
+  if (!first) return false;
+  if (first[0] === "error") return true;
+
+  const body = first[1];
+  if (!body || typeof body !== "object") return false;
+
+  const patch = body as {
+    notCreated?: Record<string, unknown>;
+    notUpdated?: Record<string, unknown>;
+    notDestroyed?: unknown[];
+  };
+
+  if (patch.notCreated && Object.keys(patch.notCreated).length > 0) return true;
+  if (patch.notUpdated && Object.keys(patch.notUpdated).length > 0) return true;
+  if (patch.notDestroyed && patch.notDestroyed.length > 0) return true;
+
+  return false;
 }
 
 export async function getStalwartStatus(): Promise<StalwartStatus> {
@@ -132,16 +155,55 @@ export function extractJmapQueryIds(res: unknown): string[] {
   return Array.isArray(ids) ? (ids as string[]) : [];
 }
 
-export async function createAlias(source: string, destination: string) {
-  const id = `alias-${Date.now()}`;
+function recipientsMap(destination: string): Record<string, boolean> {
+  return { [destination]: true };
+}
+
+function parseEmailLocalPart(email: string): string {
+  return email.split("@")[0] ?? email;
+}
+
+function extractMailingListRecords(res: unknown): { id: string; emailAddress?: string }[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("list" in body)) return [];
+  const list = (body as { list: unknown }).list;
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (item): item is { id: string; emailAddress?: string } =>
+      typeof item === "object" && item !== null && "id" in item
+  );
+}
+
+export async function resolveStalwartDomainId(
+  fqdn: string,
+  cachedId?: string | null
+): Promise<{ id: string | null; unavailable: boolean }> {
+  if (cachedId) return { id: cachedId, unavailable: false };
+
+  const queryRes = await jmapCall([["x:Domain/query", { filter: { text: fqdn } }, "q1"]]);
+  if (isStalwartFailure(queryRes)) return { id: null, unavailable: true };
+
+  const ids = extractJmapQueryIds(queryRes);
+  return { id: ids[0] ?? null, unavailable: false };
+}
+
+/** Redirection email → Stalwart MailingList (destinataire externe). */
+export async function createAlias(
+  source: string,
+  destination: string,
+  stalwartDomainId: string
+) {
+  const id = `ml-${Date.now()}`;
   return jmapCall([
     [
-      "x:EmailAlias/set",
+      "x:MailingList/set",
       {
         create: {
           [id]: {
-            email: source,
-            redirectTo: [destination],
+            name: parseEmailLocalPart(source),
+            domainId: stalwartDomainId,
+            recipients: recipientsMap(destination),
           },
         },
       },
@@ -150,19 +212,29 @@ export async function createAlias(source: string, destination: string) {
   ]);
 }
 
-export async function queryEmailAliasByEmail(email: string) {
-  return jmapCall([["x:EmailAlias/query", { filter: { email } }, "q1"]]);
+export async function queryMailingListByEmail(email: string) {
+  const localPart = parseEmailLocalPart(email);
+  return jmapCall([["x:MailingList/query", { filter: { text: localPart } }, "q1"]]);
 }
 
-export async function updateAlias(stalwartAliasId: string, destination: string) {
+export async function updateAlias(
+  stalwartListId: string,
+  destination: string,
+  previousDestination?: string
+) {
+  const patch: Record<string, unknown> = {
+    [`recipients/${destination}`]: true,
+  };
+  if (previousDestination && previousDestination !== destination) {
+    patch[`recipients/${previousDestination}`] = null;
+  }
+
   return jmapCall([
     [
-      "x:EmailAlias/set",
+      "x:MailingList/set",
       {
         update: {
-          [stalwartAliasId]: {
-            redirectTo: [destination],
-          },
+          [stalwartListId]: patch,
         },
       },
       "u1",
@@ -170,12 +242,12 @@ export async function updateAlias(stalwartAliasId: string, destination: string) 
   ]);
 }
 
-export async function deleteAlias(stalwartAliasId: string) {
+export async function deleteAlias(stalwartListId: string) {
   return jmapCall([
     [
-      "x:EmailAlias/set",
+      "x:MailingList/set",
       {
-        destroy: [stalwartAliasId],
+        destroy: [stalwartListId],
       },
       "d1",
     ],
@@ -188,11 +260,20 @@ export async function resolveEmailAliasStalwartId(
 ): Promise<{ id: string | null; unavailable: boolean }> {
   if (stalwartAliasId) return { id: stalwartAliasId, unavailable: false };
 
-  const queryRes = await queryEmailAliasByEmail(source);
+  const queryRes = await queryMailingListByEmail(source);
   if (isStalwartFailure(queryRes)) return { id: null, unavailable: true };
 
   const ids = extractJmapQueryIds(queryRes);
-  return { id: ids[0] ?? null, unavailable: false };
+  if (ids.length === 0) return { id: null, unavailable: false };
+  if (ids.length === 1) return { id: ids[0], unavailable: false };
+
+  const getRes = await jmapCall([["x:MailingList/get", { ids }, "g1"]]);
+  if (isStalwartFailure(getRes)) return { id: null, unavailable: true };
+
+  const match = extractMailingListRecords(getRes).find(
+    (list) => list.emailAddress === source
+  );
+  return { id: match?.id ?? null, unavailable: false };
 }
 
 export async function listAccounts() {
