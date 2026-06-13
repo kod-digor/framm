@@ -1,0 +1,20 @@
+deploy/docker/docker-compose.mail.yml
+  s_52d6bcebddd351::t_1f4c0056ece2bd 25
+  s_52d6bcebddd351::t_30456aa926ced4 22-24,26-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3ca13b922f3458e0d2de5bbb361f10bbc3963e50",
+  "prompts": {},
+  "sessions": {
+    "s_52d6bcebddd351": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b5842b69-eddc-419b-b1cf-3f2e6fea8a13",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
