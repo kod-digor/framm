@@ -1,0 +1,19 @@
+apps/web/src/components/aliases/create-alias-form.tsx
+  s_3e0d9527282cd3::t_b1578ad3854d88 3,5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e60ca88b02f0ce7a9b5bb035c348e2c3297f2f23",
+  "prompts": {},
+  "sessions": {
+    "s_3e0d9527282cd3": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b08607d3-225f-41a2-82fc-7b455ccb2e5e",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
