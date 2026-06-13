@@ -1,0 +1,25 @@
+deploy/scripts/lib/stalwart-setup.sh
+  s_6c208abea87d1e::t_ebc89156855192 190-207
+  s_6c208abea87d1e::t_e0d4bbc6660323 188
+terraform/environments/prod/main.tf
+  s_6c208abea87d1e::t_2a0642a07eb726 49-51
+deploy/scripts/health-check.sh
+  s_6c208abea87d1e::t_188f04cfa1349d 49,52
+  s_6c208abea87d1e::t_6b220356ec2ca5 47-48,50-51,53-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9c4cd71c770f6b084b50f9035e756f73f4135ccd",
+  "prompts": {},
+  "sessions": {
+    "s_6c208abea87d1e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "80640b3d-fd00-49ef-973c-12b7e633cff5",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
