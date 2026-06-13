@@ -93,6 +93,10 @@ jobs:
             echo "Secret SCW_SECRET_KEY absent — build Kapsule sauté"
           fi
 
+      - name: Set up Docker Buildx
+        if: steps.creds.outputs.enabled == 'true'
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to Scaleway registry
         if: steps.creds.outputs.enabled == 'true'
         uses: docker/login-action@v3
@@ -108,7 +112,11 @@ jobs:
           context: apps/web
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/web:${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/web:${{ github.sha }}
+            ${{ env.REGISTRY }}/web:latest
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/web:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/web:buildcache,mode=max
 
       - name: Build & push worker
         if: steps.creds.outputs.enabled == 'true'
@@ -118,7 +126,11 @@ jobs:
           file: apps/web/Dockerfile.worker
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/worker:${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/worker:${{ github.sha }}
+            ${{ env.REGISTRY }}/worker:latest
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/worker:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/worker:buildcache,mode=max
 
       - name: Update image tags (GitOps)
         if: steps.creds.outputs.enabled == 'true'
