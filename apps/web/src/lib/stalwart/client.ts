@@ -9,6 +9,12 @@ type JmapRequest = {
 export type StalwartFailure = { unavailable: true } | { error: string };
 export type StalwartStatus = "ok" | "unconfigured" | "unreachable";
 
+export type StalwartSetIssue = {
+  type: string;
+  properties?: string[];
+  objectId?: { object: string; id: string };
+};
+
 function stalwartJmapUrl() {
   const base = (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
   return `${base}/jmap`;
@@ -43,6 +49,31 @@ export function isStalwartFailure(res: unknown): res is StalwartFailure {
   if (patch.notDestroyed && patch.notDestroyed.length > 0) return true;
 
   return false;
+}
+
+/** Premier échec x:*\/set (notCreated, notUpdated, error JMAP ou indisponibilité). */
+export function extractStalwartSetIssue(res: unknown): StalwartSetIssue | null {
+  if (typeof res === "object" && res !== null && "unavailable" in res) {
+    return { type: "unavailable" };
+  }
+  if (typeof res === "object" && res !== null && "error" in res) {
+    return { type: String((res as { error: string }).error) };
+  }
+
+  const first = firstMethodResponse(res);
+  if (!first) return null;
+  if (first[0] === "error") {
+    const err = first[1] as { type?: string };
+    return { type: err.type ?? "jmapError" };
+  }
+
+  const body = first[1] as {
+    notCreated?: Record<string, StalwartSetIssue>;
+    notUpdated?: Record<string, StalwartSetIssue>;
+  };
+  const bucket = body.notCreated ?? body.notUpdated;
+  if (!bucket) return null;
+  return Object.values(bucket)[0] ?? null;
 }
 
 export async function getStalwartStatus(): Promise<StalwartStatus> {
@@ -118,6 +149,17 @@ export async function createDomain(fqdn: string) {
   ]);
 }
 
+function accountPasswordPatch(password: string) {
+  return {
+    credentials: {
+      "0": {
+        "@type": "Password",
+        secret: password,
+      },
+    },
+  };
+}
+
 export async function createAccount(localPart: string, domainId: string, password: string) {
   const id = `account-${Date.now()}`;
   return jmapCall([
@@ -129,12 +171,7 @@ export async function createAccount(localPart: string, domainId: string, passwor
             "@type": "User",
             name: parseEmailLocalPart(localPart),
             domainId,
-            credentials: {
-              "0": {
-                "@type": "Password",
-                secret: password,
-              },
-            },
+            ...accountPasswordPatch(password),
             roles: { "@type": "User" },
             permissions: { "@type": "Inherit" },
             aliases: {},
@@ -144,6 +181,20 @@ export async function createAccount(localPart: string, domainId: string, passwor
         },
       },
       "c1",
+    ],
+  ]);
+}
+
+export async function updateAccountPassword(stalwartAccountId: string, password: string) {
+  return jmapCall([
+    [
+      "x:Account/set",
+      {
+        update: {
+          [stalwartAccountId]: accountPasswordPatch(password),
+        },
+      },
+      "u1",
     ],
   ]);
 }

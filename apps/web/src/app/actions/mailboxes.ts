@@ -8,8 +8,10 @@ import type { ActionResult } from "@/lib/action-result";
 import {
   createAccount,
   extractStalwartCreatedId,
+  extractStalwartSetIssue,
   isStalwartFailure,
   resolveStalwartDomainId,
+  updateAccountPassword,
 } from "@/lib/stalwart/client";
 import { sealSecret } from "@/lib/crypto/seal";
 
@@ -47,13 +49,50 @@ export async function createMailboxAction(
     return { ok: false, message: "stalwartError" };
   }
 
+  const persistDomainId = !domain.stalwartDomainId
+    ? prisma.domain.update({
+        where: { id: domain.id },
+        data: { stalwartDomainId: domainResolved.id },
+      })
+    : null;
+
   const stalwartRes = await createAccount(localPart, domainResolved.id, password);
   if (isStalwartFailure(stalwartRes)) {
+    const issue = extractStalwartSetIssue(stalwartRes);
+    const orphanId =
+      issue?.type === "primaryKeyViolation" ? issue.objectId?.id : undefined;
+
+    if (orphanId) {
+      const pwdRes = await updateAccountPassword(orphanId, password);
+      if (isStalwartFailure(pwdRes)) {
+        console.error("[createMailbox] orphan password update failed:", orphanId, pwdRes);
+        return { ok: false, message: "stalwartError" };
+      }
+      await persistDomainId;
+      await prisma.mailbox.create({
+        data: {
+          organizationId: orgId,
+          domainId: domain.id,
+          address,
+          stalwartAccountId: orphanId,
+          credentialsEnc: sealSecret(password),
+        },
+      });
+      revalidatePath("/dashboard/mailboxes");
+      return { ok: true, message: "created", detail: address };
+    }
+
+    if (issue?.type === "primaryKeyViolation") {
+      return { ok: false, message: "exists" };
+    }
+
+    console.error("[createMailbox] Stalwart create failed:", issue ?? stalwartRes);
     return { ok: false, message: "stalwartError" };
   }
 
   const stalwartAccountId = extractStalwartCreatedId(stalwartRes);
 
+  await persistDomainId;
   await prisma.mailbox.create({
     data: {
       organizationId: orgId,
