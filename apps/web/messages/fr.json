@@ -82,6 +82,7 @@
     "aliases": "Redirections",
     "usage": "Consommation",
     "bureau": "Administration",
+    "healthDiagnostics": "Diagnostics",
     "welcome": "Bienvenue sur votre espace association",
     "sections": {
       "association": "Association",
@@ -263,5 +264,75 @@
     "colCardFee": "Frais CB",
     "colWalletDebit": "Prélèvement solde",
     "colTotal": "Total"
+  },
+  "adminHealth": {
+    "title": "Diagnostics plateforme",
+    "subtitle": "Tests de santé et vérifications infrastructure — réservé au bureau Kod Digor.",
+    "runAll": "Lancer tous les tests",
+    "runningAll": "Tests en cours…",
+    "refresh": "Actualiser",
+    "runOne": "Tester",
+    "lastRun": "Dernier lancement : {date}",
+    "duration": "{ms} ms",
+    "statusOk": "OK",
+    "statusWarn": "Avertissement",
+    "statusFail": "Échec",
+    "summaryOk": "{count} OK",
+    "summaryWarn": "{count} avertissement(s)",
+    "summaryFail": "{count} échec(s)",
+    "checks": {
+      "connection": {
+        "label": "Connexion",
+        "description": "Ping PostgreSQL via Prisma et session bureau authentifiée."
+      },
+      "org-create": {
+        "label": "Création association",
+        "description": "Crée une organisation test en base puis la supprime immédiatement."
+      },
+      "org-approval": {
+        "label": "Approbation association",
+        "description": "Simule le workflow d'approbation (PENDING → APPROVED) avec nettoyage."
+      },
+      "mailbox-create": {
+        "label": "Création boîte mail",
+        "description": "x:Account/set sur adresse éphémère Stalwart puis destroy."
+      },
+      "webmail-access": {
+        "label": "Accès webmail",
+        "description": "JMAP ping, URL webmail HTTP et route proxy SSO Framm."
+      },
+      "email-redirect": {
+        "label": "Redirection e-mail",
+        "description": "Crée une MailingList test puis la détruit (sans envoi SMTP réel)."
+      },
+      "mail-server": {
+        "label": "Serveur mail",
+        "description": "Statut Stalwart JMAP et accessibilité SMTP :25 ou relais TEM."
+      },
+      "infra-postgresql": {
+        "label": "Infra — PostgreSQL",
+        "description": "Requête SELECT 1 sur la base relationnelle."
+      },
+      "infra-stalwart-jmap": {
+        "label": "Infra — Stalwart JMAP",
+        "description": "Ping API JMAP Stalwart (x:Domain/query)."
+      },
+      "infra-k8s-health": {
+        "label": "Infra — App /api/health",
+        "description": "Endpoint de santé de l'application Framm."
+      },
+      "infra-mail-external": {
+        "label": "Infra — Webmail externe",
+        "description": "Accessibilité HTTP du webmail Stalwart (WEBMAIL_URL)."
+      },
+      "infra-tem-relay": {
+        "label": "Infra — Relais TEM",
+        "description": "Connexion TCP au relais SMTP sortant (port 2587 si configuré)."
+      },
+      "infra-s3": {
+        "label": "Infra — S3 uploads",
+        "description": "Head bucket sur le stockage objet Scaleway (uploads)."
+      }
+    }
   }
 }

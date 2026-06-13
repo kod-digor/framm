@@ -92,6 +92,12 @@ export async function DashboardShell({
                 label: t("bureau"),
                 icon: "bureau" as const,
               },
+              {
+                id: "health",
+                href: "/dashboard/admin/health",
+                label: t("healthDiagnostics"),
+                icon: "health" as const,
+              },
             ]
           : []),
       ],

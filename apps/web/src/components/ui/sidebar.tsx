@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import {
+  Activity,
   ChevronRight,
   Forward,
   Globe,
@@ -20,7 +21,7 @@ export type NavItem = {
   id: string;
   href: string;
   label: string;
-  icon?: "overview" | "members" | "mail" | "forward" | "globe" | "bureau";
+  icon?: "overview" | "members" | "mail" | "forward" | "globe" | "bureau" | "health";
 };
 
 export type NavGroup = {
@@ -36,6 +37,7 @@ const ICONS: Record<NonNullable<NavItem["icon"]>, LucideIcon> = {
   forward: Forward,
   globe: Globe,
   bureau: ShieldCheck,
+  health: Activity,
 };
 
 const STORAGE_PREFIX = "sidebar-section-";

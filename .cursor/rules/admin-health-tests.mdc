@@ -1,0 +1,24 @@
+---
+description: Page admin diagnostics santé infrastructure Framm
+globs: apps/web/src/lib/admin/**,apps/web/src/app/dashboard/admin/**,apps/web/src/app/actions/admin-health.ts
+alwaysApply: false
+---
+
+# Diagnostics admin — health checks
+
+Page : `/dashboard/admin/health` — **accès BUREAU uniquement** (`requireAuth(["BUREAU"])`).
+
+## Ajouter un test
+
+1. Implémenter la fonction dans `apps/web/src/lib/admin/health-checks.ts` (id unique, pas de données prod résiduelles).
+2. Enregistrer dans `HEALTH_CHECK_DEFINITIONS`.
+3. Ajouter `checks.<id>.label` et `checks.<id>.description` dans `messages/fr.json` (namespace `adminHealth`).
+4. Vérifier le lien sidebar section **Plateforme** si le test est visible côté bureau.
+
+## Bonnes pratiques
+
+- **Cleanup obligatoire** : comptes Stalwart, MailingList et orgs de test doivent être supprimés après le test.
+- **try/catch** : uniquement sur appels externes (JMAP, HTTP, TCP, S3).
+- **Statuts** : `ok` (succès), `warn` (non configuré ou dégradé acceptable), `fail` (bloquant).
+- Mettre à jour les descriptions quand le comportement infra change.
+- Ne pas envoyer d'e-mails réels en prod ; SMTP RCPT optionnel → `warn` si bloqué.
