@@ -1,5 +1,6 @@
 output "app_public_ip" {
-  value = module.app_vm.public_ip
+  value = local.app_ingress_ip
+  description = "IP d'entrée app (LB Traefik Kapsule)"
 }
 
 output "mail_public_ip" {
@@ -44,13 +45,11 @@ output "manual_dns_records" {
   value = var.dns_enabled ? null : {
     domain = var.primary_platform_domain
     records = {
-      "@"         = module.app_vm.public_ip
-      "www"       = module.app_vm.public_ip
-      "staging"   = module.app_vm.public_ip
-      "grafana"   = module.app_vm.public_ip
-      "mail"      = module.mail_vm.public_ip
-      "webmail"   = module.mail_vm.public_ip
-      "MX"        = "10 mail.${var.primary_platform_domain}."
+      "@"       = local.app_ingress_ip
+      "www"     = local.app_ingress_ip
+      "mail"    = module.mail_vm.public_ip
+      "webmail" = module.mail_vm.public_ip
+      "MX"      = "10 mail.${var.primary_platform_domain}."
     }
   }
 }

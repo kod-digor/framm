@@ -113,8 +113,8 @@ variable "k8s_pool_max" {
 
 variable "k8s_lb_ip" {
   type        = string
-  default     = ""
-  description = "IP du load balancer créé par Traefik — quand renseignée, bascule le DNS app du VM vers Kapsule (TF_VAR_k8s_lb_ip)"
+  default     = "195.154.197.31"
+  description = "IP du load balancer Traefik — bascule le DNS app vers Kapsule"
 }
 
 variable "registry_namespace" {

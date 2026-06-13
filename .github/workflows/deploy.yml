@@ -52,7 +52,7 @@ jobs:
         working-directory: terraform/environments/prod
 
   deploy-prod:
-    name: Deploy production
+    name: Deploy mail VM
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     needs: test-web
     runs-on: ubuntu-latest
@@ -62,12 +62,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to VMs
+      - name: Deploy mail stack only
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          APP_PUBLIC_IP: ${{ secrets.APP_PUBLIC_IP }}
           MAIL_PUBLIC_IP: ${{ secrets.MAIL_PUBLIC_IP }}
-        run: ./deploy/scripts/ci-deploy.sh
+        run: ./deploy/scripts/ci-deploy-mail.sh
 
   # GitOps Kubernetes : construit les images, les pousse au registre Scaleway
   # puis met à jour le tag dans k8s/apps/web — ArgoCD déploie le reste.

@@ -46,22 +46,6 @@ module "cold_archive" {
   }]
 }
 
-module "app_vm" {
-  source = "../../modules/compute_instance"
-
-  name           = "framm-app-${var.environment}"
-  instance_type  = var.environment == "prod" ? var.app_instance_type : "DEV1-M"
-  volume_size_gb = 20
-  zone           = var.scw_zone
-  inbound_ports  = [22, 80, 443]
-  admin_ips      = var.admin_ips
-
-  cloud_init = templatefile("${path.module}/../../../deploy/cloud-init/app.yaml", {
-    domain         = var.primary_platform_domain
-    ssh_public_key = var.ssh_public_key
-  })
-}
-
 module "mail_vm" {
   source = "../../modules/compute_instance"
 
@@ -71,12 +55,6 @@ module "mail_vm" {
   zone           = var.scw_zone
   inbound_ports  = [22, 25, 80, 443, 465, 587, 993]
   admin_ips      = var.admin_ips
-
-  # node-exporter scrapé par le Prometheus de la VM App uniquement
-  restricted_inbound_rules = [{
-    port     = 9100
-    ip_range = "${module.app_vm.public_ip}/32"
-  }]
 
   cloud_init = templatefile("${path.module}/../../../deploy/cloud-init/mail.yaml", {
     domain         = var.primary_platform_domain
@@ -92,8 +70,6 @@ module "dns_kod_digor" {
   records = [
     { name = "", type = "A", data = local.app_ingress_ip },
     { name = "www", type = "A", data = local.app_ingress_ip },
-    { name = "staging", type = "A", data = local.app_ingress_ip },
-    { name = "grafana", type = "A", data = local.app_ingress_ip },
     { name = "mail", type = "A", data = module.mail_vm.public_ip },
     { name = "webmail", type = "A", data = module.mail_vm.public_ip },
     { name = "", type = "MX", data = "10 mail.${var.primary_platform_domain}." },
@@ -106,8 +82,8 @@ module "dns_app_bzh" {
 
   zone_name = "app.bzh"
   records = [
-    { name = "", type = "A", data = module.app_vm.public_ip },
-    { name = "www", type = "A", data = module.app_vm.public_ip },
+    { name = "", type = "A", data = local.app_ingress_ip },
+    { name = "www", type = "A", data = local.app_ingress_ip },
     { name = "mail", type = "A", data = module.mail_vm.public_ip },
     { name = "webmail", type = "A", data = module.mail_vm.public_ip },
     { name = "", type = "MX", data = "10 mail.app.bzh." },
@@ -126,6 +102,9 @@ resource "local_file" "env_production" {
     db_password          = random_password.db_password.result
     db_host              = "127.0.0.1"
     k8s_database_url     = local.k8s_database_url
+    rdb_host             = local.rdb_host
+    rdb_port             = local.rdb_port
+    rdb_password         = random_password.rdb_password.result
     grafana_password     = random_password.grafana_password.result
     grafana_root_url     = local.grafana_url
     alert_email          = var.admin_email
@@ -143,9 +122,9 @@ resource "local_file" "env_production" {
     s3_bucket_backups    = module.backups.bucket_name
     s3_access_key        = module.uploads.access_key
     s3_secret_key        = module.uploads.secret_key
-    app_public_ip        = module.app_vm.public_ip
+    app_public_ip        = local.app_ingress_ip
     mail_public_ip       = module.mail_vm.public_ip
   })
 
-  depends_on = [module.uploads, module.app_vm, module.mail_vm]
+  depends_on = [module.uploads, module.mail_vm]
 }

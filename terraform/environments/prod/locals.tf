@@ -24,10 +24,12 @@ locals {
   alert_smtp_password = var.alert_smtp_host != "" ? var.alert_smtp_password : (var.dns_enabled && var.tem_enabled ? scaleway_iam_api_key.alerts[0].secret_key : "")
   alert_smtp_from     = var.alert_smtp_from != "" ? var.alert_smtp_from : "alertes@${var.primary_platform_domain}"
 
-  # Bascule DNS : tant que k8s_lb_ip est vide, l'app pointe sur la VM ;
-  # une fois Traefik déployé, TF_VAR_k8s_lb_ip=<ip du LB> bascule vers Kapsule.
-  app_ingress_ip = var.k8s_lb_ip != "" ? var.k8s_lb_ip : module.app_vm.public_ip
+  # Bascule DNS : k8s_lb_ip pointe l'app vers le load balancer Traefik (Kapsule).
+  app_ingress_ip = var.k8s_lb_ip
 
   # URL de connexion pour l'app sur Kapsule (RDB via réseau privé)
-  k8s_database_url = "postgresql://framm:${random_password.rdb_password.result}@${scaleway_rdb_instance.main.private_network[0].ip}:${scaleway_rdb_instance.main.private_network[0].port}/framm?sslmode=require"
+  k8s_database_url = "postgresql://framm:${urlencode(random_password.rdb_password.result)}@${scaleway_rdb_instance.main.private_network[0].ip}:${scaleway_rdb_instance.main.private_network[0].port}/framm?sslmode=require"
+
+  rdb_host = scaleway_rdb_instance.main.private_network[0].ip
+  rdb_port = scaleway_rdb_instance.main.private_network[0].port
 }
