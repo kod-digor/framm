@@ -23,9 +23,25 @@ function proxyPrefix(mailboxId: string): string {
   return `/webmail/${mailboxId}`;
 }
 
+function isAccountRoot(segments: string[]): boolean {
+  return (
+    segments.length === 0 ||
+    (segments.length === 1 && segments[0] === "account") ||
+    (segments.length === 2 &&
+      segments[0] === "account" &&
+      (segments[1] === "" || segments[1] === "index.html"))
+  );
+}
+
 function upstreamPath(segments: string[]): string {
-  if (segments.length === 0) return "/account/";
+  if (isAccountRoot(segments)) return "/account/";
   return `/${segments.join("/")}`;
+}
+
+/** Next.js normalise les URLs sans slash final — évite les boucles 308↔302. */
+function normalizeProxyPath(path: string): string {
+  if (path.endsWith("/account/")) return path.slice(0, -1);
+  return path;
 }
 
 function buildBootstrapScript(
@@ -101,6 +117,27 @@ async function resolveMailbox(mailboxId: string, orgId: string) {
   });
 }
 
+type WebmailAuthFailureCode =
+  | "credentials_invalid"
+  | "auth_failed"
+  | "auth_mfa"
+  | "auth_upstream";
+
+function mapWebmailAuthError(err: unknown): WebmailAuthFailureCode {
+  if (!(err instanceof Error)) return "auth_upstream";
+  switch (err.message) {
+    case "credentials_invalid":
+      return "credentials_invalid";
+    case "stalwart_credentials_rejected":
+    case "stalwart_auth_unexpected":
+      return "auth_failed";
+    case "stalwart_mfa_required":
+      return "auth_mfa";
+    default:
+      return "auth_upstream";
+  }
+}
+
 async function getTokensForMailbox(
   address: string,
   credentialsEnc: string
@@ -138,6 +175,9 @@ export async function handleWebmailProxy(
   }
 
   if (!mailbox.credentialsEnc) {
+    if (isAccountRoot(pathSegments) && req.method === "GET") {
+      return accountErrorHtml(403, "no_credentials");
+    }
     return NextResponse.json({ error: "no_credentials" }, { status: 403 });
   }
 
@@ -145,12 +185,7 @@ export async function handleWebmailProxy(
   const upstreamUrl = new URL(upstream);
   upstreamUrl.search = req.nextUrl.search;
 
-  const isAccountIndex =
-    pathSegments.length === 0 ||
-    (pathSegments.length === 1 && pathSegments[0] === "account") ||
-    (pathSegments.length === 2 &&
-      pathSegments[0] === "account" &&
-      (pathSegments[1] === "" || pathSegments[1] === "index.html"));
+  const isAccountIndex = isAccountRoot(pathSegments);
 
   const headers = new Headers();
   const accept = req.headers.get("accept");
@@ -188,6 +223,7 @@ export async function handleWebmailProxy(
       } else if (location.startsWith("/")) {
         proxied = `${prefix}${location}`;
       }
+      proxied = normalizeProxyPath(proxied);
       return NextResponse.redirect(new URL(proxied, req.url), upstreamRes.status);
     }
   }
@@ -200,8 +236,8 @@ export async function handleWebmailProxy(
     let tokens: WebmailTokens;
     try {
       tokens = await getTokensForMailbox(mailbox.address, mailbox.credentialsEnc);
-    } catch {
-      return NextResponse.json({ error: "auth_failed" }, { status: 502 });
+    } catch (err) {
+      return accountErrorHtml(502, mapWebmailAuthError(err));
     }
 
     const html = await upstreamRes.text();
@@ -224,7 +260,28 @@ export async function handleWebmailProxy(
   });
 }
 
+function accountErrorHtml(status: number, code: WebmailAuthFailureCode | "no_credentials"): NextResponse {
+  const messages: Record<WebmailAuthFailureCode | "no_credentials", string> = {
+    no_credentials:
+      "Les identifiants de cette boîte mail ne sont pas enregistrés. Réenregistrez le mot de passe dans les paramètres de la boîte.",
+    credentials_invalid:
+      "Les identifiants chiffrés de cette boîte sont illisibles. Définissez un nouveau mot de passe dans la liste des boîtes mail.",
+    auth_failed:
+      "Connexion automatique refusée par Stalwart (identifiants incorrects). Mettez à jour le mot de passe de la boîte dans Framm.",
+    auth_mfa:
+      "Cette boîte exige une authentification à deux facteurs — le webmail intégré ne la prend pas encore en charge.",
+    auth_upstream:
+      "Connexion automatique au webmail impossible (erreur serveur). Réessayez ou ouvrez le webmail dans un nouvel onglet.",
+  };
+  const message = messages[code] ?? "Impossible de charger le webmail.";
+  const html = `<!doctype html><html lang="fr"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Webmail</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#fafafa;color:#52525b}.box{max-width:28rem;padding:1.5rem;text-align:center;border:1px solid #e4e4e7;border-radius:.5rem;background:#fff}</style></head><body><div class="box"><p>${message}</p></div></body></html>`;
+  return new NextResponse(html, {
+    status,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
+
 /** URL same-origin pour iframe webmail (proxy Framm → Stalwart). */
 export function getWebmailProxyPath(mailboxId: string): string {
-  return `/webmail/${mailboxId}/account/`;
+  return `/webmail/${mailboxId}/account`;
 }

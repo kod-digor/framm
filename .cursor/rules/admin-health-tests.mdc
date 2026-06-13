@@ -34,3 +34,16 @@ Ce test envoie un **e-mail SMTP réel** :
 Si l'envoi SMTP est impossible (relais non configuré ou injoignable) → **`fail`** avec détail explicite, jamais de `warn` silencieux.
 
 Variables requises pour un test complet : `BUREAU_ADMIN_EMAIL`, `OUTBOUND_SMTP_RELAY_HOST/PORT/USER/SECRET` (ou SMTP Stalwart accessible), `STALWART_API_KEY`.
+
+## Test connexion SSO webmail (`webmail-sso-login`)
+
+Ce test valide le flux OAuth non-interactif utilisé par le proxy iframe Framm :
+
+1. Crée un compte Stalwart éphémère sur le domaine plateforme.
+2. Appelle `obtainStalwartSession()` → POST `/api/auth` (type `authCode`, client `stalwart-webui`) puis échange du `client_code` (snake_case) contre un access token.
+3. Vérifie que GET `/account/` renvoie le shell SPA (pas une page « Sign in »).
+4. Supprime le compte via `x:Account/set` destroy.
+
+Échec typique si Stalwart renvoie `client_code` mais le code Framm ne le lit pas → tokens absents → iframe affiche le formulaire login Stalwart.
+
+Variables requises : `WEBMAIL_URL`, `STALWART_API_KEY`, domaine plateforme synchronisé dans Stalwart.

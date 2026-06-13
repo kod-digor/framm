@@ -14,6 +14,7 @@ import {
   resolveStalwartDomainId,
 } from "@/lib/stalwart/client";
 import { getPlatformEmailDomains } from "@/lib/platform-domains";
+import { obtainStalwartSession } from "@/lib/stalwart/webmail-auth";
 
 export type HealthCheckStatus = "ok" | "fail" | "warn";
 
@@ -156,6 +157,114 @@ async function checkMailboxCreate() {
   }
 
   return { status: "ok" as const, detail: "x:Account/set + destroy OK" };
+}
+
+async function checkWebmailSsoLogin() {
+  const webmailBase = getWebmailExternalUrl();
+  if (!webmailBase) {
+    return { status: "warn" as const, detail: "WEBMAIL_URL non configuré" };
+  }
+
+  const domainId = await resolvePlatformStalwartDomainId();
+  if (!domainId) {
+    return { status: "warn" as const, detail: "Domaine plateforme absent dans Stalwart" };
+  }
+
+  const platformDomain = getPlatformEmailDomains()[0];
+  if (!platformDomain) {
+    return { status: "warn" as const, detail: "Aucun domaine plateforme configuré" };
+  }
+
+  const localPart = `health-sso-${Date.now()}`;
+
+  const createRes = await createAccount(localPart, domainId, TEST_PASSWORD, localPart);
+  if (isStalwartFailure(createRes)) {
+    return { status: "fail" as const, detail: "x:Account/set échoué" };
+  }
+
+  const accountId = extractStalwartCreatedId(createRes);
+  if (!accountId) {
+    return { status: "fail" as const, detail: "Compte SSO créé sans ID retourné" };
+  }
+
+  const accountGetRes = await stalwartAdminJmap([
+    ["x:Account/get", { ids: [accountId], properties: ["emailAddress"] }, "g1"],
+  ]);
+  if ("unavailable" in accountGetRes || "error" in accountGetRes) {
+    await deleteAccountSafe(accountId);
+    return {
+      status: "fail" as const,
+      detail: "Impossible de lire emailAddress du compte SSO",
+    };
+  }
+
+  const accountList = extractAccountEmailList(accountGetRes);
+  const address = accountList[0]?.emailAddress;
+  if (!address) {
+    await deleteAccountSafe(accountId);
+    return { status: "fail" as const, detail: "Compte SSO sans emailAddress" };
+  }
+
+  try {
+    const tokens = await obtainStalwartSession(address, TEST_PASSWORD);
+    if (!tokens.accessToken) {
+      return { status: "fail" as const, detail: "OAuth SSO sans access_token" };
+    }
+
+    const accountRes = await fetch(`${webmailBase}/account/`, {
+      method: "GET",
+      redirect: "manual",
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!accountRes.ok) {
+      return {
+        status: "fail" as const,
+        detail: `Portail /account/ HTTP ${accountRes.status}`,
+      };
+    }
+
+    const html = await accountRes.text();
+    if (/sign in|invalid username|login-form/i.test(html)) {
+      return {
+        status: "fail" as const,
+        detail: "Portail /account/ renvoie une page de connexion au lieu du shell SPA",
+      };
+    }
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    const cleanupErr = await deleteAccountSafe(accountId);
+    const suffix = cleanupErr ? ` — ${cleanupErr}` : "";
+    return { status: "fail" as const, detail: `OAuth SSO: ${detail}${suffix}` };
+  }
+
+  const destroyRes = await deleteAccount(accountId);
+  if (isStalwartFailure(destroyRes)) {
+    return {
+      status: "warn" as const,
+      detail: `OAuth SSO OK — cleanup JMAP échoué (${accountId})`,
+    };
+  }
+
+  return { status: "ok" as const, detail: "OAuth SSO + shell /account/ OK" };
+}
+
+function extractAccountEmailList(res: unknown): { emailAddress?: string }[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("list" in body)) return [];
+  const list = (body as { list: unknown }).list;
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (item): item is { emailAddress?: string } => typeof item === "object" && item !== null
+  );
+}
+
+async function deleteAccountSafe(accountId: string): Promise<string | null> {
+  const destroyRes = await deleteAccount(accountId);
+  if (isStalwartFailure(destroyRes)) {
+    return `Compte ${accountId} — cleanup échoué`;
+  }
+  return null;
 }
 
 async function checkWebmailAccess() {
@@ -666,6 +775,7 @@ export const HEALTH_CHECK_DEFINITIONS: HealthCheckDefinition[] = [
   { id: "org-create", run: checkOrgCreate },
   { id: "org-approval", run: checkOrgApproval },
   { id: "mailbox-create", run: checkMailboxCreate },
+  { id: "webmail-sso-login", run: checkWebmailSsoLogin },
   { id: "webmail-access", run: checkWebmailAccess },
   { id: "email-redirect", run: checkEmailRedirect },
   { id: "mail-server", run: checkMailServer },

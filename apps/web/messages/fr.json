@@ -299,6 +299,10 @@
         "label": "Création boîte mail",
         "description": "x:Account/set sur adresse éphémère Stalwart puis destroy."
       },
+      "webmail-sso-login": {
+        "label": "Connexion SSO webmail",
+        "description": "Compte éphémère, OAuth POST /api/auth (client_code) et shell /account/ sans page login."
+      },
       "webmail-access": {
         "label": "Accès webmail",
         "description": "JMAP ping, URL webmail HTTP et route proxy SSO Framm."

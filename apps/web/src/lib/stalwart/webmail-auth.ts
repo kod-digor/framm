@@ -11,7 +11,7 @@ export type WebmailTokens = {
 };
 
 type AuthResponse =
-  | { type: "authenticated"; clientCode: string }
+  | { type: "authenticated"; client_code?: string; clientCode?: string }
   | { type: "mfaRequired" }
   | { type: "failure" }
   | { type: string };
@@ -59,10 +59,14 @@ export async function obtainWebmailTokens(
 
   const authData = (await authRes.json()) as AuthResponse;
   if (authData.type === "mfaRequired") {
-    throw new Error("MFA is enabled on this mailbox");
+    throw new Error("stalwart_mfa_required");
   }
-  if (authData.type !== "authenticated" || !("clientCode" in authData)) {
-    throw new Error("Invalid Stalwart credentials");
+  if (authData.type === "failure") {
+    throw new Error("stalwart_credentials_rejected");
+  }
+  const clientCode = authData.client_code ?? authData.clientCode;
+  if (authData.type !== "authenticated" || !clientCode) {
+    throw new Error("stalwart_auth_unexpected");
   }
 
   const tokenRes = await fetch(`${base}/auth/token`, {
@@ -73,7 +77,7 @@ export async function obtainWebmailTokens(
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",
-      code: authData.clientCode,
+      code: clientCode,
       client_id: STALWART_WEBUI_CLIENT_ID,
       redirect_uri: redirectUri,
     }),
@@ -110,3 +114,6 @@ export async function obtainWebmailTokens(
     endSessionEndpoint,
   };
 }
+
+/** Alias utilisé par les health checks admin — tokens OAuth portail /account/. */
+export const obtainStalwartSession = obtainWebmailTokens;

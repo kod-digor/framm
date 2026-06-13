@@ -217,7 +217,10 @@ export async function updateMailboxAction(
     }
   }
 
-  if (resolved.id && passwordChanged) {
+  if (passwordChanged) {
+    if (!resolved.id) {
+      return { ok: false, message: "stalwartError" };
+    }
     const pwdRes = await updateAccountPassword(resolved.id, password);
     if (isStalwartFailure(pwdRes)) {
       const issue = extractStalwartSetIssue(pwdRes);
