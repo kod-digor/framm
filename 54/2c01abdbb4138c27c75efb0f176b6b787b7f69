@@ -1,0 +1,21 @@
+apps/web/src/components/mail/webmail-frame.tsx
+  s_8d57817a9b8426::t_33cc2e6a1dd25b 17
+apps/web/src/lib/stalwart/webmail-proxy.ts
+  s_8d57817a9b8426::t_33cc2e6a1dd25b 47-68,74-76,82,86,98-102,104-106,118-119,124-126,436
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "542c01abdbb4138c27c75efb0f176b6b787b7f69",
+  "prompts": {},
+  "sessions": {
+    "s_8d57817a9b8426": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "139cfcfc-4435-4391-8bc8-31286eb834c9",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
