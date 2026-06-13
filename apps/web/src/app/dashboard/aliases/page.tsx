@@ -67,19 +67,22 @@ export default async function AliasesPage() {
         </p>
       )}
 
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-zinc-900">{t("listTitle")}</h2>
-
-        {aliases.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
-            <ArrowRightLeft className="mx-auto size-8 text-zinc-300" aria-hidden />
-            <p className="mt-3 text-sm font-medium text-zinc-700">{t("emptyTitle")}</p>
-            <p className="mt-1 text-sm text-zinc-500">{t("emptyHint")}</p>
-          </div>
-        ) : (
-          <AliasList aliases={aliasRows} labels={listLabels} />
-        )}
-      </section>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{t("listTitle")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {aliases.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
+              <ArrowRightLeft className="mx-auto size-8 text-zinc-300" aria-hidden />
+              <p className="mt-3 text-sm font-medium text-zinc-700">{t("emptyTitle")}</p>
+              <p className="mt-1 text-sm text-zinc-500">{t("emptyHint")}</p>
+            </div>
+          ) : (
+            <AliasList aliases={aliasRows} labels={listLabels} />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
