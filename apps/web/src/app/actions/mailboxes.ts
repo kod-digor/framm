@@ -204,14 +204,23 @@ export async function updateMailboxAction(
     return { ok: false, message: "stalwartError" };
   }
 
-  if (resolved.id && (nameChanged || passwordChanged)) {
-    const patch: { name?: string; password?: string } = {};
-    if (nameChanged) patch.name = displayName ?? parseEmailLocalPart(mailbox.address);
-    if (passwordChanged) patch.password = password;
-
-    const stalwartRes = await updateAccount(resolved.id, patch);
+  if (resolved.id && nameChanged) {
+    const stalwartRes = await updateAccount(resolved.id, {
+      name: displayName ?? parseEmailLocalPart(mailbox.address),
+    });
     if (isStalwartFailure(stalwartRes)) {
       const issue = extractStalwartSetIssue(stalwartRes);
+      if (isStalwartTransportIssue(issue)) {
+        return { ok: false, message: "stalwartUnavailable" };
+      }
+      return { ok: false, message: "stalwartError" };
+    }
+  }
+
+  if (resolved.id && passwordChanged) {
+    const pwdRes = await updateAccountPassword(resolved.id, password);
+    if (isStalwartFailure(pwdRes)) {
+      const issue = extractStalwartSetIssue(pwdRes);
       if (isStalwartPasswordIssue(issue)) {
         return { ok: false, message: "passwordWeak" };
       }
@@ -230,6 +239,7 @@ export async function updateMailboxAction(
   await prisma.mailbox.update({ where: { id: mailboxId }, data });
 
   revalidatePath("/dashboard/mailboxes");
+  if (passwordChanged) revalidatePath(`/dashboard/mail/${mailboxId}`);
   return { ok: true, message: "updated", detail: mailbox.address };
 }
 

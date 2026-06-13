@@ -49,9 +49,12 @@ export default async function MailPage({
           {t("unconfigured")}
         </p>
       ) : !mailbox.credentialsEnc ? (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {t("noCredentials")}
-        </p>
+        <div className="space-y-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p>{t("noCredentials")}</p>
+          <Button asChild variant="outline" size="sm" className="border-amber-300 bg-white hover:bg-amber-50">
+            <Link href="/dashboard/mailboxes">{t("noCredentialsAction")}</Link>
+          </Button>
+        </div>
       ) : (
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden py-0">
           <WebmailFrame

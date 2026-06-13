@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -39,15 +39,14 @@ function EditMailboxFields({
   const [name, setName] = useState(displayName ?? "");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    if (!state?.ok) return;
+    setPassword("");
+    onCancel();
+  }, [state]);
+
   return (
-    <form
-      action={formAction}
-      className="flex min-w-0 flex-col gap-3"
-      onSubmit={() => {
-        setPassword("");
-        onCancel();
-      }}
-    >
+    <form action={formAction} className="flex min-w-0 flex-col gap-3">
       <input type="hidden" name="mailboxId" value={mailboxId} />
       <FormFeedback state={state} namespace="mailboxes" paramKey="address" />
 
