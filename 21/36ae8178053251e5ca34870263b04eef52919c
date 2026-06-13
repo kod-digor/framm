@@ -1,0 +1,38 @@
+apps/web/src/components/mailboxes/delete-mailbox-form.tsx
+  s_f364ed0e94ac87::t_4710c7a8e0e8f4 1-55
+apps/web/prisma/schema.prisma
+  s_f364ed0e94ac87::t_7adc6da04e4822 99
+apps/web/messages/fr.json
+  s_f364ed0e94ac87::t_0e519374b02b91 134,139-141,144-145,149-153,155-156,159-160,162-171
+apps/web/src/lib/stalwart/client.ts
+  s_f364ed0e94ac87::t_d3e90d6afd164b 163-168,170,178,194-201,207,215-226
+  s_f364ed0e94ac87::t_0b97916f4672cf 373-409
+apps/web/src/components/mailboxes/mailbox-list.tsx
+  s_f364ed0e94ac87::t_e68bdeb96d1b77 1-205
+apps/web/src/components/mailboxes/create-mailbox-form.tsx
+  s_f364ed0e94ac87::t_068c0a21da2eae 35,62-73
+apps/web/src/app/actions/mailboxes.ts
+  s_f364ed0e94ac87::t_ed901fd73ef7b0 10,14,16,32-33,64-69,81-87,94,119,128-223
+apps/web/src/app/dashboard/mailboxes/page.tsx
+  s_f364ed0e94ac87::t_99f7a45b5aa1f6 4,8,27-44,68-83
+apps/web/src/components/mailboxes/edit-mailbox-form.tsx
+  s_f364ed0e94ac87::t_08394eb8607bc2 1-169
+apps/web/prisma/migrations/20250613150000_mailbox_display_name/migration.sql
+  s_f364ed0e94ac87::t_079151d5cc18d8 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "2136ae8178053251e5ca34870263b04eef52919c",
+  "prompts": {},
+  "sessions": {
+    "s_f364ed0e94ac87": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d172652a-3d4c-4fb0-b5a4-102c6e84654a",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
