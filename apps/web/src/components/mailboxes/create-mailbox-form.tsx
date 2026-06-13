@@ -45,7 +45,7 @@ function CreateMailboxFields({
             onLocalPartChange={setLocalPart}
             localPartName="localPart"
             localPartId="localPart"
-            localPartPlaceholder="contact"
+            localPartPlaceholder="info"
             domainValue={domainId}
             onDomainChange={setDomainId}
             domainName="domainId"

@@ -76,6 +76,19 @@ export function extractStalwartSetIssue(res: unknown): StalwartSetIssue | null {
   return Object.values(bucket)[0] ?? null;
 }
 
+/** Compte Stalwart orphelin lors d'un primaryKeyViolation (Account uniquement, pas MailingList). */
+export function extractStalwartOrphanAccountId(
+  issue: StalwartSetIssue | null
+): string | undefined {
+  if (issue?.type !== "primaryKeyViolation") return undefined;
+  if (issue.objectId?.object !== "Account") return undefined;
+  return issue.objectId.id;
+}
+
+export function isStalwartAliasConflict(issue: StalwartSetIssue | null): boolean {
+  return issue?.type === "primaryKeyViolation" && issue.objectId?.object === "MailingList";
+}
+
 export async function getStalwartStatus(): Promise<StalwartStatus> {
   if (!STALWART_API_KEY || !(process.env.WEBMAIL_URL || STALWART_URL)) {
     return "unconfigured";

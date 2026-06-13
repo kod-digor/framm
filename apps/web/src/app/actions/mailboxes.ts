@@ -9,7 +9,9 @@ import {
   createAccount,
   deleteAccount,
   extractStalwartCreatedId,
+  extractStalwartOrphanAccountId,
   extractStalwartSetIssue,
+  isStalwartAliasConflict,
   isStalwartFailure,
   resolveStalwartAccountId,
   resolveStalwartDomainId,
@@ -46,11 +48,19 @@ export async function createMailboxAction(
   const existing = await prisma.mailbox.findUnique({ where: { address } });
   if (existing) return { ok: false, message: "exists" };
 
+  const alias = await prisma.emailAlias.findFirst({
+    where: { organizationId: orgId, source: address },
+  });
+  if (alias) return { ok: false, message: "existsAsAlias" };
+
   const domainResolved = await resolveStalwartDomainId(
     domain.fqdn,
     domain.stalwartDomainId
   );
-  if (domainResolved.unavailable || !domainResolved.id) {
+  if (domainResolved.unavailable) {
+    return { ok: false, message: "stalwartUnavailable" };
+  }
+  if (!domainResolved.id) {
     return { ok: false, message: "stalwartError" };
   }
 
@@ -69,8 +79,16 @@ export async function createMailboxAction(
   );
   if (isStalwartFailure(stalwartRes)) {
     const issue = extractStalwartSetIssue(stalwartRes);
-    const orphanId =
-      issue?.type === "primaryKeyViolation" ? issue.objectId?.id : undefined;
+
+    if (issue?.type === "unavailable") {
+      return { ok: false, message: "stalwartUnavailable" };
+    }
+
+    if (isStalwartAliasConflict(issue)) {
+      return { ok: false, message: "existsAsAlias" };
+    }
+
+    const orphanId = extractStalwartOrphanAccountId(issue);
 
     if (orphanId) {
       const pwdRes = await updateAccountPassword(orphanId, password);
@@ -104,7 +122,11 @@ export async function createMailboxAction(
       return { ok: false, message: "exists" };
     }
 
-    console.error("[createMailbox] Stalwart create failed:", issue ?? stalwartRes);
+    console.error(
+      "[createMailbox] Stalwart create failed:",
+      issue?.objectId?.object ?? "unknown",
+      issue ?? stalwartRes
+    );
     return { ok: false, message: "stalwartError" };
   }
 
