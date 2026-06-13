@@ -13,8 +13,7 @@ export type WebmailTokens = {
 type AuthResponse =
   | { type: "authenticated"; client_code?: string; clientCode?: string }
   | { type: "mfaRequired" }
-  | { type: "failure" }
-  | { type: string };
+  | { type: "failure" };
 
 type TokenResponse = {
   access_token: string;
@@ -64,8 +63,11 @@ export async function obtainWebmailTokens(
   if (authData.type === "failure") {
     throw new Error("stalwart_credentials_rejected");
   }
+  if (authData.type !== "authenticated") {
+    throw new Error("stalwart_auth_unexpected");
+  }
   const clientCode = authData.client_code ?? authData.clientCode;
-  if (authData.type !== "authenticated" || !clientCode) {
+  if (!clientCode) {
     throw new Error("stalwart_auth_unexpected");
   }
 
