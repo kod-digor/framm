@@ -11,7 +11,6 @@ services:
       - "465:465"
       - "587:587"
       - "993:993"
-      - "127.0.0.1:8080:8080"
     environment:
       - STALWART_RECOVERY_ADMIN=admin:${STALWART_API_KEY}
       - STALWART_PUBLIC_URL=${WEBMAIL_URL}
@@ -19,6 +18,17 @@ services:
       # Persistance obligatoire : sans ce montage, mails + config vivent dans
       # la couche éphémère du conteneur et sont perdus à chaque recréation.
       - /opt/framm/mail-data:/opt/stalwart
+
+  # docker-proxy → Stalwart renvoie une réponse vide depuis l'hôte (nginx, tunnel SSH).
+  # socat sur le réseau compose relaie correctement vers stalwart:8080.
+  stalwart-proxy:
+    image: alpine/socat@sha256:2b6b49e9000105672bf70648f8642801791374a24f549d30bed3c3115c13d24c
+    restart: unless-stopped
+    depends_on:
+      - stalwart
+    ports:
+      - "127.0.0.1:8080:8080"
+    command: ["TCP-LISTEN:8080,fork,reuseaddr", "TCP:stalwart:8080"]
 
   node-exporter:
     image: prom/node-exporter:v1.8.0
