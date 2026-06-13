@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { getWebmailEmbedUrl, getWebmailExternalUrl } from "@/lib/stalwart/client";
+import { getWebmailExternalUrl } from "@/lib/stalwart/client";
+import { getWebmailProxyPath } from "@/lib/stalwart/webmail-proxy";
 import { getT } from "@/i18n/t";
 
 export default async function MailPage({
@@ -24,7 +25,8 @@ export default async function MailPage({
   });
   if (!mailbox) notFound();
 
-  const embedUrl = getWebmailEmbedUrl(mailbox.address);
+  const webmailConfigured = Boolean(getWebmailExternalUrl());
+  const embedUrl = webmailConfigured ? getWebmailProxyPath(mailboxId) : "";
   const externalUrl = getWebmailExternalUrl();
 
   return (
@@ -42,9 +44,13 @@ export default async function MailPage({
 
       <StalwartStatusBanner namespace="mailboxes" />
 
-      {!embedUrl ? (
+      {!webmailConfigured ? (
         <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           {t("unconfigured")}
+        </p>
+      ) : !mailbox.credentialsEnc ? (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {t("noCredentials")}
         </p>
       ) : (
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden py-0">

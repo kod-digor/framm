@@ -11,6 +11,7 @@ import {
   isStalwartFailure,
   resolveStalwartDomainId,
 } from "@/lib/stalwart/client";
+import { sealSecret } from "@/lib/crypto/seal";
 
 export async function createMailboxAction(
   _prev: ActionResult,
@@ -59,6 +60,7 @@ export async function createMailboxAction(
       domainId: domain.id,
       address,
       stalwartAccountId,
+      credentialsEnc: sealSecret(password),
     },
   });
 

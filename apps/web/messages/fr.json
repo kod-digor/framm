@@ -197,7 +197,9 @@
     "openExternal": "Ouvrir dans un nouvel onglet",
     "iframeTitle": "Webmail {address}",
     "loading": "Chargement du webmail…",
-    "loginHint": "Connectez-vous avec le mot de passe de la boîte mail.",
+    "loadError": "Impossible d'afficher le webmail intégré. Utilisez le lien pour l'ouvrir dans un nouvel onglet.",
+    "connectedHint": "Connecté automatiquement à votre boîte mail.",
+    "noCredentials": "Cette boîte a été créée avant la connexion automatique. Recréez-la ou contactez le support Kod Digor pour activer le webmail intégré.",
     "unconfigured": "Le webmail n'est pas configuré (WEBMAIL_URL). Contactez le support Kod Digor."
   },
   "usage": {
