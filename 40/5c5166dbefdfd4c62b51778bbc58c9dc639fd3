@@ -1,0 +1,19 @@
+apps/web/package-lock.json
+  s_00ea0b1c8831de::t_867d8480df1344 28,41,4250-4259,8622-8628
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "405c5166dbefdfd4c62b51778bbc58c9dc639fd3",
+  "prompts": {},
+  "sessions": {
+    "s_00ea0b1c8831de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a860922-e9f4-4046-b28b-24f34780c59e",
+        "model": "composer-2.5"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
