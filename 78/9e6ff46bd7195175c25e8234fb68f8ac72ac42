@@ -1,0 +1,19 @@
+apps/web/src/app/dashboard/aliases/page.tsx
+  s_ace249b3413fd5::t_d36910470d9297 70-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "789e6ff46bd7195175c25e8234fb68f8ac72ac42",
+  "prompts": {},
+  "sessions": {
+    "s_ace249b3413fd5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3be35bc3-d21b-454a-9a87-2077e89e55b8",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
