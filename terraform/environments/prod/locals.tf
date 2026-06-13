@@ -24,7 +24,9 @@ locals {
   alert_smtp_password = var.alert_smtp_host != "" ? var.alert_smtp_password : (var.dns_enabled && var.tem_enabled ? scaleway_iam_api_key.alerts[0].secret_key : "")
   alert_smtp_from     = var.alert_smtp_from != "" ? var.alert_smtp_from : "alertes@${var.primary_platform_domain}"
 
-  # Relais SMTP sortant Stalwart (TCP/25 bloqué sur la VM) via TEM port 2587.
+  # Relais SMTP sortant (pods K8s + VM mail) : Scaleway bloque SMTP sortant 25/465/587
+  # sur les instances — règles anti-spam non modifiables via security group Terraform.
+  # Déblocage éventuel : ticket support Scaleway uniquement. Relais TEM :2587 reste la voie normale.
   outbound_smtp_relay_host   = var.dns_enabled && var.tem_enabled ? "smtp.tem.scaleway.com" : ""
   outbound_smtp_relay_port   = "2587"
   outbound_smtp_relay_user   = var.dns_enabled && var.tem_enabled ? var.scw_project_id : ""

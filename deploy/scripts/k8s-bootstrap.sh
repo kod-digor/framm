@@ -73,6 +73,10 @@ kubectl -n framm create secret generic framm-env \
   --from-literal=S3_BUCKET_BACKUPS="${S3_BUCKET_BACKUPS}" \
   --from-literal=S3_ACCESS_KEY="${S3_ACCESS_KEY}" \
   --from-literal=S3_SECRET_KEY="${S3_SECRET_KEY}" \
+  --from-literal=OUTBOUND_SMTP_RELAY_HOST="${OUTBOUND_SMTP_RELAY_HOST:-}" \
+  --from-literal=OUTBOUND_SMTP_RELAY_PORT="${OUTBOUND_SMTP_RELAY_PORT:-2587}" \
+  --from-literal=OUTBOUND_SMTP_RELAY_USER="${OUTBOUND_SMTP_RELAY_USER:-}" \
+  --from-literal=OUTBOUND_SMTP_RELAY_SECRET="${OUTBOUND_SMTP_RELAY_SECRET:-}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n monitoring create secret generic framm-grafana \

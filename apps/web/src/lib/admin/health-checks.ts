@@ -282,14 +282,6 @@ function resolveSmtpRelayConfig(): SmtpRelayConfig | null {
   };
 }
 
-function resolveStalwartSmtpHost(): string | null {
-  return (
-    parseHostFromUrl(process.env.STALWART_URL ?? "") ??
-    parseHostFromUrl(process.env.WEBMAIL_URL ?? "") ??
-    (getPlatformEmailDomains()[0] ? `mail.${getPlatformEmailDomains()[0]}` : null)
-  );
-}
-
 async function sendHealthCheckEmail(options: {
   from: string;
   to: string;
@@ -297,61 +289,38 @@ async function sendHealthCheckEmail(options: {
   text: string;
 }): Promise<{ ok: true; via: string } | { ok: false; detail: string }> {
   const relay = resolveSmtpRelayConfig();
-  const attempts: { label: string; host: string; port: number; user?: string; pass?: string }[] = [];
-
-  if (relay) {
-    attempts.push({
-      label: `TEM ${relay.host}:${relay.port}`,
-      host: relay.host,
-      port: relay.port,
-      user: relay.user,
-      pass: relay.pass,
-    });
-  }
-
-  const stalwartHost = resolveStalwartSmtpHost();
-  if (stalwartHost) {
-    attempts.push({ label: `Stalwart ${stalwartHost}:587`, host: stalwartHost, port: 587 });
-    attempts.push({ label: `Stalwart ${stalwartHost}:25`, host: stalwartHost, port: 25 });
-  }
-
-  if (attempts.length === 0) {
+  if (!relay) {
     return {
       ok: false,
-      detail: "Aucun relais SMTP (OUTBOUND_SMTP_RELAY_*) ni hôte Stalwart configuré",
+      detail: "Relais TEM non configuré (OUTBOUND_SMTP_RELAY_*) — envoi via Stalwart :25/:587 indisponible sur Scaleway",
     };
   }
 
-  const errors: string[] = [];
+  const label = `TEM ${relay.host}:${relay.port}`;
+  const transport = nodemailer.createTransport({
+    host: relay.host,
+    port: relay.port,
+    secure: false,
+    auth: { user: relay.user, pass: relay.pass },
+    connectionTimeout: 8_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 12_000,
+  });
 
-  for (const attempt of attempts) {
-    const transport = nodemailer.createTransport({
-      host: attempt.host,
-      port: attempt.port,
-      secure: false,
-      auth: attempt.user && attempt.pass ? { user: attempt.user, pass: attempt.pass } : undefined,
-      connectionTimeout: 8_000,
-      greetingTimeout: 8_000,
-      socketTimeout: 12_000,
+  try {
+    await transport.sendMail({
+      from: options.from,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
     });
-
-    try {
-      await transport.sendMail({
-        from: options.from,
-        to: options.to,
-        subject: options.subject,
-        text: options.text,
-      });
-      transport.close();
-      return { ok: true, via: attempt.label };
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      errors.push(`${attempt.label}: ${detail}`);
-      transport.close();
-    }
+    transport.close();
+    return { ok: true, via: label };
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    transport.close();
+    return { ok: false, detail: `${label}: ${detail}` };
   }
-
-  return { ok: false, detail: errors.join(" — ") };
 }
 
 function extractQueuedMessageList(res: unknown): {
@@ -581,8 +550,8 @@ async function checkMailServer() {
     const relayOk = await checkTcpPort(relayHost, relayPort);
     if (relayOk) {
       return {
-        status: "warn" as const,
-        detail: `Stalwart OK — :25 fermé, relais ${relayHost}:${relayPort} OK`,
+        status: "ok" as const,
+        detail: `Stalwart OK — SMTP :25 fermé (normal Scaleway), relais TEM ${relayHost}:${relayPort} OK`,
       };
     }
   }
