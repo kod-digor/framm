@@ -44,21 +44,46 @@ function normalizeProxyPath(path: string): string {
   return path;
 }
 
+/** Réécrit href/src absolus et littéraux JS (webpack) pour charger Bulwark via le proxy. */
+function rewriteBulwarkHtmlUrls(html: string, prefix: string): string {
+  const p = prefix.replace(/\/$/, "");
+  const esc = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const skipPrefixed = `(?!${esc}/)`;
+
+  let out = html.replace(
+    new RegExp(
+      `(\\s(?:href|src|action|content)=["'])(${skipPrefixed}\\/(?:_next|branding|api|jmap|\\.well-known|sw\\.js)[^"']*)(["'])`,
+      "gi"
+    ),
+    (_match, before: string, path: string, quote: string) => `${before}${p}${path}${quote}`
+  );
+
+  out = out.replace(
+    new RegExp(`(["'])(${skipPrefixed}\\/(?:_next|api|branding)/[^"']*)\\1`, "g"),
+    (_match, quote: string, path: string) => `${quote}${p}${path}${quote}`
+  );
+
+  return out;
+}
+
 function buildFetchRewriterScript(prefix: string, webmailBase: string, stalwartBase: string): string {
   return `<script>(function(){
 var P=${JSON.stringify(prefix)};
 var W=${JSON.stringify(webmailBase)};
 var M=${JSON.stringify(stalwartBase)};
+function isProxiedAppPath(path){
+  return path.indexOf("/api/")===0||path.indexOf("/_next/")===0||path.indexOf("/branding/")===0||path.indexOf("/sw.js")===0||path.indexOf("/jmap")===0||path.indexOf("/.well-known/jmap")===0;
+}
 function rw(u){
   if(typeof u!=="string")return u;
   if(u.indexOf(P)===0)return u;
   if(W&&u.indexOf(W)===0){
     var rest=u.slice(W.length);
-    if(rest.indexOf("/jmap")===0||rest.indexOf("/.well-known/jmap")===0)return P+rest;
+    if(isProxiedAppPath(rest))return P+rest;
   }
   if(M&&u.indexOf(M)===0){
     var rest2=u.slice(M.length);
-    if(rest2.indexOf("/jmap")===0||rest2.indexOf("/.well-known/jmap")===0)return P+rest2;
+    if(isProxiedAppPath(rest2))return P+rest2;
   }
   try{
     var parsed=new URL(u,location.origin);
@@ -70,9 +95,15 @@ function rw(u){
   if(isProxiedAppPath(u))return P+u;
   return u;
 }
-function isProxiedAppPath(path){
-  return path.indexOf("/api/")===0||path.indexOf("/_next/")===0||path.indexOf("/branding/")===0||path.indexOf("/sw.js")===0||path.indexOf("/jmap")===0||path.indexOf("/.well-known/jmap")===0;
+function patchEl(el){
+  if(!el||!el.tagName)return;
+  var tag=el.tagName.toLowerCase();
+  if(tag==="script"&&el.getAttribute("src")){var s=rw(el.getAttribute("src"));if(s!==el.getAttribute("src"))el.setAttribute("src",s);}
+  if(tag==="link"&&el.getAttribute("href")){var h=rw(el.getAttribute("href"));if(h!==el.getAttribute("href"))el.setAttribute("href",h);}
 }
+var _ac=Node.prototype.appendChild,_ib=Node.prototype.insertBefore;
+Node.prototype.appendChild=function(c){patchEl(c);return _ac.call(this,c);};
+Node.prototype.insertBefore=function(c,r){patchEl(c);return _ib.call(this,c,r);};
 var f=window.fetch.bind(window);
 window.fetch=function(i,n){
   if(typeof i==="string")i=rw(i);
@@ -84,12 +115,15 @@ window.fetch=function(i,n){
 
 function injectBulwarkHtml(html: string, mailboxId: string, webmailBase: string, stalwartBase: string): string {
   const prefix = `${proxyPrefix(mailboxId)}/`;
+  const script = buildFetchRewriterScript(proxyPrefix(mailboxId), webmailBase, stalwartBase);
+
   let out = html.replace(/<base\s+[^>]*href="\/"\s*\/?>/i, `<base href="${prefix}" />`);
   if (!out.includes(`href="${prefix}"`)) {
     out = out.replace(/<head>/i, `<head><base href="${prefix}" />`);
   }
-  const script = buildFetchRewriterScript(proxyPrefix(mailboxId), webmailBase, stalwartBase);
-  return out.replace(/<\/head>/i, `${script}</head>`);
+
+  out = rewriteBulwarkHtmlUrls(out, proxyPrefix(mailboxId));
+  return out.replace(/<head>/i, `<head>${script}`);
 }
 
 function rewriteSetCookie(header: string, prefix: string): string {
@@ -399,5 +433,5 @@ function accountErrorHtml(status: number, code: WebmailAuthFailureCode | "no_cre
 
 /** URL same-origin pour iframe webmail (proxy Framm → Bulwark). */
 export function getWebmailProxyPath(mailboxId: string): string {
-  return `/webmail/${mailboxId}/`;
+  return `/webmail/${mailboxId}`;
 }
