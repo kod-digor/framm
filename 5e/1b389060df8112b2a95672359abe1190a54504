@@ -1,0 +1,28 @@
+apps/web/src/app/actions/mailboxes.ts
+  s_1b46356c325529::t_7260146d32635c 125-129
+  s_1b46356c325529::t_711a5fb16080dc 51-55,60-63
+  s_1b46356c325529::t_4eb323ddced0b2 12,14
+  s_1b46356c325529::t_9100ba5ae5447e 82-91
+apps/web/src/lib/stalwart/client.ts
+  s_1b46356c325529::t_c17bc47b6db26e 79-91
+apps/web/src/components/mailboxes/create-mailbox-form.tsx
+  s_1b46356c325529::t_00a0745b8177d7 48
+apps/web/messages/fr.json
+  s_1b46356c325529::t_0e9886c037e15f 161-162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "5e1b389060df8112b2a95672359abe1190a54504",
+  "prompts": {},
+  "sessions": {
+    "s_1b46356c325529": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f20c5641-1dc0-4104-b6e6-2055fc34be4b",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
