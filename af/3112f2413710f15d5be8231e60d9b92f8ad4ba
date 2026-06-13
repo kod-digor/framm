@@ -1,0 +1,19 @@
+apps/web/src/lib/stalwart/webmail-proxy.ts
+  s_10a7c7ce4aa654::t_f07841b21eecb5 75-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "af3112f2413710f15d5be8231e60d9b92f8ad4ba",
+  "prompts": {},
+  "sessions": {
+    "s_10a7c7ce4aa654": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5cc6c92f-5067-410a-ab3c-6dca61beb041",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
