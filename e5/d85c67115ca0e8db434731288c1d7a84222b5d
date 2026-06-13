@@ -1,0 +1,23 @@
+deploy/scripts/lib/host-setup.sh
+  s_67e3df7d5f9612::t_5da6515d829639 5-18,22
+deploy/cloud-init/app.yaml
+  s_67e3df7d5f9612::t_cebb142f8a8549 14-15,26-33
+deploy/cloud-init/mail.yaml
+  s_67e3df7d5f9612::t_cebb142f8a8549 14-15,26-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e5d85c67115ca0e8db434731288c1d7a84222b5d",
+  "prompts": {},
+  "sessions": {
+    "s_67e3df7d5f9612": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f4ac3cdc-73b2-44fb-b996-ec37d115986a",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
