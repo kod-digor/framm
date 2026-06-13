@@ -1,0 +1,51 @@
+apps/web/src/lib/stalwart/webmail-proxy.ts
+  s_10a7c7ce4aa654::t_67cd03ee9c4994 26-35,37,41-44
+  s_10a7c7ce4aa654::t_f6df1c1c8a0446 265-266,269,275-283,286
+  s_10a7c7ce4aa654::t_227af15967244a 178-180
+  s_ac3551cfd27b16::t_18e023676c56b5 120-140
+  s_ac3551cfd27b16::t_ff891e495cf1a7 263-264,267-268,270-274
+  s_10a7c7ce4aa654::t_03b347bbe22bf7 188
+  s_10a7c7ce4aa654::t_9a6dc9602119d4 226
+  s_ac3551cfd27b16::t_59a74f56cfadbf 239-240
+apps/web/src/lib/admin/health-checks.ts
+  s_ac3551cfd27b16::t_99a3ad27e7837c 162-179,181-187,206-250,262-269
+  s_ac3551cfd27b16::t_dbbe755b2e4859 251-261
+  s_ac3551cfd27b16::t_f6b03e0fee4226 17
+  s_ac3551cfd27b16::t_47fd9024db9f91 180,188-205
+  s_ac3551cfd27b16::t_8c11bdc6cd319e 778
+apps/web/messages/fr.json
+  s_ac3551cfd27b16::t_d7c498687f786c 302-305
+apps/web/src/lib/stalwart/webmail-auth.ts
+  s_10a7c7ce4aa654::t_7786f0df420f4c 14
+  s_ac3551cfd27b16::t_0a572e63219082 62,64-66,69
+  s_ac3551cfd27b16::t_293787a375de6f 117-119
+  s_10a7c7ce4aa654::t_3cb238361f7625 67-68,80
+apps/web/src/app/actions/mailboxes.ts
+  s_ac3551cfd27b16::t_6790d2f4cfc6fe 220-223
+.cursor/rules/admin-health-tests.mdc
+  s_ac3551cfd27b16::t_9fa0ca5f8a4936 37-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "5a7b3ce4ea08cde5e21a9f3a4a291a7a8398a4d2",
+  "prompts": {},
+  "sessions": {
+    "s_10a7c7ce4aa654": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5cc6c92f-5067-410a-ab3c-6dca61beb041",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_ac3551cfd27b16": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "68ae9a23-ee4f-42f4-9308-e0e4393c4f4b",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
