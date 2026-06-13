@@ -1,0 +1,19 @@
+deploy/scripts/lib/stalwart-setup.sh
+  s_9434c0cfc184d1::t_085acbb27acab6 318-319
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "0a17e41fa0ca9e8c0a72ae7269748635302ae4ff",
+  "prompts": {},
+  "sessions": {
+    "s_9434c0cfc184d1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ae330c58-1f3e-4829-b041-d22b05aa9c43",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
