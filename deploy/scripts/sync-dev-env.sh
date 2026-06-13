@@ -21,10 +21,15 @@ set -a
 source "$PROD_ENV"
 set +a
 
-if [[ -z "${DB_PASSWORD:-}" ]]; then
-  echo "DB_PASSWORD absent de env.production"
+if [[ -z "${RDB_PASSWORD:-}" ]]; then
+  echo "RDB_PASSWORD absent de env.production"
   exit 1
 fi
+
+framm_urlencode() {
+  python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$1"
+}
+RDB_PASSWORD_ENCODED="$(framm_urlencode "$RDB_PASSWORD")"
 
 WEBMAIL_URL="${WEBMAIL_URL:-https://webmail.${PRIMARY_PLATFORM_DOMAIN:-kod-digor.bzh}}"
 STALWART_JMAP_URL="${WEBMAIL_URL}"
@@ -43,8 +48,8 @@ if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
 fi
 
 cat > "$OUT" <<EOF
-# Dev local → DB prod via tunnel (bin/framm db-tunnel)
-DATABASE_URL=postgresql://framm:${DB_PASSWORD}@127.0.0.1:${TUNNEL_PORT}/framm
+# Dev local → RDB prod via tunnel (bin/framm db-tunnel)
+DATABASE_URL=postgresql://framm:${RDB_PASSWORD_ENCODED}@127.0.0.1:${TUNNEL_PORT}/framm?sslmode=require
 AUTH_SECRET=${AUTH_SECRET}
 AUTH_URL=http://localhost:3000
 PLATFORM_DOMAINS=${PLATFORM_DOMAINS:-kod-digor.bzh}

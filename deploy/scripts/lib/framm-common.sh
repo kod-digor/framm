@@ -80,8 +80,9 @@ framm_ci_setup_ssh() {
 framm_load_deploy_context() {
   PRIMARY_PLATFORM_DOMAIN="${PRIMARY_PLATFORM_DOMAIN:-kod-digor.bzh}"
 
-  if [[ -n "${APP_PUBLIC_IP:-}" && -n "${MAIL_PUBLIC_IP:-}" ]]; then
-    export APP_PUBLIC_IP MAIL_PUBLIC_IP
+  if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
+    export MAIL_PUBLIC_IP
+    [[ -n "${APP_PUBLIC_IP:-}" ]] && export APP_PUBLIC_IP
     return 0
   fi
 
@@ -90,14 +91,13 @@ framm_load_deploy_context() {
     return 0
   fi
 
-  echo "APP_PUBLIC_IP et MAIL_PUBLIC_IP requis (variables CI ou terraform output local)"
+  echo "MAIL_PUBLIC_IP requis (variables CI ou terraform output local)"
   exit 1
 }
 
 framm_reset_known_hosts() {
   framm_load_tf_outputs 2>/dev/null || true
   : > "/tmp/framm-ssh-known-hosts-${UID}"
-  ssh-keygen -R "${APP_PUBLIC_IP:-}" -f "${HOME}/.ssh/known_hosts" 2>/dev/null || true
   ssh-keygen -R "${MAIL_PUBLIC_IP:-}" -f "${HOME}/.ssh/known_hosts" 2>/dev/null || true
 }
 
@@ -163,9 +163,8 @@ framm_rsync_mail() {
 framm_push_env() {
   local env_file="${FRAMM_ROOT}/deploy/.generated/env.production"
   [[ -f "$env_file" ]] || return 0
-  local host
-  for host in "$APP_PUBLIC_IP" "$MAIL_PUBLIC_IP"; do
-    framm_ssh "$host" "mkdir -p /opt/framm/deploy/.generated"
+  local host="$MAIL_PUBLIC_IP"
+  framm_ssh "$host" "mkdir -p /opt/framm/deploy/.generated"
     if framm_ssh "$host" "test -f /opt/framm/deploy/.generated/env.production" 2>/dev/null; then
       scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/tmp/framm-env.new"
       framm_ssh "$host" bash <<'MERGE'
@@ -182,7 +181,6 @@ MERGE
       scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/opt/framm/deploy/.generated/env.production"
       echo "env.production déposé sur ${host}"
     fi
-  done
 }
 
 framm_render_nginx() {

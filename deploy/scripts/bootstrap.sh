@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Bootstrap prod : Terraform, VM Mail, cluster Kapsule
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -11,7 +12,6 @@ mkdir -p "$GEN_DIR"
 
 echo "=== Framm bootstrap ==="
 
-# DNS : activer si la zone Scaleway est prête, sinon attendre
 if [[ "${DNS_ENABLED:-false}" != "true" ]]; then
   if scw dns record list "${PRIMARY_PLATFORM_DOMAIN}" &>/dev/null; then
     export DNS_ENABLED=true
@@ -27,35 +27,29 @@ else
 fi
 
 "${ROOT}/deploy/scripts/render-alertmanager.sh"
-
 framm_load_tf_outputs
 
-# Recréer les VMs si SSH indisponible (cloud-init avec clé SSH)
-if ! framm_ssh "$APP_PUBLIC_IP" "true" 2>/dev/null; then
-  echo "SSH indisponible — recréation des VMs pour appliquer cloud-init..."
+if ! framm_ssh "$MAIL_PUBLIC_IP" "true" 2>/dev/null; then
+  echo "SSH Mail indisponible — recréation VM Mail..."
   "${ROOT}/deploy/scripts/tf-apply.sh" \
-    -replace="module.app_vm.scaleway_instance_server.this" \
     -replace="module.mail_vm.scaleway_instance_server.this"
   framm_load_tf_outputs
   framm_reset_known_hosts
 fi
 
-framm_wait_ssh "$APP_PUBLIC_IP"
-framm_wait_ssh "$MAIL_PUBLIC_IP"
+"${ROOT}/deploy/scripts/remote-deploy-mail.sh"
 
-"${ROOT}/deploy/scripts/remote-deploy.sh"
+echo "=== Bootstrap Kubernetes (app) ==="
+"${ROOT}/deploy/scripts/k8s-bootstrap.sh"
 
 framm_wait_dns_public 60 || true
 
-echo "Configuration HTTPS..."
-if "${ROOT}/deploy/scripts/setup-tls.sh" app; then
-  "${ROOT}/deploy/scripts/setup-tls.sh" mail || true
-else
-  echo "HTTPS App échoué — réessayez : bin/framm setup-tls"
-fi
+echo "Configuration HTTPS (VM Mail)..."
+"${ROOT}/deploy/scripts/setup-tls.sh" mail || true
 
 echo ""
 echo "Bootstrap terminé."
+echo "App : Kapsule (LB ${APP_PUBLIC_IP}) — TLS via cert-manager"
 echo "Fichier généré : ${GEN_DIR}/env.production"
 
 cd "${ROOT}/terraform/environments/prod"

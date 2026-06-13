@@ -44,17 +44,11 @@ if [[ -n "${WEBMAIL_URL:-}" && "${WEBMAIL_URL}" != "skip" ]]; then
   check_tls "Webmail" "${WEBMAIL_URL}/login"
 fi
 
-if [[ $FAIL -ne 0 && "${FRAMM_CI:-}" == "true" && -n "${APP_PUBLIC_IP:-}" ]]; then
+if [[ $FAIL -ne 0 && "${FRAMM_CI:-}" == "true" && -n "${MAIL_PUBLIC_IP:-}" ]]; then
   FAIL=0
   # shellcheck source=lib/framm-common.sh
   source "${ROOT}/deploy/scripts/lib/framm-common.sh"
   framm_ci_setup_ssh
-  if framm_ssh "$APP_PUBLIC_IP" "curl -sf http://127.0.0.1:3000/api/health" >/dev/null 2>&1; then
-    echo "OK  App health (via VM)"
-  else
-    echo "FAIL App health (via VM)"
-    FAIL=1
-  fi
   if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
     code="$(framm_ssh "$MAIL_PUBLIC_IP" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/login" 2>/dev/null || echo "000")"
     if [[ "$code" != "000" && "$code" != "502" && "$code" != "503" ]]; then

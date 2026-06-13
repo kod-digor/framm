@@ -104,12 +104,7 @@ for i in $(seq 1 30); do
   sleep 10
 done
 
-echo ""
 echo "Bootstrap Kubernetes terminé."
 echo "Mot de passe initial ArgoCD :"
 echo "  kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
 echo "Interface : kubectl -n argocd port-forward svc/argocd-server 8083:443 → https://localhost:8083"
-echo ""
-echo "Quand Traefik est prêt, récupérez l'IP du load balancer puis basculez le DNS :"
-echo "  kubectl -n traefik get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
-echo "  TF_VAR_k8s_lb_ip=<ip> bin/framm bootstrap"
