@@ -1,0 +1,25 @@
+k8s/templates/monitoring-app.tpl.yaml
+  s_7f64b890629cff::t_3324aecf4b2153 34,41
+k8s/apps/web/hpa.yaml
+  s_7f64b890629cff::t_3324aecf4b2153 10
+terraform/environments/prod/variables.tf
+  s_7f64b890629cff::t_3324aecf4b2153 106,144-145
+k8s/apps/web/deployment-web.yaml
+  s_7f64b890629cff::t_3324aecf4b2153 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "7bfd0045e427893650a65217f3afc3d02fe3ded6",
+  "prompts": {},
+  "sessions": {
+    "s_7f64b890629cff": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1ea5b607-8dfb-41b2-b0dd-c4974fb7fd69",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
