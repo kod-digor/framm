@@ -1,0 +1,26 @@
+apps/web/src/components/mailboxes/edit-mailbox-form.tsx
+  s_00ea0b1c8831de::t_09655be4f83657 166
+  s_00ea0b1c8831de::t_0a7c475ead2b58 45
+  s_00ea0b1c8831de::t_c7cfdd3036c7f4 3
+  s_00ea0b1c8831de::t_90b6ccea051e5d 144
+  s_00ea0b1c8831de::t_f5ba1ad8a62861 103
+  s_00ea0b1c8831de::t_4c7f433aa94049 128
+apps/web/src/components/mail/bulwark-mail.tsx
+  s_00ea0b1c8831de::t_4d4ffed0298f07 188-189,202-215,219-232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9d6fcaaa0bc6f45b0e5613151d44dae5fbf83c38",
+  "prompts": {},
+  "sessions": {
+    "s_00ea0b1c8831de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a860922-e9f4-4046-b28b-24f34780c59e",
+        "model": "composer-2.5"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
