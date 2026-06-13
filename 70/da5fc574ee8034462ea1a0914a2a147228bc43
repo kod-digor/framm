@@ -1,0 +1,37 @@
+apps/web/env.example
+  s_731109ba1d6aa4::t_3c06927e2bb82f 11-15
+deploy/scripts/ci-infra-health-checks.sh
+  s_731109ba1d6aa4::t_1dbe2b2121a178 1-42
+apps/web/scripts/run-infra-health-checks.mjs
+  s_731109ba1d6aa4::t_41f8959b59ab0c 1-184
+.github/workflows/deploy.yml
+  s_731109ba1d6aa4::t_d22e875c7c90ce 103
+  s_731109ba1d6aa4::t_c1c3d8d4ee1b6c 40-64
+  s_731109ba1d6aa4::t_2880dc6cecd696 82
+apps/web/src/lib/stalwart/client.ts
+  s_731109ba1d6aa4::t_638124adb69979 555,557
+deploy/scripts/sync-dev-env.sh
+  s_731109ba1d6aa4::t_50439a9e36cab9 60-63
+apps/web/package.json
+  s_731109ba1d6aa4::t_9e53914501b852 12
+apps/web/src/lib/admin/health-checks.ts
+  s_731109ba1d6aa4::t_eedd6a35b3b31f 340
+  s_731109ba1d6aa4::t_fcf4f36ab2ec21 11
+  s_731109ba1d6aa4::t_2ae8ee84d1b003 677
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "70da5fc574ee8034462ea1a0914a2a147228bc43",
+  "prompts": {},
+  "sessions": {
+    "s_731109ba1d6aa4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a29d80f4-45cc-4c97-ae82-a08e702d5278",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
