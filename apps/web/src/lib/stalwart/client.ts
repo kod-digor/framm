@@ -160,8 +160,14 @@ function accountPasswordPatch(password: string) {
   };
 }
 
-export async function createAccount(localPart: string, domainId: string, password: string) {
+export async function createAccount(
+  localPart: string,
+  domainId: string,
+  password: string,
+  displayName?: string | null
+) {
   const id = `account-${Date.now()}`;
+  const name = displayName?.trim() || parseEmailLocalPart(localPart);
   return jmapCall([
     [
       "x:Account/set",
@@ -169,7 +175,7 @@ export async function createAccount(localPart: string, domainId: string, passwor
         create: {
           [id]: {
             "@type": "User",
-            name: parseEmailLocalPart(localPart),
+            name,
             domainId,
             ...accountPasswordPatch(password),
             roles: { "@type": "User" },
@@ -185,16 +191,39 @@ export async function createAccount(localPart: string, domainId: string, passwor
   ]);
 }
 
-export async function updateAccountPassword(stalwartAccountId: string, password: string) {
+export async function updateAccount(
+  stalwartAccountId: string,
+  patch: { name?: string; password?: string }
+) {
+  const update: Record<string, unknown> = {};
+  if (patch.name !== undefined) update.name = patch.name;
+  if (patch.password !== undefined) Object.assign(update, accountPasswordPatch(patch.password));
+
   return jmapCall([
     [
       "x:Account/set",
       {
         update: {
-          [stalwartAccountId]: accountPasswordPatch(password),
+          [stalwartAccountId]: update,
         },
       },
       "u1",
+    ],
+  ]);
+}
+
+export async function updateAccountPassword(stalwartAccountId: string, password: string) {
+  return updateAccount(stalwartAccountId, { password });
+}
+
+export async function deleteAccount(stalwartAccountId: string) {
+  return jmapCall([
+    [
+      "x:Account/set",
+      {
+        destroy: [stalwartAccountId],
+      },
+      "d1",
     ],
   ]);
 }
@@ -339,6 +368,43 @@ export async function resolveEmailAliasStalwartId(
 
 export async function listAccounts() {
   return jmapCall([["x:Account/query", { filter: {} }, "q1"]]);
+}
+
+export async function queryAccountByEmail(email: string) {
+  const localPart = parseEmailLocalPart(email);
+  return jmapCall([["x:Account/query", { filter: { text: localPart } }, "q1"]]);
+}
+
+function extractAccountRecords(res: unknown): { id: string; emailAddress?: string }[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("list" in body)) return [];
+  const list = (body as { list: unknown }).list;
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (item): item is { id: string; emailAddress?: string } =>
+      typeof item === "object" && item !== null && "id" in item
+  );
+}
+
+export async function resolveStalwartAccountId(
+  stalwartAccountId: string | null,
+  address: string
+): Promise<{ id: string | null; unavailable: boolean }> {
+  if (stalwartAccountId) return { id: stalwartAccountId, unavailable: false };
+
+  const queryRes = await queryAccountByEmail(address);
+  if (isStalwartFailure(queryRes)) return { id: null, unavailable: true };
+
+  const ids = extractJmapQueryIds(queryRes);
+  if (ids.length === 0) return { id: null, unavailable: false };
+  if (ids.length === 1) return { id: ids[0], unavailable: false };
+
+  const getRes = await jmapCall([["x:Account/get", { ids }, "g1"]]);
+  if (isStalwartFailure(getRes)) return { id: null, unavailable: true };
+
+  const match = extractAccountRecords(getRes).find((account) => account.emailAddress === address);
+  return { id: match?.id ?? null, unavailable: false };
 }
 
 export function getMailConfig() {

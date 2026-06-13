@@ -7,10 +7,13 @@ import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/action-result";
 import {
   createAccount,
+  deleteAccount,
   extractStalwartCreatedId,
   extractStalwartSetIssue,
   isStalwartFailure,
+  resolveStalwartAccountId,
   resolveStalwartDomainId,
+  updateAccount,
   updateAccountPassword,
 } from "@/lib/stalwart/client";
 import { sealSecret } from "@/lib/crypto/seal";
@@ -26,6 +29,8 @@ export async function createMailboxAction(
   const localPart = (formData.get("localPart") as string).trim().toLowerCase();
   const domainId = formData.get("domainId") as string;
   const password = (formData.get("password") as string) ?? "";
+  const displayNameRaw = (formData.get("displayName") as string)?.trim();
+  const displayName = displayNameRaw || null;
 
   if (!localPart || password.length < 8) {
     return { ok: false, message: "passwordError" };
@@ -56,7 +61,12 @@ export async function createMailboxAction(
       })
     : null;
 
-  const stalwartRes = await createAccount(localPart, domainResolved.id, password);
+  const stalwartRes = await createAccount(
+    localPart,
+    domainResolved.id,
+    password,
+    displayName
+  );
   if (isStalwartFailure(stalwartRes)) {
     const issue = extractStalwartSetIssue(stalwartRes);
     const orphanId =
@@ -68,12 +78,20 @@ export async function createMailboxAction(
         console.error("[createMailbox] orphan password update failed:", orphanId, pwdRes);
         return { ok: false, message: "stalwartError" };
       }
+      if (displayName) {
+        const nameRes = await updateAccount(orphanId, { name: displayName });
+        if (isStalwartFailure(nameRes)) {
+          console.error("[createMailbox] orphan display name update failed:", orphanId, nameRes);
+          return { ok: false, message: "stalwartError" };
+        }
+      }
       await persistDomainId;
       await prisma.mailbox.create({
         data: {
           organizationId: orgId,
           domainId: domain.id,
           address,
+          displayName,
           stalwartAccountId: orphanId,
           credentialsEnc: sealSecret(password),
         },
@@ -98,6 +116,7 @@ export async function createMailboxAction(
       organizationId: orgId,
       domainId: domain.id,
       address,
+      displayName,
       stalwartAccountId,
       credentialsEnc: sealSecret(password),
     },
@@ -105,4 +124,101 @@ export async function createMailboxAction(
 
   revalidatePath("/dashboard/mailboxes");
   return { ok: true, message: "created", detail: address };
+}
+
+export async function updateMailboxAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) redirect("/login?error=session");
+
+  const mailboxId = formData.get("mailboxId") as string;
+  const displayNameRaw = (formData.get("displayName") as string)?.trim();
+  const displayName = displayNameRaw || null;
+  const password = (formData.get("password") as string) ?? "";
+
+  if (!mailboxId) return null;
+
+  if (password && password.length < 8) {
+    return { ok: false, message: "passwordError" };
+  }
+
+  const mailbox = await prisma.mailbox.findFirst({
+    where: { id: mailboxId, organizationId: orgId },
+  });
+  if (!mailbox) return { ok: false, message: "notfound" };
+
+  const nameChanged = (mailbox.displayName ?? "") !== (displayName ?? "");
+  const passwordChanged = password.length > 0;
+
+  if (!nameChanged && !passwordChanged) {
+    revalidatePath("/dashboard/mailboxes");
+    return null;
+  }
+
+  const resolved = await resolveStalwartAccountId(mailbox.stalwartAccountId, mailbox.address);
+  if (resolved.unavailable) {
+    return { ok: false, message: "stalwartError" };
+  }
+
+  if (resolved.id && (nameChanged || passwordChanged)) {
+    const patch: { name?: string; password?: string } = {};
+    if (nameChanged) patch.name = displayName ?? parseEmailLocalPart(mailbox.address);
+    if (passwordChanged) patch.password = password;
+
+    const stalwartRes = await updateAccount(resolved.id, patch);
+    if (isStalwartFailure(stalwartRes)) {
+      return { ok: false, message: "stalwartError" };
+    }
+  }
+
+  const data: { displayName: string | null; credentialsEnc?: string; stalwartAccountId?: string } =
+    { displayName };
+  if (passwordChanged) data.credentialsEnc = sealSecret(password);
+  if (resolved.id && !mailbox.stalwartAccountId) data.stalwartAccountId = resolved.id;
+
+  await prisma.mailbox.update({ where: { id: mailboxId }, data });
+
+  revalidatePath("/dashboard/mailboxes");
+  return { ok: true, message: "updated", detail: mailbox.address };
+}
+
+export async function deleteMailboxAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) redirect("/login?error=session");
+
+  const mailboxId = formData.get("mailboxId") as string;
+  if (!mailboxId) return null;
+
+  const mailbox = await prisma.mailbox.findFirst({
+    where: { id: mailboxId, organizationId: orgId },
+  });
+  if (!mailbox) return { ok: false, message: "notfound" };
+
+  const resolved = await resolveStalwartAccountId(mailbox.stalwartAccountId, mailbox.address);
+  if (resolved.unavailable) {
+    return { ok: false, message: "stalwartError" };
+  }
+
+  if (resolved.id) {
+    const stalwartRes = await deleteAccount(resolved.id);
+    if (isStalwartFailure(stalwartRes)) {
+      return { ok: false, message: "stalwartError" };
+    }
+  }
+
+  await prisma.mailbox.delete({ where: { id: mailboxId } });
+
+  revalidatePath("/dashboard/mailboxes");
+  return { ok: true, message: "deleted", detail: mailbox.address };
+}
+
+function parseEmailLocalPart(email: string): string {
+  return email.split("@")[0] ?? email;
 }

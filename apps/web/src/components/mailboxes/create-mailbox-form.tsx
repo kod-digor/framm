@@ -32,6 +32,7 @@ function CreateMailboxFields({
   const t = useTranslations("mailboxes");
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
 
   return (
@@ -58,6 +59,18 @@ function CreateMailboxFields({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="displayName">{t("displayName")}</Label>
+          <Input
+            id="displayName"
+            name="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder={t("displayNamePlaceholder")}
+          />
+          <p className="text-xs text-zinc-500">{t("displayNameHint")}</p>
+        </div>
+
+        <div className="space-y-2 sm:col-span-2 sm:max-w-md">
           <Label htmlFor="password">{t("password")}</Label>
           <Input
             id="password"

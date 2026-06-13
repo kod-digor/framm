@@ -96,6 +96,7 @@ model Mailbox {
   domainId          String
   domain            Domain       @relation(fields: [domainId], references: [id])
   address           String       @unique
+  displayName       String?
   stalwartAccountId String?
   /// Mot de passe boîte chiffré (AES-GCM) pour SSO webmail — jamais en clair
   credentialsEnc    String?

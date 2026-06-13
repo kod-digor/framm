@@ -1,12 +1,11 @@
-import Link from "next/link";
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { CreateMailboxForm } from "@/components/mailboxes/create-mailbox-form";
+import { MailboxList } from "@/components/mailboxes/mailbox-list";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getT } from "@/i18n/t";
-import { formatBytes } from "@/lib/utils";
+import { Mailbox } from "lucide-react";
 
 export default async function MailboxesPage() {
   const session = await requireOrgAdmin();
@@ -24,6 +23,24 @@ export default async function MailboxesPage() {
       orderBy: { fqdn: "asc" },
     }),
   ]);
+
+  const mailboxRows = mailboxes.map((mailbox) => ({
+    id: mailbox.id,
+    address: mailbox.address,
+    displayName: mailbox.displayName,
+    domain: mailbox.domain.fqdn,
+    usedBytes: Number(mailbox.usedBytes),
+    quotaBytes: Number(mailbox.quotaBytes),
+  }));
+
+  const listLabels = {
+    colAddress: t("colAddress"),
+    colDisplayName: t("colDisplayName"),
+    colDomain: t("colDomain"),
+    colQuota: t("colQuota"),
+    colActions: t("colActions"),
+    config: t("config"),
+  };
 
   return (
     <div className="space-y-6">
@@ -48,52 +65,22 @@ export default async function MailboxesPage() {
         </p>
       )}
 
-      {mailboxes.length === 0 ? (
-        <p className="text-sm text-zinc-500">{t("empty")}</p>
-      ) : (
-        <div className="space-y-3">
-          {mailboxes.map((mailbox) => {
-            const used = Number(mailbox.usedBytes);
-            const quota = Number(mailbox.quotaBytes);
-            const percent = quota > 0 ? Math.min(100, Math.round((used / quota) * 100)) : 0;
-
-            return (
-              <Card key={mailbox.id}>
-                <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0 space-y-2">
-                    <Link
-                      href={`/dashboard/mailboxes/${mailbox.id}`}
-                      className="block truncate text-lg font-semibold text-zinc-900 hover:underline"
-                    >
-                      {mailbox.address}
-                    </Link>
-                    <p className="text-sm text-zinc-500">
-                      {t("domain")} : {mailbox.domain.fqdn}
-                    </p>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs text-zinc-500">
-                        <span>{t("quota")}</span>
-                        <span>
-                          {formatBytes(used)} / {formatBytes(quota)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
-                        <div
-                          className="h-full rounded-full bg-zinc-900 transition-all"
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <Button asChild variant="outline" size="sm" className="shrink-0">
-                    <Link href={`/dashboard/mailboxes/${mailbox.id}`}>{t("config")}</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{t("listTitle")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {mailboxes.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
+              <Mailbox className="mx-auto size-8 text-zinc-300" aria-hidden />
+              <p className="mt-3 text-sm font-medium text-zinc-700">{t("emptyTitle")}</p>
+              <p className="mt-1 text-sm text-zinc-500">{t("emptyHint")}</p>
+            </div>
+          ) : (
+            <MailboxList mailboxes={mailboxRows} labels={listLabels} />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
