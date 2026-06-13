@@ -66,6 +66,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           MAIL_PUBLIC_IP: ${{ secrets.MAIL_PUBLIC_IP }}
+          BULWARK_SESSION_SECRET: ${{ secrets.BULWARK_SESSION_SECRET }}
         run: ./deploy/scripts/ci-deploy-mail.sh
 
   # GitOps Kubernetes : construit les images, les pousse au registre Scaleway

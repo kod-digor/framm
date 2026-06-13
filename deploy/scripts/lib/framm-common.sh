@@ -156,6 +156,30 @@ framm_rsync_mail() {
     "${FRAMM_ROOT}/deploy/" "root@${MAIL_PUBLIC_IP}:/opt/framm/deploy/"
 }
 
+
+framm_mail_ensure_env_key() {
+  local key="$1"
+  local value="$2"
+  [[ -n "$value" ]] || return 0
+  framm_ssh "$MAIL_PUBLIC_IP" bash -s "$key" "$value" <<'REMOTE'
+set -euo pipefail
+key="$1"
+value="$2"
+target=/opt/framm/deploy/.generated/env.production
+mkdir -p "$(dirname "$target")"
+touch "$target"
+if grep -q "^${key}=" "$target" 2>/dev/null; then
+  current="$(grep "^${key}=" "$target" | head -1 | cut -d= -f2-)"
+  if [[ -z "$current" ]]; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "$target"
+  fi
+else
+  printf '%s=%s\n' "$key" "$value" >> "$target"
+fi
+REMOTE
+  echo "Clé ${key} synchronisée sur la VM mail (si absente ou vide)"
+}
+
 # Dépose env.production sur les VMs (le rsync exclut .generated pour ne pas
 # écraser les valeurs mises à jour côté VM, comme la clé API Stalwart
 # régénérée). Si le fichier existe déjà sur la VM, seules les clés absentes

@@ -34,14 +34,19 @@ source /opt/framm/deploy/scripts/lib/stalwart-setup.sh
 framm_stalwart_ensure_ready
 REMOTE
 
-echo "Nginx HTTP (pré-TLS, VM Mail)..."
+echo "Nginx mail (TLS si certificats présents)..."
 framm_ssh "$MAIL_PUBLIC_IP" bash -s "$PRIMARY_PLATFORM_DOMAIN" <<'REMOTE'
 set -euo pipefail
-DOMAIN="$1"
-sed "s/\${PRIMARY_DOMAIN}/${DOMAIN}/g" /opt/framm/deploy/nginx/mail-http.conf > /etc/nginx/sites-available/framm-mail
-ln -sf /etc/nginx/sites-available/framm-mail /etc/nginx/sites-enabled/framm-mail
-rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl enable nginx && systemctl reload nginx
+set -a
+# shellcheck source=/dev/null
+source /opt/framm/deploy/.generated/env.production
+set +a
+# shellcheck source=lib/mail-nginx.sh
+source /opt/framm/deploy/scripts/lib/mail-nginx.sh
+framm_mail_apply_nginx "$1"
+framm_mail_obtain_missing_certs "$1" "${BUREAU_ADMIN_EMAIL:-}"
+framm_mail_apply_nginx "$1"
+systemctl enable nginx
 REMOTE
 
 echo "Déploiement mail terminé"
