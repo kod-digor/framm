@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -41,9 +41,8 @@ function EditMailboxFields({
 
   useEffect(() => {
     if (!state?.ok) return;
-    setPassword("");
     onCancel();
-  }, [state]);
+  }, [state, onCancel]);
 
   return (
     <form action={formAction} className="flex min-w-0 flex-col gap-3">
@@ -101,6 +100,7 @@ export function EditMailboxDisplayName({
 }) {
   const t = useTranslations("mailboxes");
   const [editing, setEditing] = useState(false);
+  const handleCancel = useCallback(() => setEditing(false), []);
 
   if (!editing) {
     return (
@@ -125,7 +125,7 @@ export function EditMailboxDisplayName({
       mailboxId={mailboxId}
       address={address}
       displayName={displayName}
-      onCancel={() => setEditing(false)}
+      onCancel={handleCancel}
     />
   );
 }
@@ -141,6 +141,7 @@ export function EditMailboxForm({
 }) {
   const t = useTranslations("mailboxes");
   const [editing, setEditing] = useState(false);
+  const handleCancel = useCallback(() => setEditing(false), []);
 
   if (!editing) {
     return (
@@ -162,7 +163,7 @@ export function EditMailboxForm({
       mailboxId={mailboxId}
       address={address}
       displayName={displayName}
-      onCancel={() => setEditing(false)}
+      onCancel={handleCancel}
     />
   );
 }

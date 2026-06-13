@@ -185,15 +185,8 @@ export function BulwarkMail({
 
   const selectedEmail = emails.find((e) => e.id === selectedId) as JmapEmailDetail | undefined;
 
-  const loadInbox = useCallback(
-    async (silent = false) => {
-      if (!silent) setLoading(true);
-      else setRefreshing(true);
-      setError(null);
-
-      const res = await fetch(`/api/mail/${mailboxId}/jmap`, { cache: "no-store" });
-      const data = (await res.json().catch(() => ({}))) as InboxResponse & { error?: string };
-
+  const applyInboxResponse = useCallback(
+    (res: Response, data: InboxResponse & { error?: string }) => {
       if (!res.ok) {
         setError((data.error as MailErrorCode) ?? "load_failed");
         setEmails([]);
@@ -206,12 +199,37 @@ export function BulwarkMail({
       setLoading(false);
       setRefreshing(false);
     },
-    [mailboxId]
+    []
+  );
+
+  const loadInbox = useCallback(
+    async (silent = false) => {
+      if (silent) setRefreshing(true);
+      else setLoading(true);
+      setError(null);
+
+      const res = await fetch(`/api/mail/${mailboxId}/jmap`, { cache: "no-store" });
+      const data = (await res.json().catch(() => ({}))) as InboxResponse & { error?: string };
+      applyInboxResponse(res, data);
+    },
+    [mailboxId, applyInboxResponse]
   );
 
   useEffect(() => {
-    void loadInbox();
-  }, [loadInbox]);
+    let cancelled = false;
+
+    void (async () => {
+      const res = await fetch(`/api/mail/${mailboxId}/jmap`, { cache: "no-store" });
+      if (cancelled) return;
+
+      const data = (await res.json().catch(() => ({}))) as InboxResponse & { error?: string };
+      applyInboxResponse(res, data);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mailboxId, applyInboxResponse]);
 
   const errorMessage = error ? t(`errors.${error}` as "errors.load_failed") : null;
 
