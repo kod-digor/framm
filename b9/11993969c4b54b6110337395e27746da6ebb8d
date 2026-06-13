@@ -1,0 +1,29 @@
+apps/web/src/app/dashboard/mail/[mailboxId]/page.tsx
+  s_023aeefe67392f::t_7a8d38225b8d55 52-57
+apps/web/messages/fr.json
+  s_023aeefe67392f::t_c90526be3297ac 231
+  s_023aeefe67392f::t_c6a5cb7ac8a670 232
+apps/web/src/components/mailboxes/edit-mailbox-form.tsx
+  s_023aeefe67392f::t_32a5b340284468 3
+  s_023aeefe67392f::t_a7d66bab78452a 46
+  s_023aeefe67392f::t_9d2aee853fd10d 42-45,47,49
+apps/web/src/app/actions/mailboxes.ts
+  s_023aeefe67392f::t_defda230ff23e3 242
+  s_023aeefe67392f::t_566c40539fe336 207-210,213-223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b911993969c4b54b6110337395e27746da6ebb8d",
+  "prompts": {},
+  "sessions": {
+    "s_023aeefe67392f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1741696b-47c1-4f89-989a-b21a70745ee5",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
