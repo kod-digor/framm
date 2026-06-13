@@ -91,8 +91,8 @@ variable "alert_smtp_from" {
 
 variable "k8s_version" {
   type        = string
-  default     = "1.32"
-  description = "Version mineure Kubernetes (vérifier `scw k8s version list`) — patchs gérés par auto_upgrade"
+  default     = "1.33"
+  description = "Version mineure Kubernetes (vérifier `scw k8s version list`) — patchs gérés par auto_upgrade ; 1.32 EoS Scaleway 2026-06-24"
 }
 
 variable "k8s_node_type" {

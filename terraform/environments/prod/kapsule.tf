@@ -14,7 +14,9 @@ resource "scaleway_k8s_cluster" "framm" {
 
   private_network_id = scaleway_vpc_private_network.framm.id
 
-  # Mises à jour Kubernetes automatiques (dimanche 03h00)
+  # Mises à jour Kubernetes automatiques (dimanche 03h00).
+  # Si upgrade mineur manuel (ex. 1.32→1.33 avant EoS) : aligner var.k8s_version puis
+  # `scw k8s cluster upgrade <id> version=<x.y.z> upgrade-pools=true -w` ou terraform apply.
   auto_upgrade {
     enable                        = true
     maintenance_window_start_hour = 3
