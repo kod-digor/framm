@@ -10,8 +10,29 @@ framm_stalwart_jmap() {
     -d "$body"
 }
 
+framm_stalwart_local_rcpt_ok() {
+  local addr="${1:?}"
+  local ehlo_host="mail.${PRIMARY_PLATFORM_DOMAIN:?}"
+  docker exec framm-mail-stalwart-1 env "RCPT_ADDR=${addr}" "EHLO_HOST=${ehlo_host}" bash -c '
+    exec 3<>/dev/tcp/127.0.0.1/25
+    read -r _ <&3
+    printf "EHLO %s\r\n" "$EHLO_HOST" >&3
+    while IFS= read -r -t 2 line <&3; do
+      case "$line" in ???[^-]*) break;; esac
+    done
+    printf "MAIL FROM:<probe@localhost>\r\n" >&3
+    read -r -t 2 _ <&3
+    printf "RCPT TO:<%s>\r\n" "$RCPT_ADDR" >&3
+    read -r -t 2 line <&3
+    printf "QUIT\r\n" >&3
+    case "$line" in 250*) exit 0;; *) echo "$line" >&2; exit 1;; esac
+  ' 2>/dev/null
+}
+
 framm_stalwart_bootstrapped() {
-  docker exec framm-mail-stalwart-1 test -f /etc/stalwart/config.json 2>/dev/null
+  docker exec framm-mail-stalwart-1 test -f /etc/stalwart/config.json 2>/dev/null || return 1
+  local probe="admin@${PRIMARY_PLATFORM_DOMAIN:?}"
+  framm_stalwart_local_rcpt_ok "$probe"
 }
 
 framm_stalwart_recovery_auth() {

@@ -17,7 +17,7 @@ services:
     volumes:
       # Persistance obligatoire : sans ce montage, mails + config vivent dans
       # la couche éphémère du conteneur et sont perdus à chaque recréation.
-      - /opt/framm/mail-data:/opt/stalwart
+      - /opt/framm/mail-data:/var/lib/stalwart
 
   # docker-proxy → Stalwart renvoie une réponse vide depuis l'hôte (nginx, tunnel SSH).
   # socat sur le réseau compose relaie correctement vers stalwart:8080.

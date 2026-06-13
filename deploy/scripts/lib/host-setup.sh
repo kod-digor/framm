@@ -87,13 +87,14 @@ framm_host_migrate_stalwart() {
   [[ -n "$c" ]] || return 0
   [[ -z "$(ls -A /opt/framm/mail-data 2>/dev/null)" ]] || return 0
   if docker inspect "$c" --format '{{range .Mounts}}{{.Destination}}{{"\n"}}{{end}}' \
-      | grep -q '^/opt/stalwart$'; then
+      | grep -q '^/var/lib/stalwart$'; then
     return 0
   fi
   echo "Migration des données Stalwart vers /opt/framm/mail-data..."
   docker stop "$c" >/dev/null
   mkdir -p /opt/framm/mail-data
-  docker cp "$c":/opt/stalwart/. /opt/framm/mail-data/ 2>/dev/null || true
+  docker cp "$c":/var/lib/stalwart/. /opt/framm/mail-data/ 2>/dev/null || true
+  chown -R 2000:2000 /opt/framm/mail-data
   docker start "$c" >/dev/null || true
   echo "Migration Stalwart terminée ($(du -sh /opt/framm/mail-data | cut -f1))"
 }
