@@ -1,0 +1,27 @@
+deploy/docker/docker-compose.mail.yml
+  s_3c4a79c9316356::t_f30b2d350383b7 20
+deploy/scripts/lib/stalwart-setup.sh
+  s_3c4a79c9316356::t_0e08de4a8b29a8 25
+  s_3c4a79c9316356::t_c30f54ee5c7d59 15-16,19
+  s_3c4a79c9316356::t_f30b2d350383b7 13-14,17-18,20,22,24,26,30-31,33-35
+  s_3c4a79c9316356::t_8cfe62c96899b6 21,23,27-29
+deploy/scripts/lib/host-setup.sh
+  s_3c4a79c9316356::t_f30b2d350383b7 90,96
+  s_3c4a79c9316356::t_e2014d67d5c148 97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "75be0297fc6716ca744d69fbec5912a814bef676",
+  "prompts": {},
+  "sessions": {
+    "s_3c4a79c9316356": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1c55e4ab-132a-43b8-8365-deee15fd878e",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
