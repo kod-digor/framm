@@ -18,7 +18,19 @@ Page : `/dashboard/admin/health` — **accès BUREAU uniquement** (`requireAuth(
 ## Bonnes pratiques
 
 - **Cleanup obligatoire** : comptes Stalwart, MailingList et orgs de test doivent être supprimés après le test.
-- **try/catch** : uniquement sur appels externes (JMAP, HTTP, TCP, S3).
+- **try/catch** : uniquement sur appels externes (JMAP, HTTP, TCP, S3, SMTP).
 - **Statuts** : `ok` (succès), `warn` (non configuré ou dégradé acceptable), `fail` (bloquant).
 - Mettre à jour les descriptions quand le comportement infra change.
-- Ne pas envoyer d'e-mails réels en prod ; SMTP RCPT optionnel → `warn` si bloqué.
+
+## Test redirection e-mail (`email-redirect`)
+
+Ce test envoie un **e-mail SMTP réel** :
+
+1. Crée une MailingList éphémère vers `BUREAU_ADMIN_EMAIL`.
+2. Envoie un message via `OUTBOUND_SMTP_RELAY_*` (TEM, port 2587) ou SMTP Stalwart (:587/:25).
+3. Vérifie la livraison via `x:QueuedMessage/query` + statut `Completed`.
+4. Supprime la MailingList après le test.
+
+Si l'envoi SMTP est impossible (relais non configuré ou injoignable) → **`fail`** avec détail explicite, jamais de `warn` silencieux.
+
+Variables requises pour un test complet : `BUREAU_ADMIN_EMAIL`, `OUTBOUND_SMTP_RELAY_HOST/PORT/USER/SECRET` (ou SMTP Stalwart accessible), `STALWART_API_KEY`.

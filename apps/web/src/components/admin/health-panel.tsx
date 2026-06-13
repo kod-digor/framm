@@ -3,7 +3,6 @@
 import { useCallback, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useT } from "@/i18n/t";
 import {
@@ -20,8 +19,8 @@ type HealthPanelProps = {
 function StatusDot({ status, loading }: { status?: HealthCheckView["status"]; loading?: boolean }) {
   if (loading) {
     return (
-      <span className="flex size-3 shrink-0 items-center justify-center">
-        <Loader2 className="size-3 animate-spin text-amber-500" aria-hidden />
+      <span className="flex size-2.5 shrink-0 items-center justify-center">
+        <Loader2 className="size-2.5 animate-spin text-amber-500" aria-hidden />
       </span>
     );
   }
@@ -35,18 +34,22 @@ function StatusDot({ status, loading }: { status?: HealthCheckView["status"]; lo
           ? "bg-red-500"
           : "bg-zinc-300";
 
-  return (
-    <span
-      className={cn("size-3 shrink-0 rounded-full", color)}
-      aria-hidden
-    />
-  );
+  return <span className={cn("size-2.5 shrink-0 rounded-full", color)} aria-hidden />;
 }
 
 function statusLabel(status: HealthCheckView["status"], t: ReturnType<typeof useT>) {
   if (status === "ok") return t("statusOk");
   if (status === "warn") return t("statusWarn");
   return t("statusFail");
+}
+
+function statusTextClass(status: HealthCheckView["status"]) {
+  return cn(
+    "shrink-0 text-xs font-medium tabular-nums",
+    status === "ok" && "text-emerald-700",
+    status === "warn" && "text-amber-700",
+    status === "fail" && "text-red-700"
+  );
 }
 
 export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
@@ -95,12 +98,7 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            onClick={handleRunAll}
-            disabled={runningAll}
-            className="min-h-11"
-          >
+          <Button type="button" onClick={handleRunAll} disabled={runningAll} className="min-h-11">
             {runningAll ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -136,61 +134,67 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
         </div>
       )}
 
-      <div className="grid gap-3">
-        {checkIds.map((checkId) => {
+      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        {checkIds.map((checkId, index) => {
           const meta = labels[checkId];
           const result = resultMap.get(checkId);
           const loading = runningAll || runningId === checkId;
 
           return (
-            <Card key={checkId}>
-              <CardHeader className="pb-2">
-                <div className="flex items-start gap-3">
+            <div
+              key={checkId}
+              className={cn(index > 0 && "border-t border-zinc-100")}
+            >
+              <div className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
                   <StatusDot
                     status={result?.status}
                     loading={loading && (!result || runningAll)}
                   />
                   <div className="min-w-0 flex-1">
-                    <CardTitle className="text-base">{meta.label}</CardTitle>
-                    <p className="mt-1 text-sm text-zinc-500">{meta.description}</p>
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
+                      <span className="shrink-0 text-sm font-medium leading-tight">{meta.label}</span>
+                      <span className="truncate text-xs text-zinc-500 sm:text-sm">{meta.description}</span>
+                    </div>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pl-5 sm:shrink-0 sm:justify-end sm:pl-0">
+                  {result ? (
+                    <>
+                      <span className={statusTextClass(result.status)}>
+                        {statusLabel(result.status, t)}
+                      </span>
+                      <span className="text-xs tabular-nums text-zinc-400">
+                        {t("duration", { ms: result.durationMs })}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-zinc-400">{t("notRun")}</span>
+                  )}
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="shrink-0"
+                    className="h-8 shrink-0 px-2.5"
                     disabled={runningAll || runningId !== null}
                     onClick={() => handleRunSingle(checkId)}
                   >
                     {runningId === checkId ? (
-                      <Loader2 className="size-4 animate-spin" />
+                      <Loader2 className="size-3.5 animate-spin" />
                     ) : (
                       t("runOne")
                     )}
                   </Button>
                 </div>
-              </CardHeader>
-              {result && (
-                <CardContent className="pt-0">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                    <span
-                      className={cn(
-                        "font-medium",
-                        result.status === "ok" && "text-emerald-700",
-                        result.status === "warn" && "text-amber-700",
-                        result.status === "fail" && "text-red-700"
-                      )}
-                    >
-                      {statusLabel(result.status, t)}
-                    </span>
-                    <span className="text-zinc-400">{t("duration", { ms: result.durationMs })}</span>
-                  </div>
-                  {result.detail && (
-                    <p className="mt-2 break-words text-sm text-zinc-600">{result.detail}</p>
-                  )}
-                </CardContent>
+              </div>
+
+              {result?.detail && (
+                <p className="border-t border-zinc-50 px-3 py-1.5 pl-8 text-xs leading-relaxed break-words text-zinc-600">
+                  {result.detail}
+                </p>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>

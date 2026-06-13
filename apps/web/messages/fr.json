@@ -272,6 +272,7 @@
     "runningAll": "Tests en cours…",
     "refresh": "Actualiser",
     "runOne": "Tester",
+    "notRun": "—",
     "lastRun": "Dernier lancement : {date}",
     "duration": "{ms} ms",
     "statusOk": "OK",
@@ -303,7 +304,7 @@
       },
       "email-redirect": {
         "label": "Redirection e-mail",
-        "description": "Crée une MailingList test puis la détruit (sans envoi SMTP réel)."
+        "description": "MailingList test, envoi SMTP réel (TEM/Stalwart) et vérification queue Stalwart."
       },
       "mail-server": {
         "label": "Serveur mail",

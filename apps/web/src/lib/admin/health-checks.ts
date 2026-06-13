@@ -1,4 +1,5 @@
 import { connect } from "node:net";
+import nodemailer from "nodemailer";
 import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import { prisma } from "@/lib/prisma";
 import {
@@ -219,16 +220,291 @@ async function checkWebmailAccess() {
   };
 }
 
+type JmapMethodCall = [string, Record<string, unknown>, string];
+
+type SmtpRelayConfig = {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+};
+
+type QueuedRecipientStatus =
+  | "Scheduled"
+  | "Completed"
+  | "TemporaryFailure"
+  | "PermanentFailure"
+  | string;
+
+async function stalwartAdminJmap(methodCalls: JmapMethodCall[], timeoutMs = 15_000) {
+  const base = (process.env.WEBMAIL_URL || process.env.STALWART_URL || "").replace(/\/$/, "");
+  const apiKey = process.env.STALWART_API_KEY ?? "";
+  if (!base || !apiKey) {
+    return { unavailable: true as const };
+  }
+
+  try {
+    const res = await fetch(`${base}/jmap`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        using: ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"],
+        methodCalls,
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+
+    if (!res.ok) {
+      return { error: `JMAP HTTP ${res.status}` as const };
+    }
+
+    return res.json();
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    return { error: detail };
+  }
+}
+
+function resolveSmtpRelayConfig(): SmtpRelayConfig | null {
+  const host = process.env.OUTBOUND_SMTP_RELAY_HOST;
+  const user = process.env.OUTBOUND_SMTP_RELAY_USER;
+  const pass = process.env.OUTBOUND_SMTP_RELAY_SECRET;
+  if (!host || !user || !pass) return null;
+
+  return {
+    host,
+    port: Number(process.env.OUTBOUND_SMTP_RELAY_PORT ?? "2587"),
+    user,
+    pass,
+  };
+}
+
+function resolveStalwartSmtpHost(): string | null {
+  return (
+    parseHostFromUrl(process.env.STALWART_URL ?? "") ??
+    parseHostFromUrl(process.env.WEBMAIL_URL ?? "") ??
+    (getPlatformEmailDomains()[0] ? `mail.${getPlatformEmailDomains()[0]}` : null)
+  );
+}
+
+async function sendHealthCheckEmail(options: {
+  from: string;
+  to: string;
+  subject: string;
+  text: string;
+}): Promise<{ ok: true; via: string } | { ok: false; detail: string }> {
+  const relay = resolveSmtpRelayConfig();
+  const attempts: { label: string; host: string; port: number; user?: string; pass?: string }[] = [];
+
+  if (relay) {
+    attempts.push({
+      label: `TEM ${relay.host}:${relay.port}`,
+      host: relay.host,
+      port: relay.port,
+      user: relay.user,
+      pass: relay.pass,
+    });
+  }
+
+  const stalwartHost = resolveStalwartSmtpHost();
+  if (stalwartHost) {
+    attempts.push({ label: `Stalwart ${stalwartHost}:587`, host: stalwartHost, port: 587 });
+    attempts.push({ label: `Stalwart ${stalwartHost}:25`, host: stalwartHost, port: 25 });
+  }
+
+  if (attempts.length === 0) {
+    return {
+      ok: false,
+      detail: "Aucun relais SMTP (OUTBOUND_SMTP_RELAY_*) ni hôte Stalwart configuré",
+    };
+  }
+
+  const errors: string[] = [];
+
+  for (const attempt of attempts) {
+    const transport = nodemailer.createTransport({
+      host: attempt.host,
+      port: attempt.port,
+      secure: false,
+      auth: attempt.user && attempt.pass ? { user: attempt.user, pass: attempt.pass } : undefined,
+      connectionTimeout: 8_000,
+      greetingTimeout: 8_000,
+      socketTimeout: 12_000,
+    });
+
+    try {
+      await transport.sendMail({
+        from: options.from,
+        to: options.to,
+        subject: options.subject,
+        text: options.text,
+      });
+      transport.close();
+      return { ok: true, via: attempt.label };
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      errors.push(`${attempt.label}: ${detail}`);
+      transport.close();
+    }
+  }
+
+  return { ok: false, detail: errors.join(" — ") };
+}
+
+function extractQueuedMessageList(res: unknown): {
+  id: string;
+  recipients?: Record<string, { status?: QueuedRecipientStatus }>;
+}[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("list" in body)) return [];
+  const list = (body as { list: unknown }).list;
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (item): item is { id: string; recipients?: Record<string, { status?: QueuedRecipientStatus }> } =>
+      typeof item === "object" && item !== null && "id" in item
+  );
+}
+
+function recipientDeliveryStatus(
+  recipients: Record<string, { status?: QueuedRecipientStatus }> | undefined,
+  destination: string
+): QueuedRecipientStatus | null {
+  if (!recipients) return null;
+
+  const normalized = destination.toLowerCase();
+  for (const [address, meta] of Object.entries(recipients)) {
+    if (address.toLowerCase() === normalized || address.toLowerCase().includes(normalized)) {
+      return meta.status ?? null;
+    }
+  }
+
+  return Object.values(recipients)[0]?.status ?? null;
+}
+
+async function waitForQueuedDelivery(
+  destination: string,
+  subjectToken: string,
+  timeoutMs = 30_000
+): Promise<
+  | { outcome: "completed"; detail: string }
+  | { outcome: "failed"; detail: string }
+  | { outcome: "timeout"; detail: string }
+  | { outcome: "unavailable"; detail: string }
+> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const queryRes = await stalwartAdminJmap([
+      ["x:QueuedMessage/query", { filter: { to: destination } }, "q1"],
+    ]);
+
+    if ("unavailable" in queryRes || "error" in queryRes) {
+      return {
+        outcome: "unavailable",
+        detail:
+          "error" in queryRes
+            ? String(queryRes.error)
+            : "JMAP indisponible pour x:QueuedMessage/query",
+      };
+    }
+
+    const ids = extractJmapQueryIds(queryRes);
+    if (ids.length > 0) {
+      const getRes = await stalwartAdminJmap([
+        ["x:QueuedMessage/get", { ids, properties: ["recipients", "returnPath"] }, "g1"],
+      ]);
+
+      if (!("unavailable" in getRes) && !("error" in getRes)) {
+        for (const message of extractQueuedMessageList(getRes)) {
+          const status = recipientDeliveryStatus(message.recipients, destination);
+          if (status === "Completed") {
+            return { outcome: "completed", detail: `Queue Completed → ${destination}` };
+          }
+          if (status === "PermanentFailure") {
+            return {
+              outcome: "failed",
+              detail: `Queue PermanentFailure → ${destination}`,
+            };
+          }
+        }
+      }
+    }
+
+    const textQueryRes = await stalwartAdminJmap([
+      ["x:QueuedMessage/query", { filter: { text: subjectToken } }, "q2"],
+    ]);
+
+    if (!("unavailable" in textQueryRes) && !("error" in textQueryRes)) {
+      const textIds = extractJmapQueryIds(textQueryRes);
+      if (textIds.length > 0) {
+        const getRes = await stalwartAdminJmap([
+          ["x:QueuedMessage/get", { ids: textIds, properties: ["recipients"] }, "g2"],
+        ]);
+
+        if (!("unavailable" in getRes) && !("error" in getRes)) {
+          for (const message of extractQueuedMessageList(getRes)) {
+            const status = recipientDeliveryStatus(message.recipients, destination);
+            if (status === "Completed") {
+              return { outcome: "completed", detail: `Queue Completed (sujet) → ${destination}` };
+            }
+            if (status === "PermanentFailure") {
+              return {
+                outcome: "failed",
+                detail: `Queue PermanentFailure (sujet) → ${destination}`,
+              };
+            }
+          }
+        }
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+
+  return {
+    outcome: "timeout",
+    detail: `Timeout ${timeoutMs / 1000}s — livraison non confirmée vers ${destination}`,
+  };
+}
+
+function extractJmapQueryIds(res: unknown): string[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("ids" in body)) return [];
+  const ids = (body as { ids: unknown }).ids;
+  return Array.isArray(ids) ? (ids as string[]) : [];
+}
+
+async function deleteMailingListSafe(listId: string): Promise<string | null> {
+  const destroyRes = await deleteAlias(listId);
+  if (isStalwartFailure(destroyRes)) {
+    return `MailingList ${listId} — cleanup échoué`;
+  }
+  return null;
+}
+
 async function checkEmailRedirect() {
   const domainId = await resolvePlatformStalwartDomainId();
   if (!domainId) {
-    return { status: "warn" as const, detail: "Domaine plateforme absent dans Stalwart" };
+    return { status: "fail" as const, detail: "Domaine plateforme absent dans Stalwart" };
+  }
+
+  const destination = process.env.BUREAU_ADMIN_EMAIL;
+  if (!destination) {
+    return {
+      status: "fail" as const,
+      detail: "BUREAU_ADMIN_EMAIL requis pour tester la redirection SMTP",
+    };
   }
 
   const platformDomain = getPlatformEmailDomains()[0];
   const localPart = `health-redirect-${Date.now()}`;
   const source = `${localPart}@${platformDomain}`;
-  const destination = process.env.BUREAU_ADMIN_EMAIL ?? "health-check@example.com";
+  const subject = `Framm health redirect ${Date.now()}`;
 
   const res = await createAlias(source, destination, domainId);
   if (isStalwartFailure(res)) {
@@ -240,12 +516,44 @@ async function checkEmailRedirect() {
     return { status: "fail" as const, detail: "MailingList créée sans ID" };
   }
 
-  const destroyRes = await deleteAlias(listId);
-  if (isStalwartFailure(destroyRes)) {
-    return { status: "warn" as const, detail: `MailingList ${listId} — cleanup échoué` };
+  const sendResult = await sendHealthCheckEmail({
+    from: `health-check@${platformDomain}`,
+    to: source,
+    subject,
+    text: `Test redirection Framm → ${destination}`,
+  });
+
+  if (!sendResult.ok) {
+    const cleanupErr = await deleteMailingListSafe(listId);
+    const detail = cleanupErr
+      ? `Envoi SMTP impossible : ${sendResult.detail} — ${cleanupErr}`
+      : `Envoi SMTP impossible : ${sendResult.detail}`;
+    return { status: "fail" as const, detail };
   }
 
-  return { status: "ok" as const, detail: "MailingList create + destroy OK" };
+  const delivery = await waitForQueuedDelivery(destination, subject);
+  const cleanupErr = await deleteMailingListSafe(listId);
+
+  if (delivery.outcome === "completed") {
+    if (cleanupErr) {
+      return { status: "fail" as const, detail: `${delivery.detail} — ${cleanupErr}` };
+    }
+    return {
+      status: "ok" as const,
+      detail: `MailingList + SMTP (${sendResult.via}) + ${delivery.detail}`,
+    };
+  }
+
+  const deliveryDetail =
+    delivery.outcome === "unavailable"
+      ? `vérification queue impossible : ${delivery.detail}`
+      : delivery.detail;
+
+  const detail = cleanupErr
+    ? `SMTP OK (${sendResult.via}) — ${deliveryDetail} — ${cleanupErr}`
+    : `SMTP OK (${sendResult.via}) — ${deliveryDetail}`;
+
+  return { status: "fail" as const, detail };
 }
 
 async function checkMailServer() {
