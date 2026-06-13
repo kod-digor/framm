@@ -56,7 +56,7 @@ export async function DashboardShell({
       items: [
         ...mailboxes.map((mailbox) => ({
           id: `mailbox-${mailbox.id}`,
-          href: "#",
+          href: `/dashboard/mail/${mailbox.id}`,
           label: mailbox.address,
           icon: "mail" as const,
         })),

@@ -192,6 +192,14 @@
     "stalwartUnavailable": "Le serveur mail est indisponible. Vos redirections existantes restent listées ici ; la création reprendra quand Stalwart sera accessible.",
     "stalwartUnconfigured": "Le serveur mail n'est pas configuré. La création de redirections est suspendue jusqu'à la configuration de Stalwart."
   },
+  "mail": {
+    "settings": "Configuration client",
+    "openExternal": "Ouvrir dans un nouvel onglet",
+    "iframeTitle": "Webmail {address}",
+    "loading": "Chargement du webmail…",
+    "loginHint": "Connectez-vous avec le mot de passe de la boîte mail.",
+    "unconfigured": "Le webmail n'est pas configuré (WEBMAIL_URL). Contactez le support Kod Digor."
+  },
   "usage": {
     "title": "Consommation",
     "walletBalance": "Solde actuel",

@@ -302,3 +302,16 @@ export function getMailConfig() {
     webmailUrl: process.env.WEBMAIL_URL ?? "",
   };
 }
+
+/** URL webmail Stalwart pour iframe (login avec adresse préremplie si supportée). */
+export function getWebmailEmbedUrl(mailboxAddress: string): string {
+  const base = (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
+  if (!base) return "";
+
+  const params = new URLSearchParams({ username: mailboxAddress });
+  return `${base}/login?${params.toString()}`;
+}
+
+export function getWebmailExternalUrl(): string {
+  return (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
+}
