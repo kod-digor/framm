@@ -1,0 +1,19 @@
+k8s/apps/web/kustomization.yaml
+  s_c1783f86c71cc9::t_c16e883c3bcddf 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "dac410beb5fb55e5e3c13f565414c73e8c43335c",
+  "prompts": {},
+  "sessions": {
+    "s_c1783f86c71cc9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9a3b941d-6811-4aa0-8cce-09f526dce5b0",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
