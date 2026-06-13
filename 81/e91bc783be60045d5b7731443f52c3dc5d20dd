@@ -1,0 +1,35 @@
+deploy/scripts/update-stack.sh
+  s_00ea0b1c8831de::t_17ba280332dcf8 2,19,21-22
+deploy/scripts/db-tunnel.sh
+  s_00ea0b1c8831de::t_598d34a39e76e5 2,11-13,16-20,23-24,26-31,38-51
+deploy/scripts/bootstrap.sh
+  s_00ea0b1c8831de::t_0e4d95a7cb6a37 2,32-33,40,42-43,47-48,52
+deploy/scripts/lib/framm-common.sh
+  s_00ea0b1c8831de::t_c470de348a717a 83-85,94
+  s_00ea0b1c8831de::t_bce1f1ad586561 166-167
+deploy/scripts/remote-deploy.sh
+  s_00ea0b1c8831de::t_7f992d76c3381a 2,6
+deploy/scripts/health-check.sh
+  s_00ea0b1c8831de::t_67ad8ad778c764 47
+deploy/scripts/sync-dev-env.sh
+  s_00ea0b1c8831de::t_305a558fa0621b 51-52
+  s_00ea0b1c8831de::t_617f2e515fad22 24-25,29-32
+deploy/scripts/remote-deploy-mail.sh
+  s_00ea0b1c8831de::t_4ec2a5fa31f37d 1-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "81e91bc783be60045d5b7731443f52c3dc5d20dd",
+  "prompts": {},
+  "sessions": {
+    "s_00ea0b1c8831de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a860922-e9f4-4046-b28b-24f34780c59e",
+        "model": "composer-2.5"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
