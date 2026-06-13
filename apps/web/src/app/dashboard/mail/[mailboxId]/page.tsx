@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { WebmailFrame } from "@/components/mail/webmail-frame";
+import { BulwarkMail } from "@/components/mail/bulwark-mail";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { getWebmailExternalUrl } from "@/lib/stalwart/client";
-import { getWebmailProxyPath } from "@/lib/stalwart/webmail-proxy";
 import { getT } from "@/i18n/t";
 
 export default async function MailPage({
@@ -26,7 +25,6 @@ export default async function MailPage({
   if (!mailbox) notFound();
 
   const webmailConfigured = Boolean(getWebmailExternalUrl());
-  const embedUrl = webmailConfigured ? getWebmailProxyPath(mailboxId) : "";
   const externalUrl = getWebmailExternalUrl();
 
   return (
@@ -57,10 +55,10 @@ export default async function MailPage({
         </div>
       ) : (
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden py-0">
-          <WebmailFrame
-            src={embedUrl}
-            externalUrl={externalUrl}
+          <BulwarkMail
+            mailboxId={mailboxId}
             address={mailbox.address}
+            externalUrl={externalUrl}
           />
         </Card>
       )}

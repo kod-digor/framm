@@ -224,13 +224,32 @@
   "mail": {
     "settings": "Configuration client",
     "openExternal": "Ouvrir dans un nouvel onglet",
-    "iframeTitle": "Webmail {address}",
-    "loading": "Chargement du webmail…",
-    "loadError": "Impossible d'afficher le webmail intégré. Utilisez le lien pour l'ouvrir dans un nouvel onglet.",
-    "connectedHint": "Connecté automatiquement à votre boîte mail.",
+    "loading": "Chargement de la messagerie…",
+    "connectedHint": "Messagerie de {address} — connectée automatiquement.",
+    "refresh": "Actualiser",
+    "selectMessage": "Sélectionnez un message pour le lire.",
+    "inboxEmpty": "Aucun message dans la boîte de réception.",
+    "noSubject": "(Sans objet)",
+    "unknownSender": "Expéditeur inconnu",
+    "from": "De",
+    "to": "À",
+    "messageBody": "Corps du message",
+    "emptyBody": "Ce message ne contient pas de texte lisible.",
     "noCredentials": "Pour activer le webmail intégré, définissez un nouveau mot de passe dans la liste des boîtes mail (icône crayon). Un mot de passe d'au moins 8 caractères suffit — inutile de recréer la boîte.",
     "noCredentialsAction": "Modifier le mot de passe",
-    "unconfigured": "Le webmail n'est pas configuré (WEBMAIL_URL). Contactez le support Kod Digor."
+    "unconfigured": "Le webmail n'est pas configuré (WEBMAIL_URL). Contactez le support Kod Digor.",
+    "errors": {
+      "load_failed": "Impossible de charger la messagerie. Réessayez ou ouvrez le webmail dans un nouvel onglet.",
+      "no_credentials": "Les identifiants de cette boîte ne sont pas enregistrés.",
+      "credentials_invalid": "Les identifiants chiffrés sont illisibles. Définissez un nouveau mot de passe.",
+      "auth_failed": "Connexion refusée par le serveur mail (identifiants incorrects).",
+      "auth_mfa": "Cette boîte exige une authentification à deux facteurs — non prise en charge dans le webmail intégré.",
+      "auth_upstream": "Le serveur mail est injoignable. Réessayez plus tard.",
+      "unconfigured": "Le serveur mail n'est pas configuré.",
+      "unauthorized": "Session expirée. Reconnectez-vous.",
+      "forbidden": "Accès refusé à cette boîte mail.",
+      "not_found": "Boîte mail introuvable."
+    }
   },
   "usage": {
     "title": "Consommation",

@@ -15,6 +15,7 @@ import {
 } from "@/lib/stalwart/client";
 import { getPlatformEmailDomains } from "@/lib/platform-domains";
 import { obtainStalwartSession } from "@/lib/stalwart/webmail-auth";
+import { fetchJmapSession } from "@/lib/mail/jmap-proxy";
 
 export type HealthCheckStatus = "ok" | "fail" | "warn";
 
@@ -211,23 +212,12 @@ async function checkWebmailSsoLogin() {
       return { status: "fail" as const, detail: "OAuth SSO sans access_token" };
     }
 
-    const accountRes = await fetch(`${webmailBase}/account/`, {
-      method: "GET",
-      redirect: "manual",
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!accountRes.ok) {
+    const session = await fetchJmapSession(tokens);
+    const accountCount = Object.keys(session.accounts ?? {}).length;
+    if (accountCount === 0) {
       return {
         status: "fail" as const,
-        detail: `Portail /account/ HTTP ${accountRes.status}`,
-      };
-    }
-
-    const html = await accountRes.text();
-    if (/sign in|invalid username|login-form/i.test(html)) {
-      return {
-        status: "fail" as const,
-        detail: "Portail /account/ renvoie une page de connexion au lieu du shell SPA",
+        detail: "Session JMAP vide après OAuth (aucun compte mail)",
       };
     }
   } catch (err) {
@@ -245,7 +235,7 @@ async function checkWebmailSsoLogin() {
     };
   }
 
-  return { status: "ok" as const, detail: "OAuth SSO + shell /account/ OK" };
+  return { status: "ok" as const, detail: "OAuth SSO + session JMAP OK" };
 }
 
 function extractAccountEmailList(res: unknown): { emailAddress?: string }[] {
@@ -298,7 +288,7 @@ async function checkWebmailAccess() {
   const appBase = resolveAppBaseUrl();
   let proxyStatus = 0;
   try {
-    const proxyRes = await fetch(`${appBase}/webmail/health-check-probe/account/`, {
+    const proxyRes = await fetch(`${appBase}/api/mail/health-check-probe/jmap`, {
       method: "GET",
       redirect: "manual",
       signal: AbortSignal.timeout(8_000),
@@ -315,7 +305,7 @@ async function checkWebmailAccess() {
   if (proxyStatus === 401 || proxyStatus === 403 || proxyStatus === 404) {
     return {
       status: "ok" as const,
-      detail: `Webmail HTTP ${webmailHttp} — proxy SSO actif (${proxyStatus})`,
+      detail: `Webmail HTTP ${webmailHttp} — API JMAP intégrée active (${proxyStatus})`,
     };
   }
 
@@ -325,7 +315,7 @@ async function checkWebmailAccess() {
 
   return {
     status: "ok" as const,
-    detail: `Webmail HTTP ${webmailHttp} — proxy HTTP ${proxyStatus}`,
+    detail: `Webmail HTTP ${webmailHttp} — API JMAP HTTP ${proxyStatus}`,
   };
 }
 

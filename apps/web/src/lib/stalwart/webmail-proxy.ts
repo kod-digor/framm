@@ -1,3 +1,7 @@
+/**
+ * @deprecated Remplacé par le client JMAP natif (`BulwarkMail` + `/api/mail/.../jmap`).
+ * Proxy iframe WebUI Stalwart `/account` — conservé temporairement pour compatibilité.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { unsealSecret } from "@/lib/crypto/seal";
 import { auth } from "@/lib/auth";
