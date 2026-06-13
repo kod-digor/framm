@@ -1,0 +1,29 @@
+apps/web/src/app/dashboard/mail/layout.tsx
+  s_0a0a91fa6591b8::t_29d5069ac765c8 1-3
+apps/web/src/lib/stalwart/client.ts
+  s_0a0a91fa6591b8::t_95aabe50379f61 305-317
+apps/web/src/components/mail/webmail-frame.tsx
+  s_0a0a91fa6591b8::t_c61d327f4f5ef7 1-50
+apps/web/src/app/dashboard/mail/[mailboxId]/page.tsx
+  s_0a0a91fa6591b8::t_aabdbf1ffb143e 1-60
+apps/web/messages/fr.json
+  s_0a0a91fa6591b8::t_a823d0e5e42121 195-202
+apps/web/src/components/layout/dashboard-shell.tsx
+  s_0a0a91fa6591b8::t_9900e5a4538b31 59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "72b595f888fb260ec93bba3af097e21f3713046e",
+  "prompts": {},
+  "sessions": {
+    "s_0a0a91fa6591b8": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "23f5221c-7bf9-484d-acd5-16b6e2a3e336",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
