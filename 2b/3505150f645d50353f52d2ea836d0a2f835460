@@ -1,0 +1,42 @@
+apps/web/prisma/migrations/20250613140000_mailbox_credentials/migration.sql
+  s_5b0967417e5273::t_98529b086f9c05 1-2
+apps/web/prisma/schema.prisma
+  s_5b0967417e5273::t_0cd7a1d1f49681 100-101
+apps/web/src/lib/crypto/seal.ts
+  s_5b0967417e5273::t_9dd34756d1a7ef 1-38
+apps/web/src/components/mail/webmail-frame.tsx
+  s_5b0967417e5273::t_a38c84445fbcd3 10-17,28,32-64,91
+  s_5b0967417e5273::t_18ee3052a01583 4,8-9,21-27,30-31,79
+apps/web/src/lib/stalwart/client.ts
+  s_5b0967417e5273::t_e04c60933c8455 306
+apps/web/src/app/dashboard/mail/[mailboxId]/page.tsx
+  s_5b0967417e5273::t_c922a58eff2d33 9-10,28-29,47,51-53
+apps/web/src/lib/stalwart/webmail-proxy.ts
+  s_5b0967417e5273::t_f8020f40e0816f 1-27,29-230
+  s_5b0967417e5273::t_9c5f33f6fdd1b6 28
+apps/web/messages/fr.json
+  s_5b0967417e5273::t_1ba86b4b2810ed 200-202
+apps/web/src/lib/stalwart/webmail-auth.ts
+  s_5b0967417e5273::t_f95442c8b51340 1-112
+apps/web/src/app/webmail/[mailboxId]/[[...path]]/route.ts
+  s_5b0967417e5273::t_a0c5f83a86875c 1-22
+apps/web/src/app/actions/mailboxes.ts
+  s_5b0967417e5273::t_c5e1d35d11abe3 14
+  s_5b0967417e5273::t_51676282132c89 63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "2b3505150f645d50353f52d2ea836d0a2f835460",
+  "prompts": {},
+  "sessions": {
+    "s_5b0967417e5273": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a5364ec4-9a13-4a62-9c70-5745345a4257",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
