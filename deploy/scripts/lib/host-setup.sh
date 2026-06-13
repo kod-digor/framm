@@ -99,7 +99,16 @@ framm_host_migrate_stalwart() {
   echo "Migration Stalwart terminée ($(du -sh /opt/framm/mail-data | cut -f1))"
 }
 
+framm_host_ensure_stalwart_data_perms() {
+  [[ -d /opt/framm/mail-data ]] || return 0
+  chown -R 2000:2000 /opt/framm/mail-data
+  chmod -R u+rwX /opt/framm/mail-data
+}
+
 framm_host_setup() {
   framm_host_ensure_tools
   framm_host_install_backup_cron "$1"
+  if [[ "$1" == "mail" ]]; then
+    framm_host_ensure_stalwart_data_perms
+  fi
 }

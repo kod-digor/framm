@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronRight,
   Forward,
@@ -83,7 +83,12 @@ function CollapsibleGroup({
   pathname: string;
 }) {
   const hasActiveChild = group.items.some((item) => isNavActive(pathname, item.href));
-  const [open, setOpen] = useState(() => getStoredSectionOpen(group.id) ?? false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = getStoredSectionOpen(group.id);
+    if (stored !== null) setOpen(stored);
+  }, [group.id]);
 
   const isOpen = open || hasActiveChild;
 
