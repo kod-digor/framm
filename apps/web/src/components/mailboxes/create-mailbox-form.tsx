@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createMailboxAction } from "@/app/actions/mailboxes";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -33,12 +33,6 @@ function CreateMailboxFields({
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
   const [password, setPassword] = useState("");
-
-  const selectedDomain = domains.find((d) => d.id === domainId);
-  const preview = useMemo(() => {
-    const part = localPart.trim() || "contact";
-    return selectedDomain ? `${part}@${selectedDomain.fqdn}` : part;
-  }, [localPart, selectedDomain]);
 
   return (
     <>
@@ -78,14 +72,6 @@ function CreateMailboxFields({
           />
           <p className="text-xs text-zinc-500">{t("passwordHint")}</p>
         </div>
-      </div>
-
-      <div className="flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm">
-        <Mail className="size-4 shrink-0 text-zinc-400" />
-        <p className="text-zinc-600">
-          {t("preview")}{" "}
-          <code className="rounded bg-white px-2 py-0.5 font-mono text-zinc-900">{preview}</code>
-        </p>
       </div>
     </>
   );
