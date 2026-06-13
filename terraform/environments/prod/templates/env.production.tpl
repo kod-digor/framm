@@ -4,6 +4,7 @@ PLATFORM_DOMAINS=${platform_domains}
 WEBMAIL_URL=${webmail_url}
 STALWART_URL=${stalwart_url}
 STALWART_API_KEY=${stalwart_api_key}
+BULWARK_SESSION_SECRET=${bulwark_session_secret}
 DB_PASSWORD=${db_password}
 K8S_DATABASE_URL=${k8s_database_url}
 RDB_HOST=${rdb_host}

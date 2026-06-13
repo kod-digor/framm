@@ -1,4 +1,4 @@
-import { getWebmailExternalUrl } from "@/lib/stalwart/client";
+import { getStalwartJmapUrl } from "@/lib/stalwart/client";
 import type { WebmailTokens } from "@/lib/stalwart/webmail-auth";
 import type { JmapRequestBody, JmapResponseBody, JmapSession } from "@/lib/mail/jmap-types";
 
@@ -9,7 +9,7 @@ const MAIL_USING = [
 ] as const;
 
 function webmailBase(): string | null {
-  const base = getWebmailExternalUrl();
+  const base = getStalwartJmapUrl();
   return base || null;
 }
 

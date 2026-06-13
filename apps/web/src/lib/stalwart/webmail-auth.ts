@@ -1,4 +1,4 @@
-import { getWebmailExternalUrl } from "@/lib/stalwart/client";
+import { getStalwartJmapUrl } from "@/lib/stalwart/client";
 
 export const STALWART_WEBUI_CLIENT_ID = "stalwart-webui";
 
@@ -30,9 +30,9 @@ export async function obtainWebmailTokens(
   address: string,
   password: string
 ): Promise<WebmailTokens> {
-  const base = getWebmailExternalUrl();
+  const base = getStalwartJmapUrl();
   if (!base) {
-    throw new Error("WEBMAIL_URL is not configured");
+    throw new Error("STALWART_URL is not configured");
   }
 
   const redirectUri = accountRedirectUri(base);

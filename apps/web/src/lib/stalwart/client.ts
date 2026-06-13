@@ -17,7 +17,7 @@ export type StalwartSetIssue = {
 };
 
 function stalwartJmapUrl() {
-  const base = (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
+  const base = getStalwartJmapUrl();
   return `${base}/jmap`;
 }
 
@@ -112,7 +112,7 @@ export function isStalwartTransportIssue(issue: StalwartSetIssue | null): boolea
 }
 
 export async function getStalwartStatus(): Promise<StalwartStatus> {
-  if (!STALWART_API_KEY || !(process.env.WEBMAIL_URL || STALWART_URL)) {
+  if (!STALWART_API_KEY || !getStalwartJmapUrl()) {
     return "unconfigured";
   }
 
@@ -540,7 +540,7 @@ export async function resolveStalwartAccountId(
 }
 
 export function getMailConfig() {
-  const base = process.env.WEBMAIL_URL || STALWART_URL;
+  const base = getStalwartJmapUrl() || STALWART_URL;
   const host = base.replace(/^https?:\/\//, "").replace(/\/$/, "");
   return {
     imapServer: host,
@@ -552,7 +552,12 @@ export function getMailConfig() {
   };
 }
 
-/** URL webmail externe (nouvel onglet). */
+/** URL JMAP Stalwart (API admin + auth OAuth portail). */
+export function getStalwartJmapUrl(): string {
+  return (STALWART_URL || process.env.WEBMAIL_URL || "").replace(/\/$/, "");
+}
+
+/** URL webmail externe (Bulwark, nouvel onglet). */
 export function getWebmailExternalUrl(): string {
   return (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
 }

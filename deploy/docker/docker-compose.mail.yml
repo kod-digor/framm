@@ -31,6 +31,29 @@ services:
       - stalwart
     command: ["TCP-LISTEN:18080,fork,reuseaddr", "TCP:127.0.0.1:8080"]
 
+  bulwark:
+    # Version épinglée — mises à jour automatisées par Renovate (renovate.json).
+    image: ghcr.io/bulwarkmail/webmail:1.7.3
+    restart: unless-stopped
+    env_file:
+      - ../.generated/env.production
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - JMAP_SERVER_URL=https://mail.${PRIMARY_PLATFORM_DOMAIN}
+      - STALWART_FEATURES=true
+      - SESSION_SECRET=${BULWARK_SESSION_SECRET}
+      - APP_NAME=Framm Webmail
+      - BULWARK_TELEMETRY=off
+      - TRUSTED_PROXY_DEPTH=1
+    volumes:
+      - /opt/framm/bulwark-data/admin:/app/data/admin
+      - /opt/framm/bulwark-data/admin-state:/app/data/admin-state
+      - /opt/framm/bulwark-data/settings:/app/data/settings
+      - /opt/framm/bulwark-data/telemetry:/app/data/telemetry
+    depends_on:
+      - stalwart
+
   node-exporter:
     image: prom/node-exporter:v1.8.0
     restart: unless-stopped

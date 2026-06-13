@@ -41,7 +41,7 @@ setup_app_tls() {
 setup_mail_tls() {
   framm_ssh "$MAIL_PUBLIC_IP" "sed 's/\${PRIMARY_DOMAIN}/${DOMAIN}/g' /opt/framm/deploy/nginx/mail-http.conf > /etc/nginx/sites-available/framm-mail && ln -sf /etc/nginx/sites-available/framm-mail /etc/nginx/sites-enabled/framm-mail && rm -f /etc/nginx/sites-enabled/default && nginx -t && systemctl reload nginx"
 
-  run_certbot "$MAIL_PUBLIC_IP" "webmail.${DOMAIN}"
+  run_certbot "$MAIL_PUBLIC_IP" "webmail.${DOMAIN}" "mail.${DOMAIN}"
 
   framm_ssh "$MAIL_PUBLIC_IP" "sed 's/\${PRIMARY_DOMAIN}/${DOMAIN}/g' /opt/framm/deploy/nginx/mail-ssl.conf > /etc/nginx/sites-available/framm-mail && nginx -t && systemctl reload nginx"
 }

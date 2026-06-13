@@ -50,5 +50,5 @@ runcmd:
       grep -q "$uuid" /etc/fstab 2>/dev/null || echo "UUID=$uuid /opt/framm ext4 defaults,nofail 0 2" >> /etc/fstab
       break
     done
-  - mkdir -p /opt/framm/mail-data /opt/framm/stalwart /var/www/acme /var/lib/node_exporter/textfile_collector
+  - mkdir -p /opt/framm/mail-data /opt/framm/stalwart /opt/framm/bulwark-data/admin /opt/framm/bulwark-data/admin-state /opt/framm/bulwark-data/settings /opt/framm/bulwark-data/telemetry /var/www/acme /var/lib/node_exporter/textfile_collector
   - echo "Cloud-init Framm mail complete" > /opt/framm/ready.txt

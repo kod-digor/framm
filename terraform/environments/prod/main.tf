@@ -102,6 +102,7 @@ resource "local_file" "env_production" {
     webmail_url          = local.webmail_url
     stalwart_url         = local.mail_url
     stalwart_api_key     = random_password.stalwart_api_key.result
+    bulwark_session_secret = random_password.bulwark_session_secret.result
     db_password          = random_password.db_password.result
     db_host              = "127.0.0.1"
     k8s_database_url     = local.k8s_database_url

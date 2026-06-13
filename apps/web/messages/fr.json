@@ -238,6 +238,8 @@
     "noCredentials": "Pour activer le webmail intégré, définissez un nouveau mot de passe dans la liste des boîtes mail (icône crayon). Un mot de passe d'au moins 8 caractères suffit — inutile de recréer la boîte.",
     "noCredentialsAction": "Modifier le mot de passe",
     "unconfigured": "Le webmail n'est pas configuré (WEBMAIL_URL). Contactez le support Kod Digor.",
+    "webmailFrameTitle": "Webmail de {address}",
+    "webmailFrameHint": "Webmail intégré de {address} — connecté automatiquement via Bulwark.",
     "errors": {
       "load_failed": "Impossible de charger la messagerie. Réessayez ou ouvrez le webmail dans un nouvel onglet.",
       "no_credentials": "Les identifiants de cette boîte ne sont pas enregistrés.",
@@ -320,11 +322,11 @@
       },
       "webmail-sso-login": {
         "label": "Connexion SSO webmail",
-        "description": "Compte éphémère, OAuth POST /api/auth (client_code) et shell /account/ sans page login."
+        "description": "Compte éphémère, OAuth Stalwart (STALWART_URL) et session JMAP."
       },
       "webmail-access": {
         "label": "Accès webmail",
-        "description": "JMAP ping, URL webmail HTTP et route proxy SSO Framm."
+        "description": "JMAP ping, Bulwark HTTP (WEBMAIL_URL) et proxy iframe Framm."
       },
       "email-redirect": {
         "label": "Redirection e-mail",
@@ -348,7 +350,7 @@
       },
       "infra-mail-external": {
         "label": "Infra — Webmail externe",
-        "description": "Accessibilité HTTP du webmail Stalwart (WEBMAIL_URL)."
+        "description": "Accessibilité HTTP de Bulwark Webmail (WEBMAIL_URL)."
       },
       "infra-tem-relay": {
         "label": "Infra — Relais TEM",

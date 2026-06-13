@@ -32,7 +32,7 @@ function mapAuthError(err: unknown): MailboxAccessError {
       return "auth_failed";
     case "stalwart_mfa_required":
       return "auth_mfa";
-    case "WEBMAIL_URL is not configured":
+    case "STALWART_URL is not configured":
       return "unconfigured";
     default:
       return "auth_upstream";

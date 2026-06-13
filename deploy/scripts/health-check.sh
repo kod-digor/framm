@@ -66,12 +66,17 @@ if [[ $FAIL -ne 0 && "${FRAMM_CI:-}" == "true" && -n "${MAIL_PUBLIC_IP:-}" ]]; t
   source "${ROOT}/deploy/scripts/lib/framm-common.sh"
   framm_ci_setup_ssh
   if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
-    code="$(framm_ssh "$MAIL_PUBLIC_IP" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/login" 2>/dev/null || echo "000")"
+    code="$(framm_ssh "$MAIL_PUBLIC_IP" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/login" 2>/dev/null || echo "000")"
     if [[ "$code" != "000" && "$code" != "502" && "$code" != "503" ]]; then
-      echo "OK  Webmail (via VM, HTTP ${code})"
+      echo "OK  Webmail Bulwark (via VM, HTTP ${code})"
     else
-      echo "FAIL Webmail (via VM)"
-      FAIL=1
+      code="$(framm_ssh "$MAIL_PUBLIC_IP" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/login" 2>/dev/null || echo "000")"
+      if [[ "$code" != "000" && "$code" != "502" && "$code" != "503" ]]; then
+        echo "OK  Stalwart JMAP (via VM, HTTP ${code})"
+      else
+        echo "FAIL Webmail (via VM)"
+        FAIL=1
+      fi
     fi
   fi
 fi

@@ -336,7 +336,7 @@ type QueuedRecipientStatus =
   | string;
 
 async function stalwartAdminJmap(methodCalls: JmapMethodCall[], timeoutMs = 15_000) {
-  const base = (process.env.WEBMAIL_URL || process.env.STALWART_URL || "").replace(/\/$/, "");
+  const base = (process.env.STALWART_URL || process.env.WEBMAIL_URL || "").replace(/\/$/, "");
   const apiKey = process.env.STALWART_API_KEY ?? "";
   if (!base || !apiKey) {
     return { unavailable: true as const };

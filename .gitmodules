@@ -1,0 +1,4 @@
+[submodule "vendor/bulwarkmail"]
+	path = vendor/bulwarkmail
+	url = https://github.com/bulwarkmail/webmail
+	branch = main

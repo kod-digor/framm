@@ -17,3 +17,8 @@ resource "random_password" "stalwart_api_key" {
   length  = 48
   special = false
 }
+
+resource "random_password" "bulwark_session_secret" {
+  length  = 64
+  special = false
+}

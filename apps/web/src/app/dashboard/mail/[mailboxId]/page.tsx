@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BulwarkMail } from "@/components/mail/bulwark-mail";
+import { WebmailFrame } from "@/components/mail/webmail-frame";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,7 @@ export default async function MailPage({
 
   const webmailConfigured = Boolean(getWebmailExternalUrl());
   const externalUrl = getWebmailExternalUrl();
+  const useNativeJmap = process.env.WEBMAIL_USE_NATIVE_JMAP === "true";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-3 pt-3 sm:gap-4 sm:px-4 sm:pb-4 sm:pt-4">
@@ -55,11 +57,19 @@ export default async function MailPage({
         </div>
       ) : (
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden py-0">
-          <BulwarkMail
-            mailboxId={mailboxId}
-            address={mailbox.address}
-            externalUrl={externalUrl}
-          />
+          {useNativeJmap ? (
+            <BulwarkMail
+              mailboxId={mailboxId}
+              address={mailbox.address}
+              externalUrl={externalUrl}
+            />
+          ) : (
+            <WebmailFrame
+              mailboxId={mailboxId}
+              address={mailbox.address}
+              externalUrl={externalUrl}
+            />
+          )}
         </Card>
       )}
     </div>

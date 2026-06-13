@@ -31,6 +31,7 @@ cd /opt/framm/deploy/docker
 export COMPOSE_PROJECT_NAME=framm-mail
 docker compose -f docker-compose.mail.yml pull
 docker compose -f docker-compose.mail.yml up -d
+mkdir -p /opt/framm/bulwark-data/admin /opt/framm/bulwark-data/admin-state /opt/framm/bulwark-data/settings /opt/framm/bulwark-data/telemetry
 framm_stalwart_ensure_ready
 PRIMARY_DOMAIN="${PRIMARY_PLATFORM_DOMAIN}" \
   sed "s/\${PRIMARY_DOMAIN}/${PRIMARY_PLATFORM_DOMAIN}/g" /opt/framm/deploy/nginx/mail-ssl.conf \

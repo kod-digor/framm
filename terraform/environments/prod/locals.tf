@@ -8,7 +8,7 @@ locals {
 
   auth_url    = "https://${var.primary_platform_domain}"
   webmail_url = "https://webmail.${var.primary_platform_domain}"
-  mail_url    = "https://webmail.${var.primary_platform_domain}"
+  mail_url    = "https://mail.${var.primary_platform_domain}"
   grafana_url = "https://grafana.${var.primary_platform_domain}"
 
   bucket_uploads  = "framm-uploads-${local.project_slug}"

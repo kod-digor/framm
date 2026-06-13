@@ -32,7 +32,7 @@ framm_urlencode() {
 RDB_PASSWORD_ENCODED="$(framm_urlencode "$RDB_PASSWORD")"
 
 WEBMAIL_URL="${WEBMAIL_URL:-https://webmail.${PRIMARY_PLATFORM_DOMAIN:-kod-digor.bzh}}"
-STALWART_JMAP_URL="${WEBMAIL_URL}"
+STALWART_JMAP_URL="${STALWART_URL:-https://mail.${PRIMARY_PLATFORM_DOMAIN:-kod-digor.bzh}}"
 
 framm_load_env 2>/dev/null || true
 if [[ -z "${MAIL_PUBLIC_IP:-}" ]]; then
