@@ -6,7 +6,7 @@ import { unsealSecret } from "@/lib/crypto/seal";
 import { auth } from "@/lib/auth";
 import { getOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { getStalwartJmapUrl, getWebmailExternalUrl } from "@/lib/stalwart/client";
+import { getBulwarkJmapUrl, getStalwartJmapUrl, getWebmailExternalUrl } from "@/lib/stalwart/client";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -44,21 +44,34 @@ function normalizeProxyPath(path: string): string {
   return path;
 }
 
-function buildFetchRewriterScript(prefix: string): string {
+function buildFetchRewriterScript(prefix: string, webmailBase: string, stalwartBase: string): string {
   return `<script>(function(){
 var P=${JSON.stringify(prefix)};
+var W=${JSON.stringify(webmailBase)};
+var M=${JSON.stringify(stalwartBase)};
 function rw(u){
   if(typeof u!=="string")return u;
   if(u.indexOf(P)===0)return u;
+  if(W&&u.indexOf(W)===0){
+    var rest=u.slice(W.length);
+    if(rest.indexOf("/jmap")===0||rest.indexOf("/.well-known/jmap")===0)return P+rest;
+  }
+  if(M&&u.indexOf(M)===0){
+    var rest2=u.slice(M.length);
+    if(rest2.indexOf("/jmap")===0||rest2.indexOf("/.well-known/jmap")===0)return P+rest2;
+  }
   try{
     var parsed=new URL(u,location.origin);
     if(parsed.origin===location.origin){
       var path=parsed.pathname+parsed.search+parsed.hash;
-      if(path.indexOf("/api/")===0||path.indexOf("/_next/")===0||path.indexOf("/branding/")===0||path.indexOf("/sw.js")===0)return P+path;
+      if(isProxiedAppPath(path))return P+path;
     }
   }catch(e){}
-  if(u.indexOf("/api/")===0||u.indexOf("/_next/")===0||u.indexOf("/branding/")===0||u.indexOf("/sw.js")===0)return P+u;
+  if(isProxiedAppPath(u))return P+u;
   return u;
+}
+function isProxiedAppPath(path){
+  return path.indexOf("/api/")===0||path.indexOf("/_next/")===0||path.indexOf("/branding/")===0||path.indexOf("/sw.js")===0||path.indexOf("/jmap")===0||path.indexOf("/.well-known/jmap")===0;
 }
 var f=window.fetch.bind(window);
 window.fetch=function(i,n){
@@ -69,13 +82,13 @@ window.fetch=function(i,n){
 })();</script>`;
 }
 
-function injectBulwarkHtml(html: string, mailboxId: string): string {
+function injectBulwarkHtml(html: string, mailboxId: string, webmailBase: string, stalwartBase: string): string {
   const prefix = `${proxyPrefix(mailboxId)}/`;
   let out = html.replace(/<base\s+[^>]*href="\/"\s*\/?>/i, `<base href="${prefix}" />`);
   if (!out.includes(`href="${prefix}"`)) {
     out = out.replace(/<head>/i, `<head><base href="${prefix}" />`);
   }
-  const script = buildFetchRewriterScript(proxyPrefix(mailboxId));
+  const script = buildFetchRewriterScript(proxyPrefix(mailboxId), webmailBase, stalwartBase);
   return out.replace(/<\/head>/i, `${script}</head>`);
 }
 
@@ -148,7 +161,7 @@ async function bootstrapBulwarkSession(
     throw new Error("credentials_invalid");
   }
 
-  const jmapUrl = getStalwartJmapUrl();
+  const jmapUrl = getBulwarkJmapUrl();
   if (!jmapUrl) {
     throw new Error("auth_upstream");
   }
@@ -223,6 +236,14 @@ function isHtmlNavigation(req: NextRequest, pathSegments: string[]): boolean {
   return pathSegments.length === 0 || pathSegments[0] === "login";
 }
 
+function needsSessionBootstrap(req: NextRequest, pathSegments: string[]): boolean {
+  if (hasBulwarkSession(req)) return false;
+  if (isHtmlNavigation(req, pathSegments)) return true;
+  if (pathSegments[0] === "api") return true;
+  if (pathSegments[0] === "jmap" || pathSegments[0] === ".well-known") return true;
+  return false;
+}
+
 export async function handleWebmailProxy(
   req: NextRequest,
   mailboxId: string,
@@ -260,9 +281,7 @@ export async function handleWebmailProxy(
   let bootstrapCookies: string[] = [];
   let cookieHeader = req.headers.get("cookie");
 
-  const needsBootstrap =
-    !hasBulwarkSession(req) &&
-    (isHtmlNavigation(req, pathSegments) || pathSegments[0] === "api");
+  const needsBootstrap = needsSessionBootstrap(req, pathSegments);
 
   if (needsBootstrap) {
     try {
@@ -331,7 +350,7 @@ export async function handleWebmailProxy(
 
   if (isHtml && req.method === "GET") {
     const html = await upstreamRes.text();
-    const injected = injectBulwarkHtml(html, mailboxId);
+    const injected = injectBulwarkHtml(html, mailboxId, webmailBase, getStalwartJmapUrl());
     const responseHeaders = new Headers({
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
@@ -347,7 +366,7 @@ export async function handleWebmailProxy(
   for (const cookie of bootstrapCookies) {
     responseHeaders.append("Set-Cookie", rewriteSetCookie(cookie, prefix));
   }
-  if (!responseHeaders.has("Cache-Control") && pathSegments[0] === "api") {
+  if (!responseHeaders.has("Cache-Control") && (pathSegments[0] === "api" || pathSegments[0] === "jmap")) {
     responseHeaders.set("Cache-Control", "no-store");
   }
 

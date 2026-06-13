@@ -561,3 +561,8 @@ export function getStalwartJmapUrl(): string {
 export function getWebmailExternalUrl(): string {
   return (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
 }
+
+/** JMAP same-origin Bulwark (nginx webmail → Stalwart). Évite CORS navigateur. */
+export function getBulwarkJmapUrl(): string {
+  return getWebmailExternalUrl();
+}
