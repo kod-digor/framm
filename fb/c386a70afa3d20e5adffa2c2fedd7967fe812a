@@ -1,0 +1,41 @@
+apps/web/src/app/actions/aliases.ts
+  s_fca52caf8b7539::t_a02bf5d8d67edb 7-14,44-45,47,53-121
+apps/web/src/components/aliases/alias-email-badge.tsx
+  s_fca52caf8b7539::t_7e8bc8c3906805 1-20
+apps/web/src/components/aliases/alias-status-badge.tsx
+  s_fca52caf8b7539::t_6e8296c3336c57 1-13
+apps/web/src/components/aliases/edit-alias-form.tsx
+  s_fca52caf8b7539::t_65cd2c13c20a37 1-6,8-22,93-112,115-125,127-136,138-154,156-158
+  s_fca52caf8b7539::t_c1066326bd715e 113-114
+  s_fca52caf8b7539::t_ce4dbdf7610e85 7,23-44,47-92,126,137,155
+  s_fca52caf8b7539::t_9f4d947d432293 45-46
+apps/web/src/lib/stalwart/client.ts
+  s_fca52caf8b7539::t_c12dbac82bf896 118-134,153-195
+apps/web/messages/fr.json
+  s_fca52caf8b7539::t_c2c0c196712e1c 160,168-173,175-176,179-180,182-191
+apps/web/src/app/dashboard/aliases/page.tsx
+  s_fca52caf8b7539::t_cb5b07c05e6d05 4,9-14,19-24,42-57,70-81,88-93,118-130
+apps/web/src/components/aliases/delete-alias-form.tsx
+  s_fca52caf8b7539::t_9b7fa3ad442d92 16-17
+  s_fca52caf8b7539::t_929ac16590af2f 1-15,18-55
+apps/web/src/components/aliases/alias-list.tsx
+  s_fca52caf8b7539::t_4bb858edad1997 1-5,7-121,129-134,140-148
+  s_fca52caf8b7539::t_55d8affb7428ec 122-128,135-139
+  s_fca52caf8b7539::t_7483a73107a86e 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "fbc386a70afa3d20e5adffa2c2fedd7967fe812a",
+  "prompts": {},
+  "sessions": {
+    "s_fca52caf8b7539": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5ebd9c6f-17bc-4813-9b58-4249720f337c",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
