@@ -68,13 +68,19 @@ export function resolveMailAccountId(session: JmapSession): string {
   return accountId;
 }
 
-/** Proxy d'un appel JMAP vers l'apiUrl de la session. */
+/** POST JMAP mail — STALWART_URL, pas session.apiUrl (souvent WEBMAIL_URL/Bulwark → 404). */
+function jmapMailEndpoint(): string {
+  const base = webmailBase();
+  if (!base) throw new Error("unconfigured");
+  return `${base}/jmap`;
+}
+
+/** Proxy d'un appel JMAP mail (Email/query, Mailbox/get, etc.). */
 export async function proxyJmapCall(
   tokens: WebmailTokens,
   body: JmapRequestBody
 ): Promise<JmapResponseBody> {
-  const session = await fetchJmapSession(tokens);
-  const response = await fetchWithBearer(session.apiUrl, tokens, {
+  const response = await fetchWithBearer(jmapMailEndpoint(), tokens, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
