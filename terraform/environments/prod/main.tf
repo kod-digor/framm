@@ -116,6 +116,10 @@ resource "local_file" "env_production" {
     alert_smtp_user      = local.alert_smtp_user
     alert_smtp_password  = local.alert_smtp_password
     alert_smtp_from      = local.alert_smtp_from
+    outbound_smtp_relay_host   = local.outbound_smtp_relay_host
+    outbound_smtp_relay_port   = local.outbound_smtp_relay_port
+    outbound_smtp_relay_user   = local.outbound_smtp_relay_user
+    outbound_smtp_relay_secret = local.outbound_smtp_relay_secret
     bureau_admin_email   = var.admin_email
     bureau_admin_password = var.admin_password
     primary_domain       = var.primary_platform_domain

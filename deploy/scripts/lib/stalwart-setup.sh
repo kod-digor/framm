@@ -185,7 +185,11 @@ framm_stalwart_ensure_ready() {
   fi
 
   echo "Stalwart prêt (webmail /login HTTP ${code})"
-  framm_stalwart_warn_outbound_smtp || true
+  if ! framm_stalwart_outbound_smtp_reachable; then
+    framm_stalwart_configure_outbound_relay || framm_stalwart_warn_outbound_smtp || true
+  else
+    framm_stalwart_warn_outbound_smtp || true
+  fi
 }
 
 framm_stalwart_outbound_smtp_reachable() {
@@ -205,4 +209,122 @@ framm_stalwart_warn_outbound_smtp() {
   echo "  Ouvrir un ticket Scaleway pour autoriser le SMTP sortant sur la VM mail,"
   echo "  ou configurer un relais SMTP sur un port autorisé (ex. 2525)."
   return 1
+}
+
+framm_stalwart_tem_relay_reachable() {
+  local host="${OUTBOUND_SMTP_RELAY_HOST:-smtp.tem.scaleway.com}"
+  local port="${OUTBOUND_SMTP_RELAY_PORT:-2587}"
+  docker exec framm-mail-stalwart-1 env "RELAY_HOST=${host}" "RELAY_PORT=${port}" bash -c '
+    timeout 8 bash -c "exec 3<>/dev/tcp/$RELAY_HOST/$RELAY_PORT && exit 0"
+  ' 2>/dev/null
+}
+
+framm_stalwart_configure_outbound_relay() {
+  local host="${OUTBOUND_SMTP_RELAY_HOST:-}"
+  local port="${OUTBOUND_SMTP_RELAY_PORT:-2587}"
+  local user="${OUTBOUND_SMTP_RELAY_USER:-}"
+  local secret="${OUTBOUND_SMTP_RELAY_SECRET:-}"
+
+  if [[ -z "$host" || -z "$user" || -z "$secret" ]]; then
+    return 0
+  fi
+
+  if ! framm_stalwart_tem_relay_reachable; then
+    echo "Relais SMTP ${host}:${port} inaccessible depuis Stalwart — configuration relais ignorée."
+    return 1
+  fi
+
+  framm_stalwart_recovery_auth
+  local api_key="${STALWART_API_KEY:-}"
+  if framm_stalwart_api_key_valid; then
+    api_key="${STALWART_API_KEY}"
+  elif [[ -n "${RECOVERY_PASS:-}" ]]; then
+    api_key="${RECOVERY_PASS}"
+  fi
+  [[ -n "$api_key" ]] || {
+    echo "Clé API Stalwart requise pour configurer le relais sortant"
+    return 1
+  }
+
+  echo "Configuration relais SMTP sortant (${host}:${port}, route mx → TEM)..."
+  OUTBOUND_SMTP_RELAY_HOST="$host" OUTBOUND_SMTP_RELAY_PORT="$port" \
+    OUTBOUND_SMTP_RELAY_USER="$user" OUTBOUND_SMTP_RELAY_SECRET="$secret" \
+    STALWART_API_KEY="$api_key" python3 <<'PY'
+import json, os, urllib.request
+
+host = os.environ["OUTBOUND_SMTP_RELAY_HOST"]
+port = int(os.environ["OUTBOUND_SMTP_RELAY_PORT"])
+user = os.environ["OUTBOUND_SMTP_RELAY_USER"]
+secret = os.environ["OUTBOUND_SMTP_RELAY_SECRET"]
+api_key = os.environ["STALWART_API_KEY"]
+
+def jmap(calls):
+    body = {"using": ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"], "methodCalls": calls}
+    req = urllib.request.Request(
+        "http://127.0.0.1:8080/jmap",
+        data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        return json.loads(resp.read().decode())
+
+routes = jmap([["x:MtaRoute/query", {"filter": {}}, "q1"]])["methodResponses"][0][1]["ids"]
+route_list = jmap([["x:MtaRoute/get", {"ids": routes, "properties": ["name", "@type"]}, "g1"]])["methodResponses"][0][1]["list"]
+mx_relay_id = next(
+    (r["id"] for r in route_list if r.get("name") == "mx" and r.get("@type") == "Relay"),
+    None,
+)
+
+calls = []
+if not mx_relay_id:
+    calls.append([
+        "x:MtaRoute/set",
+        {
+            "create": {
+                "framm-mx-relay": {
+                    "@type": "Relay",
+                    "name": "mx",
+                    "description": "Relais Scaleway TEM (SMTP sortant VM)",
+                    "address": host,
+                    "port": port,
+                    "protocol": "smtp",
+                    "implicitTls": False,
+                    "allowInvalidCerts": False,
+                    "authUsername": user,
+                    "authSecret": {"@type": "Value", "secret": secret},
+                }
+            }
+        },
+        "c1",
+    ])
+
+calls.append([
+    "x:MtaOutboundStrategy/set",
+    {
+        "update": {
+            "singleton": {
+                "route": {
+                    "match": {"0": {"if": "is_local_domain(rcpt_domain)", "then": "'local'"}},
+                    "else": "'mx'",
+                }
+            }
+        }
+    },
+    "s1",
+])
+calls.append(["x:Action/set", {"create": {"framm-reload": {"@type": "ReloadSettings"}}}, "a1"])
+
+result = jmap(calls)
+for name, payload in result.get("methodResponses", []):
+    if isinstance(payload, dict) and payload.get("type") == "error":
+        raise SystemExit(f"JMAP {name} error: {payload}")
+print("Relais sortant Stalwart configuré (route mx → TEM).")
+PY
+}
+
+framm_stalwart_outbound_delivery_ok() {
+  if framm_stalwart_outbound_smtp_reachable; then
+    return 0
+  fi
+  framm_stalwart_tem_relay_reachable
 }

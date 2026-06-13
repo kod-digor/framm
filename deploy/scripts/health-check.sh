@@ -52,8 +52,10 @@ if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
   framm_init_ssh
   if framm_ssh "$MAIL_PUBLIC_IP" "timeout 8 bash -c 'exec 3<>/dev/tcp/ASPMX.L.GOOGLE.COM/25 && read -r l <&3 && case "\$l" in 220*) exit 0;; *) exit 1;; esac'" 2>/dev/null; then
     echo "OK  Mail outbound SMTP (TCP/25)"
+  elif framm_ssh "$MAIL_PUBLIC_IP" "timeout 8 bash -c 'exec 3<>/dev/tcp/smtp.tem.scaleway.com/2587 && exit 0'" 2>/dev/null; then
+    echo "OK  Mail outbound via relais TEM (smtp.tem.scaleway.com:2587 — TCP/25 bloqué côté Scaleway)"
   else
-    echo "FAIL Mail outbound SMTP (TCP/25 bloqué — redirections externes impossibles)"
+    echo "FAIL Mail outbound SMTP (TCP/25 bloqué et relais TEM:2587 inaccessible)"
     FAIL=1
   fi
 fi
