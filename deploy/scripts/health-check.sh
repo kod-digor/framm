@@ -44,6 +44,20 @@ if [[ -n "${WEBMAIL_URL:-}" && "${WEBMAIL_URL}" != "skip" ]]; then
   check_tls "Webmail" "${WEBMAIL_URL}/login"
 fi
 
+# Redirections alias → adresses externes : nécessite SMTP sortant (port 25) depuis la VM mail.
+if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
+  FRAMM_ROOT="${ROOT}"
+  # shellcheck source=lib/framm-common.sh
+  source "${ROOT}/deploy/scripts/lib/framm-common.sh"
+  framm_init_ssh
+  if framm_ssh "$MAIL_PUBLIC_IP" "timeout 8 bash -c 'exec 3<>/dev/tcp/ASPMX.L.GOOGLE.COM/25 && read -r l <&3 && case "\$l" in 220*) exit 0;; *) exit 1;; esac'" 2>/dev/null; then
+    echo "OK  Mail outbound SMTP (TCP/25)"
+  else
+    echo "FAIL Mail outbound SMTP (TCP/25 bloqué — redirections externes impossibles)"
+    FAIL=1
+  fi
+fi
+
 if [[ $FAIL -ne 0 && "${FRAMM_CI:-}" == "true" && -n "${MAIL_PUBLIC_IP:-}" ]]; then
   FAIL=0
   # shellcheck source=lib/framm-common.sh

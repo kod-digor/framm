@@ -46,6 +46,9 @@ module "cold_archive" {
   }]
 }
 
+# VM mail : Scaleway injecte des règles SG non éditables bloquant le SMTP sortant
+# (TCP 25/465/587). Sans déblocage support Scaleway, les MailingList Stalwart ne peuvent
+# pas relayer vers des MX externes (ex. igor@mages.pro → Google).
 module "mail_vm" {
   source = "../../modules/compute_instance"
 

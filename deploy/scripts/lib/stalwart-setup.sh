@@ -185,4 +185,24 @@ framm_stalwart_ensure_ready() {
   fi
 
   echo "Stalwart prêt (webmail /login HTTP ${code})"
+  framm_stalwart_warn_outbound_smtp || true
+}
+
+framm_stalwart_outbound_smtp_reachable() {
+  local mx_host="${1:-ASPMX.L.GOOGLE.COM}"
+  docker exec framm-mail-stalwart-1 env "MX_HOST=${mx_host}" bash -c '
+    timeout 8 bash -c "exec 3<>/dev/tcp/$MX_HOST/25 && read -r line <&3 && case \"\$line\" in 220*) exit 0;; *) exit 1;; esac"
+  ' 2>/dev/null
+}
+
+framm_stalwart_warn_outbound_smtp() {
+  if framm_stalwart_outbound_smtp_reachable; then
+    echo "SMTP sortant (TCP/25) : OK"
+    return 0
+  fi
+  echo "ATTENTION: SMTP sortant TCP/25 bloqué (Scaleway anti-spam sur le SG)."
+  echo "  Les redirections MailingList vers des adresses externes restent en file (queue remote)."
+  echo "  Ouvrir un ticket Scaleway pour autoriser le SMTP sortant sur la VM mail,"
+  echo "  ou configurer un relais SMTP sur un port autorisé (ex. 2525)."
+  return 1
 }
