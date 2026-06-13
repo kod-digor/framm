@@ -315,7 +315,8 @@ calls.append([
 calls.append(["x:Action/set", {"create": {"framm-reload": {"@type": "ReloadSettings"}}}, "a1"])
 
 result = jmap(calls)
-for name, payload in result.get("methodResponses", []):
+for item in result.get("methodResponses", []):
+    name, payload = item[0], item[1]
     if isinstance(payload, dict) and payload.get("type") == "error":
         raise SystemExit(f"JMAP {name} error: {payload}")
 print("Relais sortant Stalwart configuré (route mx → TEM).")
