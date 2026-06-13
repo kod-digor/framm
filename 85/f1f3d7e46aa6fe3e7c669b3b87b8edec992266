@@ -1,0 +1,22 @@
+apps/web/src/lib/stalwart/client.ts
+  s_7450edc1132222::t_2a872ae69f7cb6 121,130,132-142
+apps/web/src/app/actions/mailboxes.ts
+  s_7450edc1132222::t_3035ccd2e588ca 8-13
+  s_7450edc1132222::t_6752c3a69485d9 41-43,45-49,54-55,61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "85f1f3d7e46aa6fe3e7c669b3b87b8edec992266",
+  "prompts": {},
+  "sessions": {
+    "s_7450edc1132222": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f2a4da33-e29c-4f11-94a3-df1f68c2e636",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
