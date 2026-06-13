@@ -1,0 +1,24 @@
+apps/web/src/app/actions/aliases.ts
+  s_ad98dd554435de::t_f5ae7c8476b14e 44-52
+  s_ad98dd554435de::t_50d4ac3fd64dc5 95
+  s_ad98dd554435de::t_f0d626cff42e09 14
+apps/web/src/lib/stalwart/client.ts
+  s_ad98dd554435de::t_caa4ddc7a4e39f 158-197,200,204-206,215-217,220-231,234,237,245,248,250,263,267-276
+  s_ad98dd554435de::t_feb72582df7611 17-22,24-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9622e3a9d81d35377feded74d2b23852b38afdb7",
+  "prompts": {},
+  "sessions": {
+    "s_ad98dd554435de": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "806532ca-8166-4c19-a377-490b2d8d3056",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
