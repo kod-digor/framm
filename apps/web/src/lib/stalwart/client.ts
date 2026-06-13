@@ -115,6 +115,23 @@ export async function createAccount(email: string, domainId: string, password: s
   ]);
 }
 
+export function extractStalwartCreatedId(res: unknown): string | null {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return null;
+  const created = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1] as
+    | { created?: Record<string, { id?: string }> }
+    | undefined;
+  const first = created?.created && Object.values(created.created)[0];
+  return first?.id ?? null;
+}
+
+export function extractJmapQueryIds(res: unknown): string[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("ids" in body)) return [];
+  const ids = (body as { ids: unknown }).ids;
+  return Array.isArray(ids) ? (ids as string[]) : [];
+}
+
 export async function createAlias(source: string, destination: string) {
   const id = `alias-${Date.now()}`;
   return jmapCall([
@@ -131,6 +148,51 @@ export async function createAlias(source: string, destination: string) {
       "c1",
     ],
   ]);
+}
+
+export async function queryEmailAliasByEmail(email: string) {
+  return jmapCall([["x:EmailAlias/query", { filter: { email } }, "q1"]]);
+}
+
+export async function updateAlias(stalwartAliasId: string, destination: string) {
+  return jmapCall([
+    [
+      "x:EmailAlias/set",
+      {
+        update: {
+          [stalwartAliasId]: {
+            redirectTo: [destination],
+          },
+        },
+      },
+      "u1",
+    ],
+  ]);
+}
+
+export async function deleteAlias(stalwartAliasId: string) {
+  return jmapCall([
+    [
+      "x:EmailAlias/set",
+      {
+        destroy: [stalwartAliasId],
+      },
+      "d1",
+    ],
+  ]);
+}
+
+export async function resolveEmailAliasStalwartId(
+  stalwartAliasId: string | null,
+  source: string
+): Promise<{ id: string | null; unavailable: boolean }> {
+  if (stalwartAliasId) return { id: stalwartAliasId, unavailable: false };
+
+  const queryRes = await queryEmailAliasByEmail(source);
+  if (isStalwartFailure(queryRes)) return { id: null, unavailable: true };
+
+  const ids = extractJmapQueryIds(queryRes);
+  return { id: ids[0] ?? null, unavailable: false };
 }
 
 export async function listAccounts() {
