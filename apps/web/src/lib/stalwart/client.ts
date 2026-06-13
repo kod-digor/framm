@@ -184,6 +184,40 @@ export async function createDomain(fqdn: string) {
   ]);
 }
 
+const STALWART_DEFAULT_LOCALE = "fr_FR";
+const STALWART_DEFAULT_TIMEZONE = "Europe/Paris";
+const STALWART_ENCRYPTION_PUBLIC_KEY_ID = process.env.STALWART_ENCRYPTION_PUBLIC_KEY_ID ?? "";
+const STALWART_PLATFORM_PGP_PUBLIC_KEY = process.env.STALWART_PLATFORM_PGP_PUBLIC_KEY ?? "";
+
+function defaultEncryptionAtRest():
+  | { "@type": "Disabled" }
+  | {
+      "@type": "Aes256";
+      publicKey: string;
+      encryptOnAppend: false;
+      allowSpamTraining: false;
+    } {
+  if (STALWART_ENCRYPTION_PUBLIC_KEY_ID) {
+    return {
+      "@type": "Aes256",
+      publicKey: STALWART_ENCRYPTION_PUBLIC_KEY_ID,
+      encryptOnAppend: false,
+      allowSpamTraining: false,
+    };
+  }
+  return { "@type": "Disabled" };
+}
+
+function accountUserDefaults(displayName?: string | null) {
+  const description = displayName?.trim() || undefined;
+  return {
+    locale: STALWART_DEFAULT_LOCALE,
+    timeZone: STALWART_DEFAULT_TIMEZONE,
+    encryptionAtRest: defaultEncryptionAtRest(),
+    ...(description ? { description } : {}),
+  };
+}
+
 function accountPasswordPatch(password: string) {
   return {
     credentials: {
@@ -195,6 +229,51 @@ function accountPasswordPatch(password: string) {
   };
 }
 
+async function enableAccountEncryptionAtRest(accountId: string, publicKeyPem: string) {
+  const pkClientId = `pk-${Date.now()}`;
+  const pkRes = await jmapCall([
+    [
+      "x:PublicKey/set",
+      {
+        accountId,
+        create: {
+          [pkClientId]: {
+            description: "framm-platform",
+            emailAddresses: {},
+            key: publicKeyPem,
+          },
+        },
+      },
+      "pk1",
+    ],
+  ]);
+  if (isStalwartFailure(pkRes)) return pkRes;
+
+  const publicKeyId = extractStalwartCreatedId(pkRes);
+  if (!publicKeyId) {
+    return { error: "Stalwart PublicKey created without id" as const };
+  }
+
+  return jmapCall([
+    [
+      "x:Account/set",
+      {
+        update: {
+          [accountId]: {
+            encryptionAtRest: {
+              "@type": "Aes256",
+              publicKey: publicKeyId,
+              encryptOnAppend: false,
+              allowSpamTraining: false,
+            },
+          },
+        },
+      },
+      "u1",
+    ],
+  ]);
+}
+
 export async function createAccount(
   localPart: string,
   domainId: string,
@@ -202,36 +281,54 @@ export async function createAccount(
   displayName?: string | null
 ) {
   const id = `account-${Date.now()}`;
-  const name = displayName?.trim() || parseEmailLocalPart(localPart);
-  return jmapCall([
+  const res = await jmapCall([
     [
       "x:Account/set",
       {
         create: {
           [id]: {
             "@type": "User",
-            name,
+            name: localPart,
             domainId,
             ...accountPasswordPatch(password),
+            ...accountUserDefaults(displayName),
             roles: { "@type": "User" },
             permissions: { "@type": "Inherit" },
             aliases: {},
             quotas: {},
-            encryptionAtRest: { "@type": "Disabled" },
           },
         },
       },
       "c1",
     ],
   ]);
+
+  if (
+    isStalwartFailure(res) ||
+    !STALWART_PLATFORM_PGP_PUBLIC_KEY ||
+    STALWART_ENCRYPTION_PUBLIC_KEY_ID
+  ) {
+    return res;
+  }
+
+  const accountId = extractStalwartCreatedId(res);
+  if (!accountId) return res;
+
+  const encRes = await enableAccountEncryptionAtRest(
+    accountId,
+    STALWART_PLATFORM_PGP_PUBLIC_KEY
+  );
+  if (isStalwartFailure(encRes)) return encRes;
+
+  return res;
 }
 
 export async function updateAccount(
   stalwartAccountId: string,
-  patch: { name?: string; password?: string }
+  patch: { description?: string | null; password?: string }
 ) {
   const update: Record<string, unknown> = {};
-  if (patch.name !== undefined) update.name = patch.name;
+  if (patch.description !== undefined) update.description = patch.description;
   if (patch.password !== undefined) Object.assign(update, accountPasswordPatch(patch.password));
 
   return jmapCall([

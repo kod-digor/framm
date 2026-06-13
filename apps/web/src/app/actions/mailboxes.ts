@@ -116,9 +116,9 @@ export async function createMailboxAction(
         return { ok: false, message: "stalwartError" };
       }
       if (displayName) {
-        const nameRes = await updateAccount(orphanId, { name: displayName });
-        if (isStalwartFailure(nameRes)) {
-          console.error("[createMailbox] orphan display name update failed:", orphanId, nameRes);
+        const descRes = await updateAccount(orphanId, { description: displayName });
+        if (isStalwartFailure(descRes)) {
+          console.error("[createMailbox] orphan display name update failed:", orphanId, descRes);
           return { ok: false, message: "stalwartError" };
         }
       }
@@ -206,7 +206,7 @@ export async function updateMailboxAction(
 
   if (resolved.id && nameChanged) {
     const stalwartRes = await updateAccount(resolved.id, {
-      name: displayName ?? parseEmailLocalPart(mailbox.address),
+      description: displayName,
     });
     if (isStalwartFailure(stalwartRes)) {
       const issue = extractStalwartSetIssue(stalwartRes);
@@ -278,8 +278,4 @@ export async function deleteMailboxAction(
 
   revalidatePath("/dashboard/mailboxes");
   return { ok: true, message: "deleted", detail: mailbox.address };
-}
-
-function parseEmailLocalPart(email: string): string {
-  return email.split("@")[0] ?? email;
 }
