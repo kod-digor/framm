@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import {
   getMailboxWebmailTokens,
   resolveAuthorizedMailbox,
@@ -25,14 +24,13 @@ const ERROR_STATUS: Record<MailboxAccessError, number> = {
 async function loadTokens(mailboxId: string) {
   const access = await resolveAuthorizedMailbox(mailboxId);
   if ("error" in access) return access;
+  if (!access.mailbox.credentialsEnc) return { error: "no_credentials" as const };
 
-  const row = await prisma.mailbox.findFirst({
-    where: { id: mailboxId },
-    select: { credentialsEnc: true, address: true },
-  });
-  if (!row?.credentialsEnc) return { error: "no_credentials" as const };
-
-  return getMailboxWebmailTokens(mailboxId, row.credentialsEnc, row.address);
+  return getMailboxWebmailTokens(
+    mailboxId,
+    access.mailbox.credentialsEnc,
+    access.mailbox.address
+  );
 }
 
 function errorResponse(code: MailboxAccessError | string, status = 400) {

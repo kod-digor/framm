@@ -5,8 +5,8 @@ import { WebmailFrame } from "@/components/mail/webmail-frame";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
-import { prisma } from "@/lib/prisma";
+import { requireOrgAdmin } from "@/lib/auth-utils";
+import { resolveAuthorizedMailbox } from "@/lib/mail/mailbox-access";
 import { getWebmailExternalUrl } from "@/lib/stalwart/client";
 import { getT } from "@/i18n/t";
 
@@ -16,14 +16,15 @@ export default async function MailPage({
   params: Promise<{ mailboxId: string }>;
 }) {
   const { mailboxId } = await params;
-  const session = await requireOrgAdmin();
-  const orgId = getOrgId(session)!;
+  await requireOrgAdmin();
   const t = await getT("mail");
 
-  const mailbox = await prisma.mailbox.findFirst({
-    where: { id: mailboxId, organizationId: orgId },
-  });
-  if (!mailbox) notFound();
+  const access = await resolveAuthorizedMailbox(mailboxId);
+  if ("error" in access) {
+    if (access.error === "not_found" || access.error === "forbidden") notFound();
+    throw new Error(access.error);
+  }
+  const mailbox = access.mailbox;
 
   const webmailConfigured = Boolean(getWebmailExternalUrl());
   const externalUrl = getWebmailExternalUrl();

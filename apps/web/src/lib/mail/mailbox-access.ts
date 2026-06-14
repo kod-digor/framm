@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { getOrgId } from "@/lib/auth-utils";
 import { unsealSecret } from "@/lib/crypto/seal";
 import { prisma } from "@/lib/prisma";
+import { getMembership } from "@/lib/tenant";
+import type { UserRole } from "@prisma/client";
 import { obtainWebmailTokens, type WebmailTokens } from "@/lib/stalwart/webmail-auth";
 
 export type MailboxAccessError =
@@ -18,7 +20,20 @@ export type MailboxAccessError =
 export type AuthorizedMailbox = {
   id: string;
   address: string;
+  credentialsEnc: string | null;
 };
+
+async function mailboxMembershipAllowed(
+  mailboxOrganizationId: string,
+  userId: string,
+  globalRole: UserRole,
+  activeOrgId: string | null
+): Promise<boolean> {
+  const member = await getMembership(userId, mailboxOrganizationId);
+  if (!member) return false;
+  if (globalRole === "BUREAU") return true;
+  return mailboxOrganizationId === activeOrgId;
+}
 
 const tokenCache = new Map<string, { tokens: WebmailTokens; expiresAt: number }>();
 
@@ -45,17 +60,30 @@ export async function resolveAuthorizedMailbox(
   const session = await auth();
   if (!session?.user) return { error: "unauthorized" };
 
-  const orgId = getOrgId(session);
-  if (!orgId) return { error: "forbidden" };
+  const activeOrgId = getOrgId(session);
+  if (!activeOrgId && session.user.role !== "BUREAU") return { error: "forbidden" };
 
   const mailbox = await prisma.mailbox.findFirst({
-    where: { id: mailboxId, organizationId: orgId },
-    select: { id: true, address: true, credentialsEnc: true },
+    where: { id: mailboxId },
+    select: { id: true, address: true, credentialsEnc: true, organizationId: true },
   });
   if (!mailbox) return { error: "not_found" };
-  if (!mailbox.credentialsEnc) return { error: "no_credentials" };
 
-  return { mailbox: { id: mailbox.id, address: mailbox.address } };
+  const allowed = await mailboxMembershipAllowed(
+    mailbox.organizationId,
+    session.user.id,
+    session.user.role,
+    activeOrgId
+  );
+  if (!allowed) return { error: "forbidden" };
+
+  return {
+    mailbox: {
+      id: mailbox.id,
+      address: mailbox.address,
+      credentialsEnc: mailbox.credentialsEnc,
+    },
+  };
 }
 
 export async function getMailboxWebmailTokens(

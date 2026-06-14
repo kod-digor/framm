@@ -4,8 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unsealSecret } from "@/lib/crypto/seal";
 import { auth } from "@/lib/auth";
-import { getOrgId } from "@/lib/auth-utils";
-import { prisma } from "@/lib/prisma";
+import { resolveAuthorizedMailbox } from "@/lib/mail/mailbox-access";
 import { getBulwarkJmapUrl, getStalwartJmapUrl, getWebmailExternalUrl } from "@/lib/stalwart/client";
 
 const HOP_BY_HOP = new Set([
@@ -29,6 +28,16 @@ const EMBED_BLOCKING_HEADERS = new Set([
 
 const BULWARK_SESSION_COOKIE = "jmap_session";
 
+const PROXIED_PATH_PREFIXES = [
+  "/_next/",
+  "/api/",
+  "/branding/",
+  "/sw.js",
+  "/jmap",
+  "/.well-known/jmap",
+  "/manifest.webmanifest",
+] as const;
+
 function proxyPrefix(mailboxId: string): string {
   return `/webmail/${mailboxId}`;
 }
@@ -49,10 +58,11 @@ function rewriteBulwarkHtmlUrls(html: string, prefix: string): string {
   const p = prefix.replace(/\/$/, "");
   const esc = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const skipPrefixed = `(?!${esc}/)`;
+  const roots = "(?:_next|branding|api|jmap|\\.well-known|sw\\.js|manifest\\.webmanifest)";
 
   let out = html.replace(
     new RegExp(
-      `(\\s(?:href|src|action|content)=["'])(${skipPrefixed}\\/(?:_next|branding|api|jmap|\\.well-known|sw\\.js)[^"']*)(["'])`,
+      `(\\s(?:href|src|action|content)=["'])(${skipPrefixed}\\/${roots}[^"']*)(["'])`,
       "gi"
     ),
     (_match, before: string, path: string, quote: string) => `${before}${p}${path}${quote}`
@@ -66,13 +76,27 @@ function rewriteBulwarkHtmlUrls(html: string, prefix: string): string {
   return out;
 }
 
+/** Réécrit les chemins absolus dans les bundles JS/CSS servis par le proxy. */
+function rewriteBulwarkAssetUrls(content: string, prefix: string): string {
+  const p = prefix.replace(/\/$/, "");
+  const esc = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const skipPrefixed = `(?!${esc})`;
+  return content.replace(
+    new RegExp(`(["'(\`])${skipPrefixed}\\/(_next|api|branding)\\/`, "g"),
+    `$1${p}/$2/`
+  );
+}
+
 function buildFetchRewriterScript(prefix: string, webmailBase: string, stalwartBase: string): string {
+  const roots = JSON.stringify(PROXIED_PATH_PREFIXES);
   return `<script>(function(){
 var P=${JSON.stringify(prefix)};
 var W=${JSON.stringify(webmailBase)};
 var M=${JSON.stringify(stalwartBase)};
+var R=${roots};
 function isProxiedAppPath(path){
-  return path.indexOf("/api/")===0||path.indexOf("/_next/")===0||path.indexOf("/branding/")===0||path.indexOf("/sw.js")===0||path.indexOf("/jmap")===0||path.indexOf("/.well-known/jmap")===0;
+  for(var i=0;i<R.length;i++){var r=R[i];if(r.endsWith("/")?path.indexOf(r)===0:path===r||path.indexOf(r+"/")===0)return true;}
+  return false;
 }
 function rw(u){
   if(typeof u!=="string")return u;
@@ -126,12 +150,16 @@ function injectBulwarkHtml(html: string, mailboxId: string, webmailBase: string,
   return out.replace(/<head>/i, `<head>${script}`);
 }
 
-function rewriteSetCookie(header: string, prefix: string): string {
+function rewriteSetCookie(header: string, prefix: string, secureRequest: boolean): string {
   let out = header.replace(/;\s*Domain=[^;]*/gi, "");
+  const cookiePath = `${prefix.replace(/\/$/, "")}/`;
   if (/;\s*Path=/i.test(out)) {
-    out = out.replace(/;\s*Path=[^;]*/i, `; Path=${prefix}`);
+    out = out.replace(/;\s*Path=[^;]*/i, `; Path=${cookiePath}`);
   } else {
-    out += `; Path=${prefix}`;
+    out += `; Path=${cookiePath}`;
+  }
+  if (!secureRequest) {
+    out = out.replace(/;\s*Secure\b/gi, "");
   }
   return out;
 }
@@ -144,7 +172,12 @@ function collectSetCookies(headers: Headers): string[] {
   return cookies;
 }
 
-function copyResponseHeaders(from: Headers, to: Headers, prefix: string) {
+function copyResponseHeaders(
+  from: Headers,
+  to: Headers,
+  prefix: string,
+  secureRequest: boolean
+) {
   from.forEach((value, key) => {
     const lower = key.toLowerCase();
     if (HOP_BY_HOP.has(lower)) return;
@@ -155,7 +188,7 @@ function copyResponseHeaders(from: Headers, to: Headers, prefix: string) {
   });
 
   for (const cookie of collectSetCookies(from)) {
-    to.append("Set-Cookie", rewriteSetCookie(cookie, prefix));
+    to.append("Set-Cookie", rewriteSetCookie(cookie, prefix, secureRequest));
   }
 }
 
@@ -164,11 +197,10 @@ function hasBulwarkSession(req: NextRequest): boolean {
   return raw.split(";").some((part) => part.trim().startsWith(`${BULWARK_SESSION_COOKIE}=`));
 }
 
-async function resolveMailbox(mailboxId: string, orgId: string) {
-  return prisma.mailbox.findFirst({
-    where: { id: mailboxId, organizationId: orgId },
-    select: { id: true, address: true, credentialsEnc: true },
-  });
+async function resolveMailbox(mailboxId: string) {
+  const access = await resolveAuthorizedMailbox(mailboxId);
+  if ("error" in access) return access;
+  return { mailbox: access.mailbox };
 }
 
 type WebmailAuthFailureCode =
@@ -293,17 +325,22 @@ export async function handleWebmailProxy(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const orgId = getOrgId(session);
-  if (!orgId) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const mailboxResult = await resolveMailbox(mailboxId);
+  if ("error" in mailboxResult) {
+    const status =
+      mailboxResult.error === "not_found"
+        ? 404
+        : mailboxResult.error === "forbidden"
+          ? 403
+          : mailboxResult.error === "no_credentials"
+            ? 403
+            : 401;
+    return NextResponse.json({ error: mailboxResult.error }, { status });
   }
-
-  const mailbox = await resolveMailbox(mailboxId, orgId);
-  if (!mailbox) {
-    return NextResponse.json({ error: "not_found" }, { status: 404 });
-  }
+  const mailbox = mailboxResult.mailbox;
 
   const prefix = proxyPrefix(mailboxId);
+  const secureRequest = req.nextUrl.protocol === "https:";
 
   if (!mailbox.credentialsEnc) {
     if (isHtmlNavigation(req, pathSegments)) {
@@ -373,7 +410,7 @@ export async function handleWebmailProxy(
       proxied = normalizeProxyPath(proxied);
       const redirect = NextResponse.redirect(new URL(proxied, req.url), upstreamRes.status);
       for (const cookie of bootstrapCookies) {
-        redirect.headers.append("Set-Cookie", rewriteSetCookie(cookie, prefix));
+        redirect.headers.append("Set-Cookie", rewriteSetCookie(cookie, prefix, secureRequest));
       }
       return redirect;
     }
@@ -381,6 +418,9 @@ export async function handleWebmailProxy(
 
   const resContentType = upstreamRes.headers.get("content-type") ?? "";
   const isHtml = resContentType.includes("text/html");
+  const isJs =
+    resContentType.includes("javascript") || pathSegments[0] === "_next";
+  const isCss = resContentType.includes("text/css");
 
   if (isHtml && req.method === "GET") {
     const html = await upstreamRes.text();
@@ -390,15 +430,31 @@ export async function handleWebmailProxy(
       "Cache-Control": "no-store",
     });
     for (const cookie of [...bootstrapCookies, ...collectSetCookies(upstreamRes.headers)]) {
-      responseHeaders.append("Set-Cookie", rewriteSetCookie(cookie, prefix));
+      responseHeaders.append("Set-Cookie", rewriteSetCookie(cookie, prefix, secureRequest));
     }
     return new NextResponse(injected, { status: upstreamRes.status, headers: responseHeaders });
   }
 
+  if ((isJs || isCss) && req.method === "GET") {
+    const raw = await upstreamRes.text();
+    const rewritten = rewriteBulwarkAssetUrls(raw, prefix);
+    const responseHeaders = new Headers({
+      "Content-Type": resContentType,
+      "Cache-Control": "public, max-age=31536000, immutable",
+    });
+    copyResponseHeaders(upstreamRes.headers, responseHeaders, prefix, secureRequest);
+    responseHeaders.delete("content-encoding");
+    responseHeaders.delete("content-length");
+    for (const cookie of bootstrapCookies) {
+      responseHeaders.append("Set-Cookie", rewriteSetCookie(cookie, prefix, secureRequest));
+    }
+    return new NextResponse(rewritten, { status: upstreamRes.status, headers: responseHeaders });
+  }
+
   const responseHeaders = new Headers();
-  copyResponseHeaders(upstreamRes.headers, responseHeaders, prefix);
+  copyResponseHeaders(upstreamRes.headers, responseHeaders, prefix, secureRequest);
   for (const cookie of bootstrapCookies) {
-    responseHeaders.append("Set-Cookie", rewriteSetCookie(cookie, prefix));
+    responseHeaders.append("Set-Cookie", rewriteSetCookie(cookie, prefix, secureRequest));
   }
   if (!responseHeaders.has("Cache-Control") && (pathSegments[0] === "api" || pathSegments[0] === "jmap")) {
     responseHeaders.set("Cache-Control", "no-store");
