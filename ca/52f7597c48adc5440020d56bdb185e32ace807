@@ -1,0 +1,30 @@
+apps/web/src/components/domains/dns-status-panel.tsx
+  s_8309f018b8854d::t_5997774a5d07d9 39,46,58-63
+  s_8309f018b8854d::t_d183a87eb27f03 182-186
+  s_8309f018b8854d::t_ea6e05c12173b6 36-38,40-45,47-57,64-85,97-98,100,104,127-156,172,174,176-181,187-190
+apps/web/messages/fr.json
+  s_8309f018b8854d::t_64e38214193623 129-130,132,136
+apps/web/src/lib/dns/verify.ts
+  s_8309f018b8854d::t_d4419ffd755ff0 104-109,114,116
+  s_8309f018b8854d::t_95f9e7101d06d5 5-10,22
+apps/web/src/app/dashboard/domains/page.tsx
+  s_8309f018b8854d::t_6ddad38cd9a833 67-68,70,74
+apps/web/src/components/domains/domains-list.tsx
+  s_8309f018b8854d::t_babb1a9a34dd7b 50-51,53,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "ca52f7597c48adc5440020d56bdb185e32ace807",
+  "prompts": {},
+  "sessions": {
+    "s_8309f018b8854d": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6d484dd3-cfca-4cc8-a5a2-01ea4ba57aca",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
