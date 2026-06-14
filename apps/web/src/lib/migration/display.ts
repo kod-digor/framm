@@ -1,11 +1,43 @@
 import type { MigrationPhase } from "@prisma/client";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
 
-/** imapsync 2.323+ : « Host1: folder [INBOX] selected 42 messages » */
-const HOST1_FOLDER_RE =
+/** imapsync 2.323+ : « Host1: folder [INBOX] selected 42 messages, duplicates 0 » */
+export const IMAPSYNC_HOST1_FOLDER_SCAN_RE =
   /Host1:\s+folder\s+(.+?)\s+selected\s+(\d+)\s+messages?(?:,\s*duplicates\s+\d+)?/i;
 /** imapsync 2.323+ : « msg INBOX/12 {1234} copied to … » */
-const MSG_COPIED_RE = /^msg\s+(.+?)\/(\d+)\s+\{/i;
+export const IMAPSYNC_MSG_COPIED_RE = /^msg\s+(.+?)\/(\d+)\s+\{/i;
+
+const LEGACY_PROGRESS_RE = /(\d+)\s*\/\s*(\d+)\s+msgs/;
+
+/** Lignes imapsync à ne jamais afficher ni persister dans le journal. */
+export function isImapsyncJournalNoise(message: string): boolean {
+  const trimmed = message.trim();
+  if (!trimmed) return true;
+  if (/Log file is LOG_imapsync/i.test(trimmed)) return true;
+  if (/\bDEBUG\b/i.test(trimmed)) return true;
+  if (/Undefined SSL object/i.test(trimmed)) return true;
+  if (IMAPSYNC_HOST1_FOLDER_SCAN_RE.test(trimmed)) return true;
+  if (/Host[12]:\s+folder\s+.+\s+selected\s+\d+\s+messages?/i.test(trimmed)) return true;
+  if (/\bselected\s+\d+\s+messages?\b/i.test(trimmed) && /\bduplicates\s+\d+\b/i.test(trimmed)) {
+    return true;
+  }
+  if (/^\S*(?:\/bin\/)?imapsync\s+--/i.test(trimmed)) return true;
+  return false;
+}
+
+/** Journal migration : messages copiés, erreurs et fin uniquement. */
+export function shouldLogImapsyncLine(line: string): boolean {
+  if (isImapsyncJournalNoise(line)) return false;
+  const trimmed = line.trim();
+  if (IMAPSYNC_MSG_COPIED_RE.test(trimmed)) return true;
+  if (LEGACY_PROGRESS_RE.test(trimmed)) return true;
+  if (/\bERROR\b/i.test(trimmed)) return true;
+  if (/\bFATAL\b/i.test(trimmed)) return true;
+  if (/\bExiting with /i.test(trimmed)) return true;
+  if (/^End of sync/i.test(trimmed)) return true;
+  if (/^Messages transferred/i.test(trimmed)) return true;
+  return false;
+}
 
 function decodeImapUtf7Segment(segment: string): string {
   let b64 = segment.replace(/,/g, "/");
@@ -66,12 +98,12 @@ export function formatMigrationFolderName(folder: string): string {
 
 /** Décode les noms de dossiers dans une ligne de journal imapsync. */
 export function formatImapsyncJournalLine(line: string): string {
-  const folderMatch = HOST1_FOLDER_RE.exec(line);
+  const folderMatch = IMAPSYNC_HOST1_FOLDER_SCAN_RE.exec(line);
   if (folderMatch) {
     const raw = folderMatch[1]!.trim();
     return line.replace(raw, decodeImapFolderName(raw));
   }
-  const copiedMatch = MSG_COPIED_RE.exec(line);
+  const copiedMatch = IMAPSYNC_MSG_COPIED_RE.exec(line);
   if (copiedMatch) {
     const raw = copiedMatch[1]!;
     return line.replace(raw, decodeImapFolderName(raw));
@@ -88,6 +120,7 @@ const SYSTEM_EVENT_CODES = new Set([
   "source_discovered",
   "migration_queued",
   "migration_started",
+  "folder_scanning",
   "migration_completed",
   "migration_cancelled",
 ]);
@@ -96,6 +129,7 @@ const EVENT_I18N_KEYS = {
   source_discovered: "migration.event_source_discovered",
   migration_queued: "migration.event_migration_queued",
   migration_started: "migration.event_migration_started",
+  folder_scanning: "migration.event_folder_scanning",
   migration_completed: "migration.event_migration_completed",
   migration_cancelled: "migration.event_migration_cancelled",
 } as const;
@@ -114,15 +148,45 @@ export function formatMigrationEventMessage(
   return truncateText(formatImapsyncJournalLine(message), 120);
 }
 
-/** Garde un seul événement source_discovered (le plus récent). */
+type MigrationEvent = MigrationStatusPayload["events"][number];
+
+function insertSyntheticFolderScanEvent(
+  events: MigrationEvent[],
+  anchor: MigrationEvent
+): MigrationEvent[] {
+  const insertIdx = events.findIndex(
+    (event) => new Date(event.createdAt) >= new Date(anchor.createdAt)
+  );
+  const synthetic: MigrationEvent = {
+    id: `synthetic-folder-scan-${anchor.id}`,
+    phase: anchor.phase,
+    message: "folder_scanning",
+    createdAt: anchor.createdAt,
+  };
+  if (insertIdx === -1) {
+    return [...events, synthetic];
+  }
+  return [...events.slice(0, insertIdx), synthetic, ...events.slice(insertIdx)];
+}
+
+/** Filtre le bruit imapsync (anciens événements DB inclus) et déduplique. */
 export function filterMigrationEvents(
   events: MigrationStatusPayload["events"]
 ): MigrationStatusPayload["events"] {
   const reversed = [...events].reverse();
   let seenSourceDiscovered = false;
   const seenMessages = new Set<string>();
+  let sawFolderScanNoise = false;
+  let folderScanAnchor: MigrationEvent | null = null;
+
   const filtered = reversed.filter((event) => {
-    if (/Log file is LOG_imapsync/i.test(event.message)) return false;
+    if (event.message !== "folder_scanning" && isImapsyncJournalNoise(event.message)) {
+      if (IMAPSYNC_HOST1_FOLDER_SCAN_RE.test(event.message)) {
+        sawFolderScanNoise = true;
+        folderScanAnchor ??= event;
+      }
+      return false;
+    }
     if (event.message === "source_discovered") {
       if (seenSourceDiscovered) return false;
       seenSourceDiscovered = true;
@@ -131,7 +195,13 @@ export function filterMigrationEvents(
     seenMessages.add(event.message);
     return true;
   });
-  return filtered.reverse();
+
+  const chronological = filtered.reverse();
+  const hasFolderScanEvent = chronological.some((event) => event.message === "folder_scanning");
+  if (sawFolderScanNoise && !hasFolderScanEvent && folderScanAnchor) {
+    return insertSyntheticFolderScanEvent(chronological, folderScanAnchor);
+  }
+  return chronological;
 }
 
 export function formatRelativeTimeFr(iso: string, now = Date.now()): string {

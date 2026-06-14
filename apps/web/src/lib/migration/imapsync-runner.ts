@@ -1,7 +1,12 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import type { ImapSourceCredentials, MigrationProgress } from "@/lib/migration/types";
-import { decodeImapFolderName } from "@/lib/migration/display";
+import {
+  decodeImapFolderName,
+  IMAPSYNC_HOST1_FOLDER_SCAN_RE,
+  IMAPSYNC_MSG_COPIED_RE,
+  shouldLogImapsyncLine,
+} from "@/lib/migration/display";
 import { unsealSecret } from "@/lib/crypto/seal";
 import { ICLOUD_IMAP_PRESET } from "@/lib/migration/providers/imap-generic";
 
@@ -23,13 +28,14 @@ export type ImapsyncRunResult = {
   progress: MigrationProgress;
 };
 
+export { shouldLogImapsyncLine };
+
 /** Ancien format imapsync (rare) : « 42 / 100 msgs » */
 const LEGACY_PROGRESS_RE = /(\d+)\s*\/\s*(\d+)\s+msgs/;
 /** imapsync 2.323+ : « Host1: folder [INBOX] selected 42 messages, duplicates 0 » */
-const HOST1_FOLDER_RE =
-  /Host1:\s+folder\s+(.+?)\s+selected\s+(\d+)\s+messages?(?:,\s*duplicates\s+\d+)?/i;
+const HOST1_FOLDER_RE = IMAPSYNC_HOST1_FOLDER_SCAN_RE;
 /** imapsync 2.323+ : « msg INBOX/12 {1234} copied to INBOX/1 … » */
-const MSG_COPIED_RE = /^msg\s+(.+?)\/(\d+)\s+\{/i;
+const MSG_COPIED_RE = IMAPSYNC_MSG_COPIED_RE;
 
 function resolveImapsyncMaxBytesPerSecond(): number | null {
   const raw = process.env.IMAPSYNC_MAX_BYTES_PER_SECOND?.trim();
@@ -118,23 +124,6 @@ export function redactImapsyncLogLine(line: string): string {
     })
     .replace(GOOGLE_ACCESS_TOKEN_RE, "ya29.<redacted>")
     .replace(GOOGLE_REFRESH_TOKEN_RE, "1//<redacted>");
-}
-
-/** Journal migration : messages copiés, erreurs et fin uniquement. */
-export function shouldLogImapsyncLine(line: string): boolean {
-  const trimmed = line.trim();
-  if (!trimmed) return false;
-  if (/Log file is LOG_imapsync/i.test(trimmed)) return false;
-  if (/\bDEBUG\b/i.test(trimmed)) return false;
-  if (/Undefined SSL object/i.test(trimmed)) return false;
-  if (MSG_COPIED_RE.test(trimmed)) return true;
-  if (LEGACY_PROGRESS_RE.test(trimmed)) return true;
-  if (/\bERROR\b/i.test(trimmed)) return true;
-  if (/\bFATAL\b/i.test(trimmed)) return true;
-  if (/\bExiting with /i.test(trimmed)) return true;
-  if (/^End of sync/i.test(trimmed)) return true;
-  if (/^Messages transferred/i.test(trimmed)) return true;
-  return false;
 }
 
 function resolveOAuthProvider(
@@ -274,7 +263,6 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
     foldersSeen: new Set(),
   };
   const commandPreview = `${binary} ${redactImapsyncArgsForLog(args)}`;
-  options.onLog?.(commandPreview);
   parseState.progress = { ...parseState.progress, lastLogLine: commandPreview };
 
   return new Promise((resolve) => {
@@ -288,7 +276,9 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       for (const line of lines) {
         if (!line.trim()) continue;
         const safeLine = redactImapsyncLogLine(line);
-        options.onLog?.(safeLine);
+        if (shouldLogImapsyncLine(safeLine)) {
+          options.onLog?.(safeLine);
+        }
         parseState = parseImapsyncProgressLine(line, parseState, options.totalMessages);
         options.onProgress?.(parseState.progress, safeLine);
       }
@@ -298,7 +288,10 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       const lines = chunk.toString("utf8").split(/\r?\n/);
       for (const line of lines) {
         if (!line.trim()) continue;
-        options.onLog?.(redactImapsyncLogLine(line));
+        const safeLine = redactImapsyncLogLine(line);
+        if (shouldLogImapsyncLine(safeLine)) {
+          options.onLog?.(safeLine);
+        }
       }
     };
 

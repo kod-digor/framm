@@ -5,6 +5,7 @@ import {
   runImapsync,
   shouldLogImapsyncLine,
 } from "@/lib/migration/imapsync-runner";
+import { IMAPSYNC_HOST1_FOLDER_SCAN_RE } from "@/lib/migration/display";
 import { runContactsMigration } from "@/lib/migration/contacts-runner";
 import { runCalendarMigration } from "@/lib/migration/calendar-runner";
 import {
@@ -144,6 +145,7 @@ async function processMigration(migrationId: string) {
     const targetPort = Number(process.env.MIGRATION_STALWART_IMAP_PORT ?? "993");
     const sourceStats = parseSourceStatsJson(migration.sourceStatsJson);
     const totalMessages = sourceStats?.mail.messageCount;
+    let folderScanLogged = false;
 
     const result = await runImapsync({
       source,
@@ -160,6 +162,10 @@ async function processMigration(migrationId: string) {
         currentProgress = scaled;
         void updateMigrationProgress(migrationId, scaled, "SYNCING_MAIL");
         const trimmed = line.trim();
+        if (!folderScanLogged && IMAPSYNC_HOST1_FOLDER_SCAN_RE.test(trimmed)) {
+          folderScanLogged = true;
+          void logMigrationEvent(migrationId, "folder_scanning", "SYNCING_MAIL");
+        }
         if (trimmed && shouldLogImapsyncLine(trimmed)) {
           void logMigrationEvent(migrationId, trimmed, "SYNCING_MAIL");
         }
