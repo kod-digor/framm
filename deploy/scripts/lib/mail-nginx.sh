@@ -227,3 +227,20 @@ framm_mail_apply_nginx() {
   nginx -t
   systemctl reload nginx
 }
+
+framm_mail_install_certbot_hooks() {
+  local hook="/etc/letsencrypt/renewal-hooks/deploy/framm-stalwart-tls.sh"
+  cat > "$hook" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+set -a
+# shellcheck source=/dev/null
+source /opt/framm/deploy/.generated/env.production
+set +a
+# shellcheck source=lib/stalwart-setup.sh
+source /opt/framm/deploy/scripts/lib/stalwart-setup.sh
+framm_stalwart_sync_le_certs
+framm_stalwart_ensure_le_tls
+EOF
+  chmod 755 "$hook"
+}

@@ -19,6 +19,8 @@ services:
       # Persistance obligatoire : sans ce montage, mails + config vivent dans
       # la couche éphémère du conteneur et sont perdus à chaque recréation.
       - /opt/framm/mail-data:/var/lib/stalwart
+      # Certificats LE (IMAPS 993, SMTP 587/465) — copiés depuis certbot par deploy mail.
+      - /opt/framm/stalwart-tls:/etc/stalwart/tls:ro
 
   # Migration IMAP : imapsync s'exécute dans le pod worker K8s (Dockerfile.worker).
   # imapsync est aussi installé sur la VM mail (cloud-init / host-setup) pour

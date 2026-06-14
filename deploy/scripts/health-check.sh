@@ -39,9 +39,31 @@ check_tls() {
   fi
 }
 
+check_imap_tls() {
+  local host="$1"
+  local issuer
+  issuer="$(echo | timeout 8 openssl s_client -connect "${host}:993" -servername "${host}" 2>/dev/null \
+    | openssl x509 -noout -issuer 2>/dev/null || true)"
+  if [[ -z "$issuer" ]]; then
+    echo "FAIL IMAP TLS (${host}:993 handshake)"
+    FAIL=1
+    return
+  fi
+  if echo "$issuer" | grep -qiE 'rcgen|self.?signed'; then
+    echo "FAIL IMAP TLS certificat auto-signé (${issuer})"
+    FAIL=1
+    return
+  fi
+  echo "OK  IMAP TLS (${host}:993, LE)"
+}
+
 check "App health" "${AUTH_URL}/api/health"
 if [[ -n "${WEBMAIL_URL:-}" && "${WEBMAIL_URL}" != "skip" ]]; then
   check_tls "Webmail" "${WEBMAIL_URL}/login"
+fi
+
+if [[ -n "${MAIL_PUBLIC_IP:-}" && -n "${PRIMARY_PLATFORM_DOMAIN:-}" ]]; then
+  check_imap_tls "mail.${PRIMARY_PLATFORM_DOMAIN}"
 fi
 
 # Redirections alias → adresses externes : nécessite SMTP sortant (port 25) depuis la VM mail.

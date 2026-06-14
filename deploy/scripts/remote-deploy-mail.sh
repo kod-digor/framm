@@ -46,6 +46,11 @@ source /opt/framm/deploy/scripts/lib/mail-nginx.sh
 framm_mail_apply_nginx "$1"
 framm_mail_obtain_missing_certs "$1" "${BUREAU_ADMIN_EMAIL:-}"
 framm_mail_apply_nginx "$1"
+framm_mail_install_certbot_hooks
+# shellcheck source=lib/stalwart-setup.sh
+source /opt/framm/deploy/scripts/lib/stalwart-setup.sh
+framm_stalwart_sync_le_certs || true
+framm_stalwart_ensure_le_tls || true
 systemctl enable nginx
 REMOTE
 

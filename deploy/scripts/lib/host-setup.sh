@@ -113,11 +113,17 @@ framm_host_ensure_stalwart_data_perms() {
   chmod -R u+rwX /opt/framm/mail-data
 }
 
+framm_host_ensure_stalwart_tls_dir() {
+  mkdir -p /opt/framm/stalwart-tls
+  chown 2000:2000 /opt/framm/stalwart-tls
+}
+
 framm_host_setup() {
   framm_host_ensure_tools
   framm_host_install_backup_cron "$1"
   if [[ "$1" == "mail" ]]; then
     framm_host_install_imapsync
     framm_host_ensure_stalwart_data_perms
+    framm_host_ensure_stalwart_tls_dir
   fi
 }

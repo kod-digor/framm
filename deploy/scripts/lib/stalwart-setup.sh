@@ -199,6 +199,151 @@ print("Stalwart usePermissiveCors activé (JMAP cross-origin)")
 PY
 }
 
+framm_stalwart_le_mail_host() {
+  echo "mail.${PRIMARY_PLATFORM_DOMAIN:?}"
+}
+
+framm_stalwart_le_cert_src_dir() {
+  echo "/etc/letsencrypt/live/$(framm_stalwart_le_mail_host)"
+}
+
+framm_stalwart_tls_dir() {
+  echo "/opt/framm/stalwart-tls"
+}
+
+# Copie les certificats LE (certbot) vers un répertoire lisible par Stalwart (uid 2000).
+framm_stalwart_sync_le_certs() {
+  local src dst
+  src="$(framm_stalwart_le_cert_src_dir)"
+  dst="$(framm_stalwart_tls_dir)"
+  if [[ ! -f "${src}/fullchain.pem" || ! -f "${src}/privkey.pem" ]]; then
+    echo "Certificat LE absent (${src}) — TLS IMAP/SMTP inchangé"
+    return 0
+  fi
+  mkdir -p "$dst"
+  cp -L "${src}/fullchain.pem" "${dst}/fullchain.pem"
+  cp -L "${src}/privkey.pem" "${dst}/privkey.pem"
+  chown 2000:2000 "${dst}/fullchain.pem" "${dst}/privkey.pem"
+  chmod 644 "${dst}/fullchain.pem"
+  chmod 640 "${dst}/privkey.pem"
+  echo "Certificats LE copiés vers ${dst}"
+}
+
+framm_stalwart_ensure_le_tls() {
+  local dst
+  dst="$(framm_stalwart_tls_dir)"
+  if [[ ! -f "${dst}/fullchain.pem" || ! -f "${dst}/privkey.pem" ]]; then
+    return 0
+  fi
+
+  framm_stalwart_recovery_auth
+  local api_key="${STALWART_API_KEY:-}"
+  if framm_stalwart_api_key_valid; then
+    api_key="${STALWART_API_KEY}"
+  elif [[ -n "${RECOVERY_PASS:-}" ]]; then
+    api_key="${RECOVERY_PASS}"
+  fi
+  [[ -n "$api_key" ]] || {
+    echo "Clé API Stalwart requise pour configurer TLS IMAP/SMTP"
+    return 1
+  }
+
+  echo "Configuration TLS Stalwart (Let's Encrypt, $(framm_stalwart_le_mail_host))..."
+  PRIMARY_PLATFORM_DOMAIN="${PRIMARY_PLATFORM_DOMAIN:?}" STALWART_API_KEY="$api_key" python3 <<'PY'
+import json, os, urllib.request
+
+domain = os.environ["PRIMARY_PLATFORM_DOMAIN"]
+mail_host = f"mail.{domain}"
+chain_path = "/etc/stalwart/tls/fullchain.pem"
+key_path = "/etc/stalwart/tls/privkey.pem"
+api_key = os.environ["STALWART_API_KEY"]
+create_id = "framm-le-mail"
+
+def jmap(calls):
+    body = {"using": ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"], "methodCalls": calls}
+    req = urllib.request.Request(
+        "http://127.0.0.1:8080/jmap",
+        data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        return json.loads(resp.read().decode())
+
+def jmap_error(payload):
+    if isinstance(payload, dict) and payload.get("type") == "error":
+        raise SystemExit(f"JMAP error: {payload}")
+
+cert_file = {
+    "certificate": {"@type": "File", "filePath": chain_path},
+    "privateKey": {"@type": "File", "filePath": key_path},
+}
+
+cert_ids = jmap([["x:Certificate/query", {"filter": {}}, "cq"]])["methodResponses"][0][1]["ids"]
+cert_id = None
+rcgen_ids = []
+cert_list = []
+
+if cert_ids:
+    cert_list = jmap([
+        ["x:Certificate/get", {"ids": cert_ids, "properties": ["subjectAlternativeNames", "issuer"]}, "cg"]
+    ])["methodResponses"][0][1]["list"]
+
+for cert in cert_list:
+    issuer = (cert.get("issuer") or "").lower()
+    sans = cert.get("subjectAlternativeNames") or []
+    if mail_host in sans and "rcgen" not in issuer:
+        cert_id = cert["id"]
+        break
+    if "rcgen" in issuer or mail_host in sans:
+        rcgen_ids.append(cert["id"])
+
+calls = []
+if cert_id:
+    calls.append(["x:Certificate/set", {"update": {cert_id: cert_file}}, "cu"])
+else:
+    calls.append(["x:Certificate/set", {"create": {create_id: cert_file}}, "cc"])
+
+domain_ids = jmap([["x:Domain/query", {"filter": {}}, "dq"]])["methodResponses"][0][1]["ids"]
+domain_id = None
+if domain_ids:
+    domain_list = jmap([
+        ["x:Domain/get", {"ids": domain_ids, "properties": ["name"]}, "dg"]
+    ])["methodResponses"][0][1]["list"]
+    domain_id = next((d["id"] for d in domain_list if d.get("name") == domain), None)
+
+if domain_id:
+    calls.append([
+        "x:Domain/set",
+        {"update": {domain_id: {"certificateManagement": {"@type": "Manual"}}}},
+        "du",
+    ])
+
+calls.append(["x:Action/set", {"create": {"framm-tls": {"@type": "ReloadSettings"}}}, "a1"])
+
+result = jmap(calls)
+for item in result.get("methodResponses", []):
+    jmap_error(item[1])
+
+if not cert_id:
+    created = result["methodResponses"][0][1].get("created", {})
+    cert_id = created.get(create_id, {}).get("id") or next(iter(created.values()), {}).get("id")
+
+if cert_id:
+    jmap([
+        ["x:SystemSettings/set", {"update": {"singleton": {"defaultCertificateId": cert_id}}}, "ss"],
+        ["x:Action/set", {"create": {"framm-tls-default": {"@type": "ReloadSettings"}}}, "a2"],
+    ])
+
+for rid in rcgen_ids:
+    if rid == cert_id:
+        continue
+    destroy_result = jmap([["x:Certificate/set", {"destroy": [rid]}, "cd"]])
+    jmap_error(destroy_result["methodResponses"][0][1])
+
+print("TLS Stalwart configuré (certificat LE pour IMAP/SMTP)")
+PY
+}
+
 framm_stalwart_ensure_ready() {
   set -a
   # shellcheck source=/dev/null
@@ -230,6 +375,9 @@ framm_stalwart_ensure_ready() {
   else
     framm_stalwart_warn_outbound_smtp || true
   fi
+
+  framm_stalwart_sync_le_certs || true
+  framm_stalwart_ensure_le_tls || true
 }
 
 framm_stalwart_outbound_smtp_reachable() {
