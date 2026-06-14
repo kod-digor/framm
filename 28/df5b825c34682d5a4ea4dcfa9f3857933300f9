@@ -1,0 +1,36 @@
+apps/web/src/lib/migration/display.ts
+  s_3f260dce51dc31::t_023935d0adb9fb 27-34,39-46
+  s_3f260dce51dc31::t_15933fcdf04054 1-26,35-38,47-135
+apps/web/src/components/ui/sidebar.tsx
+  s_3f260dce51dc31::t_12f3d41873bc59 7
+  s_3f260dce51dc31::t_c0ec7ec95b1c12 159
+apps/web/messages/fr.json
+  s_3f260dce51dc31::t_aa92bb0c7c330b 376-388
+apps/web/src/components/users/migration-sidebar-widget.tsx
+  s_3f260dce51dc31::t_81ff84549a6ac8 1-2,4-51,53,71-133
+  s_3f260dce51dc31::t_2a90c6219e6213 3
+  s_3f260dce51dc31::t_1086a55d2f196b 52,54-70
+apps/web/src/components/users/migration-status-panel.tsx
+  s_3f260dce51dc31::t_494afaacb6e9f7 28
+  s_3f260dce51dc31::t_1314e01a6b3506 3,5-15,24-27,29-32,38,41-49,71-82,96,140-148,151-155,166-175,178-180,184-187,189,191-214,217-261,275-276,279,283-296
+  s_3f260dce51dc31::t_3c284b4360f89f 280-282
+apps/web/src/components/users/users-crud.tsx
+  s_3f260dce51dc31::t_62a0089c1d0c4d 87
+  s_3f260dce51dc31::t_91d3a2b2e1601b 150-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "28df5b825c34682d5a4ea4dcfa9f3857933300f9",
+  "prompts": {},
+  "sessions": {
+    "s_3f260dce51dc31": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3b3329a2-652e-4b21-85d4-34bb702e9713",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
