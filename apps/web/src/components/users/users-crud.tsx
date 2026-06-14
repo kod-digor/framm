@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { ArrowRightLeft, Pencil } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { removeWorkspaceUserAction } from "@/app/actions/workspace-users";
 import {
+  getDraftMigrationAction,
   getMigrationStatusAction,
   listActiveMigrationsAction,
 } from "@/app/actions/mailbox-migration";
@@ -32,6 +33,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
+import { isLaunchedMigrationStatus } from "@/lib/migration/types";
 import type { DelegationRow } from "@/components/mail/mailbox-delegations-section";
 import type { OrgMemberOption } from "@/components/shared-mailboxes/org-members-picker";
 import type { MailboxAddressPatternType } from "@prisma/client";
@@ -69,6 +71,7 @@ export function UsersCrud({
   initialActiveMigrations?: Record<string, MigrationStatusPayload>;
 }) {
   const t = useTranslations("users");
+  const router = useRouter();
   const searchParams = useSearchParams();
   const oauthMailboxId = searchParams.get("migrationMailboxId");
   const oauthMigrationId = searchParams.get("migrationId");
@@ -83,16 +86,23 @@ export function UsersCrud({
   const [migrationInitialId, setMigrationInitialId] = useState<string | null>(
     oauthMigrationId
   );
-  const [migrationInitialStep, setMigrationInitialStep] = useState<"scope" | "status" | null>(
-    oauthStep === "scope" ? "scope" : null
+  const [migrationInitialStep, setMigrationInitialStep] = useState<
+    "provider" | "credentials" | "scope" | "confirm" | "status" | null
+  >(
+    oauthStep === "scope"
+      ? "scope"
+      : oauthStep === "credentials"
+        ? "credentials"
+        : oauthStep === "confirm"
+          ? "confirm"
+          : null
   );
   const [activeMigrations, setActiveMigrations] = useState<
     Record<string, MigrationStatusPayload>
   >(initialActiveMigrations);
+  const [draftMigration, setDraftMigration] = useState<MigrationStatusPayload | null>(null);
   const [statusDrawerMailboxId, setStatusDrawerMailboxId] = useState<string | null>(null);
-  const [migrationStatus, setMigrationStatus] = useState<MigrationStatusPayload | null>(
-    oauthMailboxId ? initialActiveMigrations[oauthMailboxId] ?? null : null
-  );
+  const [migrationStatus, setMigrationStatus] = useState<MigrationStatusPayload | null>(null);
   const [deleteState, deleteAction] = useActionState(
     removeWorkspaceUserAction,
     INITIAL_ACTION_RESULT
@@ -128,21 +138,38 @@ export function UsersCrud({
     console.warn("[migration] OAuth error:", oauthError);
   }
 
+  const oauthHandled = useRef(false);
+
   useEffect(() => {
-    if (!oauthMailboxId) return;
+    if (!oauthMailboxId || oauthHandled.current) return;
+    oauthHandled.current = true;
+
     let cancelled = false;
-    void getMigrationStatusAction(oauthMailboxId).then((status) => {
-      if (!cancelled) {
-        setMigrationStatus(status);
-        if (status) {
-          setActiveMigrations((prev) => ({ ...prev, [oauthMailboxId]: status }));
-        }
+    const loadDraft = oauthMigrationId
+      ? getDraftMigrationAction(oauthMigrationId)
+      : getDraftMigrationAction(oauthMailboxId, true);
+
+    void loadDraft.then((draft) => {
+      if (!cancelled && draft) {
+        setDraftMigration(draft);
+        setMigrationInitialId(draft.id);
       }
     });
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("migrationId");
+    params.delete("migrationMailboxId");
+    params.delete("migrationStep");
+    params.delete("migrationError");
+    const next = params.toString();
+    router.replace(next ? `/dashboard/users?${next}` : "/dashboard/users", {
+      scroll: false,
+    });
+
     return () => {
       cancelled = true;
     };
-  }, [oauthMailboxId]);
+  }, [oauthMailboxId, oauthMigrationId, oauthStep, router, searchParams]);
 
   const hasRunningMigrations = Object.values(activeMigrations).some(
     (migration) => migration.status === "QUEUED" || migration.status === "RUNNING"
@@ -170,20 +197,33 @@ export function UsersCrud({
   ).length;
 
   const openMigration = (mailboxId: string) => {
-    const existing = activeMigrations[mailboxId];
-    if (
-      existing &&
-      (existing.status === "QUEUED" ||
-        existing.status === "RUNNING" ||
-        existing.status === "PENDING_OAUTH")
-    ) {
+    const launched = activeMigrations[mailboxId];
+    if (launched && isLaunchedMigrationStatus(launched.status)) {
       openStatusDrawer(mailboxId);
       return;
     }
+
+    setStatusDrawerMailboxId(null);
     setMigrationMailboxId(mailboxId);
     setMigrationInitialId(null);
     setMigrationInitialStep(null);
-    void refreshMigrationStatus(mailboxId);
+    setDraftMigration(null);
+    setMigrationStatus(null);
+
+    void getDraftMigrationAction(mailboxId, true).then((draft) => {
+      if (!draft) return;
+      setDraftMigration(draft);
+      setMigrationInitialId(draft.id);
+      const resumeStep =
+        draft.provider === "ICLOUD" || draft.provider === "IMAP_GENERIC"
+          ? draft.sourceAddress
+            ? "scope"
+            : "credentials"
+          : draft.sourceAddress
+            ? "scope"
+            : "provider";
+      setMigrationInitialStep(resumeStep);
+    });
   };
 
   const openStatusDrawer = (mailboxId: string) => {
@@ -217,7 +257,7 @@ export function UsersCrud({
             ) : (
               <span className="text-ardoise/50">{t("noMailbox")}</span>
             )}
-            {migration ? (
+            {migration && isLaunchedMigrationStatus(migration.status) ? (
               <MigrationStatusChip
                 status={migration}
                 onClick={() => openStatusDrawer(row.mailboxId!)}
@@ -336,12 +376,14 @@ export function UsersCrud({
 
       {migrationUser?.mailboxId && migrationUser.primaryAddress ? (
         <MigrationWizard
+          key={`${migrationUser.mailboxId}:${migrationInitialId ?? "new"}:${migrationInitialStep ?? "provider"}`}
           open={migrationMailboxId !== null}
           onOpenChange={(open) => {
             if (!open) {
               setMigrationMailboxId(null);
               setMigrationInitialId(null);
               setMigrationInitialStep(null);
+              setDraftMigration(null);
               setMigrationStatus(null);
               void refreshAllActiveMigrations();
             }
@@ -351,7 +393,10 @@ export function UsersCrud({
           userEmail={migrationUser.userEmail}
           initialMigrationId={migrationInitialId}
           initialStep={migrationInitialStep}
-          activeStatus={migrationStatus ?? activeMigrations[migrationUser.mailboxId] ?? null}
+          activeStatus={
+            migrationStatus ??
+            (draftMigration?.mailboxId === migrationUser.mailboxId ? draftMigration : null)
+          }
           onStatusChange={() => refreshMigrationStatus(migrationUser.mailboxId!)}
         />
       ) : null}

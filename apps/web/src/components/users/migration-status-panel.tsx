@@ -84,11 +84,7 @@ export function MigrationStatusPanel({
   useEffect(() => {
     const status = polledStatus ?? initialStatus;
     if (!status) return;
-    if (
-      status.status === "COMPLETED" ||
-      status.status === "FAILED" ||
-      status.status === "CANCELLED"
-    ) {
+    if (status.status !== "QUEUED" && status.status !== "RUNNING") {
       return;
     }
 
@@ -107,6 +103,7 @@ export function MigrationStatusPanel({
 
   const percent = status.progress?.percent ?? 0;
   const isActive = status.status === "QUEUED" || status.status === "RUNNING";
+  const showProgress = isActive;
   const isSuccess = status.status === "COMPLETED";
   const isFailed = status.status === "FAILED";
   const isCancelled = status.status === "CANCELLED";
@@ -118,22 +115,26 @@ export function MigrationStatusPanel({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-encre">{statusLabel}</span>
-          <span className="text-ardoise/60">{percent}%</span>
+          {showProgress ? (
+            <span className="text-ardoise/60">{percent}%</span>
+          ) : null}
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-canal">
-          <div
-            className={cn(
-              "h-full transition-all duration-500",
-              isSuccess ? "bg-green-600" : isFailed ? "bg-red-600" : "bg-encre"
-            )}
-            style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
-            role="progressbar"
-            aria-valuenow={percent}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={t("migration.progressAria")}
-          />
-        </div>
+        {showProgress ? (
+          <div className="h-2 overflow-hidden rounded-full bg-canal">
+            <div
+              className={cn(
+                "h-full transition-all duration-500",
+                isSuccess ? "bg-green-600" : isFailed ? "bg-red-600" : "bg-encre"
+              )}
+              style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
+              role="progressbar"
+              aria-valuenow={percent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={t("migration.progressAria")}
+            />
+          </div>
+        ) : null}
         {status.progress?.currentFolder ? (
           <p className="text-xs text-ardoise/60">
             {t("migration.currentFolder", { folder: status.progress.currentFolder })}

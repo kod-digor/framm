@@ -7,10 +7,12 @@ import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import type { ActionResult } from "@/lib/action-result";
 import { prisma } from "@/lib/prisma";
 import {
-  createMigrationDraft,
   cancelMigration,
-  getActiveMigrationForMailbox,
-  getActiveMigrationsForOrg,
+  createMigrationDraft,
+  getDraftMigrationForMailbox,
+  getLaunchedMigrationForMailbox,
+  getLaunchedMigrationsForOrg,
+  getMigrationById,
   queueMigration,
   serializeMigrationStatus,
   storeImapCredentials,
@@ -191,7 +193,7 @@ export async function listActiveMigrationsAction(): Promise<
   const orgId = await resolveOrgId(session);
   if (!orgId) return {};
 
-  const migrations = await getActiveMigrationsForOrg(orgId);
+  const migrations = await getLaunchedMigrationsForOrg(orgId);
   const map: Record<string, MigrationStatusPayload> = {};
   for (const migration of migrations) {
     map[migration.mailboxId] = serializeMigrationStatus(migration);
@@ -209,8 +211,32 @@ export async function getMigrationStatusAction(
   const mailbox = await assertMailboxOrg(mailboxId, orgId);
   if (!mailbox) return null;
 
-  const migration = await getActiveMigrationForMailbox(mailboxId);
+  const migration = await getLaunchedMigrationForMailbox(mailboxId);
   if (!migration) return null;
+
+  return serializeMigrationStatus(migration);
+}
+
+export async function getDraftMigrationAction(
+  migrationIdOrMailboxId: string,
+  byMailbox = false
+): Promise<MigrationStatusPayload | null> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) return null;
+
+  const migration = byMailbox
+    ? await getDraftMigrationForMailbox(migrationIdOrMailboxId)
+    : await getMigrationById(migrationIdOrMailboxId);
+
+  if (!migration || migration.organizationId !== orgId) return null;
+
+  if (byMailbox) {
+    const mailbox = await assertMailboxOrg(migrationIdOrMailboxId, orgId);
+    if (!mailbox) return null;
+  }
+
+  if (migration.status !== "PENDING_OAUTH") return null;
 
   return serializeMigrationStatus(migration);
 }

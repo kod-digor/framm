@@ -66,11 +66,28 @@ export type MigrationStatusPayload = {
   }[];
 };
 
-export const ACTIVE_MIGRATION_STATUSES: MigrationStatus[] = [
-  "PENDING_OAUTH",
-  "QUEUED",
-  "RUNNING",
+/** Migration réellement lancée (badge, bannière, panneau de suivi). */
+export const LAUNCHED_MIGRATION_STATUSES: MigrationStatus[] = ["QUEUED", "RUNNING"];
+
+/** Brouillon wizard (OAuth / choix du périmètre) — pas une migration en cours. */
+export const DRAFT_MIGRATION_STATUSES: MigrationStatus[] = ["PENDING_OAUTH"];
+
+/** Statuts bloquant une nouvelle migration sur la même boîte. */
+export const BLOCKING_MIGRATION_STATUSES: MigrationStatus[] = [
+  ...DRAFT_MIGRATION_STATUSES,
+  ...LAUNCHED_MIGRATION_STATUSES,
 ];
+
+/** @deprecated Utiliser LAUNCHED_MIGRATION_STATUSES ou BLOCKING_MIGRATION_STATUSES. */
+export const ACTIVE_MIGRATION_STATUSES = LAUNCHED_MIGRATION_STATUSES;
+
+export function isLaunchedMigrationStatus(status: MigrationStatus): boolean {
+  return LAUNCHED_MIGRATION_STATUSES.includes(status);
+}
+
+export function isDraftMigrationStatus(status: MigrationStatus): boolean {
+  return DRAFT_MIGRATION_STATUSES.includes(status);
+}
 
 export const MIGRATION_ERROR_CODES = [
   "imapsync_not_found",

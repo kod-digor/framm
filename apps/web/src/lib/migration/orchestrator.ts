@@ -9,7 +9,11 @@ import type {
   MigrationStatusPayload,
   OAuthTokens,
 } from "@/lib/migration/types";
-import { ACTIVE_MIGRATION_STATUSES } from "@/lib/migration/types";
+import {
+  BLOCKING_MIGRATION_STATUSES,
+  DRAFT_MIGRATION_STATUSES,
+  LAUNCHED_MIGRATION_STATUSES,
+} from "@/lib/migration/types";
 import {
   parseSourceStatsJson,
   type MigrationSourceStats,
@@ -76,11 +80,44 @@ const migrationWithEventsInclude = {
   events: { orderBy: { createdAt: "asc" as const }, take: 50 },
 };
 
-export async function getActiveMigrationForMailbox(mailboxId: string) {
+export async function getLaunchedMigrationForMailbox(mailboxId: string) {
   return prisma.mailboxMigration.findFirst({
     where: {
       mailboxId,
-      status: { in: ACTIVE_MIGRATION_STATUSES },
+      status: { in: LAUNCHED_MIGRATION_STATUSES },
+    },
+    orderBy: { createdAt: "desc" },
+    include: migrationWithEventsInclude,
+  });
+}
+
+export async function getActiveMigrationForMailbox(mailboxId: string) {
+  return getLaunchedMigrationForMailbox(mailboxId);
+}
+
+export async function getDraftMigrationForMailbox(mailboxId: string) {
+  return prisma.mailboxMigration.findFirst({
+    where: {
+      mailboxId,
+      status: { in: DRAFT_MIGRATION_STATUSES },
+    },
+    orderBy: { createdAt: "desc" },
+    include: migrationWithEventsInclude,
+  });
+}
+
+export async function getMigrationById(migrationId: string) {
+  return prisma.mailboxMigration.findUnique({
+    where: { id: migrationId },
+    include: migrationWithEventsInclude,
+  });
+}
+
+export async function getLaunchedMigrationsForOrg(organizationId: string) {
+  return prisma.mailboxMigration.findMany({
+    where: {
+      organizationId,
+      status: { in: LAUNCHED_MIGRATION_STATUSES },
     },
     orderBy: { createdAt: "desc" },
     include: migrationWithEventsInclude,
@@ -88,14 +125,28 @@ export async function getActiveMigrationForMailbox(mailboxId: string) {
 }
 
 export async function getActiveMigrationsForOrg(organizationId: string) {
-  return prisma.mailboxMigration.findMany({
+  return getLaunchedMigrationsForOrg(organizationId);
+}
+
+export async function cancelStaleDraftMigrations(
+  organizationId: string,
+  maxAgeMs = 24 * 60 * 60 * 1000
+) {
+  const cutoff = new Date(Date.now() - maxAgeMs);
+  const stale = await prisma.mailboxMigration.findMany({
     where: {
       organizationId,
-      status: { in: ACTIVE_MIGRATION_STATUSES },
+      status: { in: DRAFT_MIGRATION_STATUSES },
+      createdAt: { lt: cutoff },
     },
-    orderBy: { createdAt: "desc" },
-    include: migrationWithEventsInclude,
+    select: { id: true },
   });
+
+  for (const migration of stale) {
+    await cancelMigration(migration.id);
+  }
+
+  return stale.length;
 }
 
 export async function createMigrationDraft(params: {
@@ -105,7 +156,13 @@ export async function createMigrationDraft(params: {
   provider: MigrationProvider;
   sourceAddress?: string | null;
 }) {
-  const existing = await getActiveMigrationForMailbox(params.mailboxId);
+  const existing = await prisma.mailboxMigration.findFirst({
+    where: {
+      mailboxId: params.mailboxId,
+      status: { in: BLOCKING_MIGRATION_STATUSES },
+    },
+    orderBy: { createdAt: "desc" },
+  });
   if (existing) return existing;
 
   return prisma.mailboxMigration.create({
@@ -188,14 +245,22 @@ export async function storeSourceStats(
   migrationId: string,
   stats: MigrationSourceStats
 ) {
+  const existing = await prisma.mailboxMigration.findUnique({
+    where: { id: migrationId },
+    select: { sourceStatsJson: true },
+  });
+  const hadStats = !!parseSourceStatsJson(existing?.sourceStatsJson)?.discoveredAt;
+
   await prisma.mailboxMigration.update({
     where: { id: migrationId },
     data: {
       sourceStatsJson: stats as unknown as Prisma.InputJsonValue,
-      phase: "SCANNING",
     },
   });
-  await logMigrationEvent(migrationId, "source_discovered", "SCANNING");
+
+  if (!hadStats) {
+    await logMigrationEvent(migrationId, "source_discovered");
+  }
 }
 
 export async function queueMigration(

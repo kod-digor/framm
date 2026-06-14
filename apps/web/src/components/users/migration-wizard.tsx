@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, type ComponentProps } from "react";
+import { useActionState, useEffect, useRef, useState, type ComponentProps } from "react";
 import { useFormStatus } from "react-dom";
 import {
   ArrowLeft,
@@ -34,6 +34,7 @@ import {
 import { ICLOUD_IMAP_PRESET } from "@/lib/migration/providers/imap-generic";
 import type { MigrationProvider } from "@prisma/client";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
+import { isLaunchedMigrationStatus } from "@/lib/migration/types";
 import { cn } from "@/lib/utils";
 
 type ProviderOption = {
@@ -138,6 +139,7 @@ function MigrationWizardBody({
   const t = useTranslations("users");
   const [step, setStep] = useState<WizardStep>(initialStep ?? "provider");
   const [migrationId, setMigrationId] = useState<string | null>(initialMigrationId ?? null);
+  const discoveryInFlight = useRef(false);
   const [provider, setProvider] = useState<MigrationProvider | null>(
     activeStatus?.provider ?? null
   );
@@ -181,15 +183,18 @@ function MigrationWizardBody({
         !sourceStats.calendar.available));
 
   useEffect(() => {
-    if (!needsDiscovery || !migrationId) return;
+    if (!needsDiscovery || !migrationId || discoveryInFlight.current) return;
 
+    discoveryInFlight.current = true;
     let cancelled = false;
     void discoverMigrationSourceAction(migrationId).then((stats) => {
       if (!cancelled && stats) setSourceStats(stats);
+      discoveryInFlight.current = false;
     });
 
     return () => {
       cancelled = true;
+      discoveryInFlight.current = false;
     };
   }, [needsDiscovery, migrationId]);
 
@@ -239,11 +244,9 @@ function MigrationWizardBody({
 
   const showStatus =
     step === "status" ||
-    (activeStatus &&
-      (activeStatus.status === "QUEUED" ||
-        activeStatus.status === "RUNNING" ||
-        activeStatus.status === "COMPLETED" ||
-        activeStatus.status === "FAILED"));
+    (!!activeStatus && isLaunchedMigrationStatus(activeStatus.status)) ||
+    activeStatus?.status === "COMPLETED" ||
+    activeStatus?.status === "FAILED";
 
   const title = showStatus ? t("migration.statusTitle") : t("migration.wizardTitle");
 

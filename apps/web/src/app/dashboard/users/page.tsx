@@ -5,6 +5,7 @@ import { UsersCrud } from "@/components/users/users-crud";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { isDnsVerifiedDomainStatus, MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/domain-status";
 import {
+  cancelStaleDraftMigrations,
   getActiveMigrationsForOrg,
   serializeMigrationStatus,
 } from "@/lib/migration/orchestrator";
@@ -12,6 +13,8 @@ import {
 export default async function UsersPage() {
   const session = await requireOrgAdmin();
   const orgId = getOrgId(session)!;
+
+  await cancelStaleDraftMigrations(orgId);
 
   const [members, domains, activeMigrations] = await Promise.all([
     prisma.organizationMember.findMany({
