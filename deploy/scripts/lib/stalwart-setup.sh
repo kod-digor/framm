@@ -7,9 +7,25 @@ framm_stalwart_compose() {
   docker compose --env-file /opt/framm/deploy/.generated/env.production -f docker-compose.mail.yml "$@"
 }
 
+
+# Disque / plein (souvent ~8 Go sur la VM mail) : RocksDB renvoie « CONTACTADMIN »
+# lors des append IMAP (ex. Sent Items). Libérer de l'espace puis redémarrer Stalwart.
+framm_mail_ensure_root_disk_headroom() {
+  local use_pct avail_mb
+  use_pct="$(df -P / | awk 'NR==2 {gsub(/%/,"",$5); print $5}')"
+  avail_mb="$(df -Pm / | awk 'NR==2 {print $4}')"
+  if [[ "${use_pct:-0}" -ge 90 || "${avail_mb:-0}" -lt 256 ]]; then
+    echo "WARN: disque / à ${use_pct}% (${avail_mb} Mo libres) — nettoyage avant Stalwart…"
+    journalctl --vacuum-size=20M 2>/dev/null || true
+    apt-get clean 2>/dev/null || true
+    df -h /
+  fi
+}
+
 # stalwart-proxy (socat 18080→8080) partage le netns de stalwart. Un « restart stalwart »
 # seul laisse socat dans l'ancien namespace : nginx voit 502 sur mail.*/jmap.
 framm_stalwart_restart_with_proxy() {
+  framm_mail_ensure_root_disk_headroom
   framm_stalwart_compose restart stalwart
   framm_stalwart_compose up -d --force-recreate stalwart-proxy
   sleep 3
