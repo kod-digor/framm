@@ -1,0 +1,48 @@
+k8s/apps/web/deployment-worker.yaml
+  s_49a888a0bf4459::t_579c56a1029959 8-10
+deploy/docker/docker-compose.mail.yml
+  s_49a888a0bf4459::t_413be076e7316b 23-25
+deploy/cloud-init/mail.yaml
+  s_49a888a0bf4459::t_f513389b62d1d4 16
+apps/web/env.example
+  s_49a888a0bf4459::t_303a5d59f5df19 69,72-77
+terraform/environments/prod/templates/env.production.tpl
+  s_beb51fdb05bc1e::t_f701e5aa6a75f8 46
+  s_49a888a0bf4459::t_2a1a0b260b2dc9 42-45,47
+.github/workflows/deploy.yml
+  s_beb51fdb05bc1e::t_e8cab347ab0653 89-92
+deploy/scripts/k8s-sync-secrets.sh
+  s_49a888a0bf4459::t_4a32a35e733c4e 57-66
+  s_49a888a0bf4459::t_cd189e0eaa1739 15-23
+deploy/scripts/lib/host-setup.sh
+  s_49a888a0bf4459::t_7d8ea3554f3d59 120
+  s_49a888a0bf4459::t_144f8748cc7e80 19-26
+deploy/scripts/ci-terraform-sync.sh
+  s_49a888a0bf4459::t_84c7032ebf54a8 36-42
+apps/web/Dockerfile.worker
+  s_49a888a0bf4459::t_3c73873e54e373 1-3,5-9,15-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c8c3f552a2e50506f10e5e01e288a7467c3fd184",
+  "prompts": {},
+  "sessions": {
+    "s_49a888a0bf4459": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d88cea86-c99a-435d-b550-b0c3a7909c01",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_beb51fdb05bc1e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "53cafe7b-eaec-4256-8b8a-c3204771a08e",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
