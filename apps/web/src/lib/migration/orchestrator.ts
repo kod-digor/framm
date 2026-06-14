@@ -68,7 +68,9 @@ export function serializeMigrationStatus(
     scopeCalendar: migration.scopeCalendar,
     progress: parseProgressJson(migration.progressJson),
     sourceStats: parseSourceStatsJson(migration.sourceStatsJson),
-    errorMessage: migration.errorMessage,
+    errorMessage: migration.errorMessage
+      ? redactImapsyncLogLine(migration.errorMessage)
+      : null,
     startedAt: migration.startedAt?.toISOString() ?? null,
     completedAt: migration.completedAt?.toISOString() ?? null,
     events: migration.events.map((e) => ({
@@ -398,15 +400,16 @@ export async function completeMigration(migrationId: string) {
 }
 
 export async function failMigration(migrationId: string, error: string) {
+  const safeError = redactImapsyncLogLine(error).slice(0, 500);
   await prisma.mailboxMigration.update({
     where: { id: migrationId },
     data: {
       status: "FAILED",
-      errorMessage: error,
+      errorMessage: safeError,
       completedAt: new Date(),
     },
   });
-  await logMigrationEvent(migrationId, error);
+  await logMigrationEvent(migrationId, safeError);
 }
 
 export async function wipeMigrationSecrets(migrationId: string) {
