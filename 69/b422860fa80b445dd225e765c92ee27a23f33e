@@ -1,0 +1,33 @@
+apps/web/src/lib/dns/verify.ts
+  s_16eabd6a628cfc::t_90f8638c086149 117-124,129-130
+  s_16eabd6a628cfc::t_8aedc030d1017a 5-18,27-43,48
+  s_16eabd6a628cfc::t_6a06743fe9f62b 83
+apps/web/src/components/domains/domains-list.tsx
+  s_16eabd6a628cfc::t_87a5efe6cbfa50 51-54
+  s_16eabd6a628cfc::t_54d10c3aee02d3 50
+apps/web/messages/fr.json
+  s_16eabd6a628cfc::t_b2e287cc98efb7 129
+  s_16eabd6a628cfc::t_4ddc5ce3096072 130-133
+apps/web/src/components/domains/dns-status-panel.tsx
+  s_16eabd6a628cfc::t_848be161c8df03 5-35,48-51,62,66,73-76,78-142
+  s_16eabd6a628cfc::t_748676c9710ce6 47,77
+apps/web/src/app/dashboard/domains/page.tsx
+  s_16eabd6a628cfc::t_3626454d7bbdf3 67,70
+  s_16eabd6a628cfc::t_83f3960d93e4a8 68-69,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "69b422860fa80b445dd225e765c92ee27a23f33e",
+  "prompts": {},
+  "sessions": {
+    "s_16eabd6a628cfc": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "94bc343e-dc48-4b4d-aedb-3322a7c92e44",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
