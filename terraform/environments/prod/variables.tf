@@ -136,6 +136,12 @@ variable "rdb_ha" {
   default = false
 }
 
+variable "rdb_allowed_ips" {
+  type        = list(string)
+  default     = []
+  description = "IPv4 autorisées sur l'endpoint public RDB (CIDR /32). Vide = admin_ips/32"
+}
+
 # --- Tailles des VMs ---
 
 

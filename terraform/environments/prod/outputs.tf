@@ -40,6 +40,21 @@ output "rdb_private_ip" {
   value = scaleway_rdb_instance.main.private_network[0].ip
 }
 
+output "rdb_public_host" {
+  value       = local.rdb_public_host
+  description = "Hostname ou IP de l'endpoint public RDB (dev local TLS)"
+}
+
+output "rdb_public_port" {
+  value = local.rdb_public_port
+}
+
+output "dev_database_url" {
+  value       = local.dev_database_url
+  sensitive   = true
+  description = "DATABASE_URL dev direct (sans tunnel)"
+}
+
 output "manual_dns_records" {
   description = "Records à configurer manuellement si dns_enabled=false"
   value = var.dns_enabled ? null : {

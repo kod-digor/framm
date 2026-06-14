@@ -40,4 +40,19 @@ locals {
 
   rdb_host = scaleway_rdb_instance.main.private_network[0].ip
   rdb_port = scaleway_rdb_instance.main.private_network[0].port
+
+  rdb_acl_ips = length(var.rdb_allowed_ips) > 0 ? var.rdb_allowed_ips : [for ip in var.admin_ips : "${ip}/32"]
+
+  rdb_lb_endpoint = try(scaleway_rdb_instance.main.load_balancer[0], null)
+  rdb_public_host = local.rdb_lb_endpoint != null ? coalesce(
+    try(nullif(local.rdb_lb_endpoint.hostname, ""), null),
+    try(local.rdb_lb_endpoint.ip, null),
+    ""
+  ) : ""
+  rdb_public_port = (
+    local.rdb_lb_endpoint != null && try(local.rdb_lb_endpoint.port, null) != null
+  ) ? local.rdb_lb_endpoint.port : 5432
+
+  # Dev local direct (Neon-style) — TLS obligatoire, IP filtrée via ACL
+  dev_database_url = length(local.rdb_public_host) > 0 ? "postgresql://framm:${urlencode(random_password.rdb_password.result)}@${local.rdb_public_host}:${local.rdb_public_port}/framm?sslmode=require" : ""
 }

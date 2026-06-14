@@ -41,7 +41,7 @@
     "signupPriceHint": "Montant d'activation : {price}.",
     "signupExistingHint": "Vous avez déjà un compte ? Utilisez le même e-mail et mot de passe pour créer un nouvel espace.",
     "invalidCredentials": "Identifiants incorrects",
-    "dbUnavailable": "Base de données inaccessible. Lancez le tunnel : bin/framm db-tunnel",
+    "dbUnavailable": "Base de données inaccessible. Vérifiez DATABASE_URL ou bin/framm sync-dev-env",
     "sessionExpired": "Votre session n'est plus valide pour cette base de données. Reconnectez-vous.",
     "emailLocalPlaceholder": "prenom.nom",
     "emailDomainLabel": "Domaine e-mail",

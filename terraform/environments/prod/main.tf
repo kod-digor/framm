@@ -118,6 +118,9 @@ resource "local_file" "env_production" {
     rdb_host             = local.rdb_host
     rdb_port             = local.rdb_port
     rdb_password         = random_password.rdb_password.result
+    rdb_public_host      = local.rdb_public_host
+    rdb_public_port      = local.rdb_public_port
+    dev_database_url     = local.dev_database_url
     grafana_password     = random_password.grafana_password.result
     grafana_root_url     = local.grafana_url
     alert_email          = var.admin_email

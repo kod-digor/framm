@@ -14,6 +14,28 @@ framm_load_env
 DNS_ENABLED="${DNS_ENABLED:-true}"
 APP_BZH_ENABLED="${APP_BZH_ENABLED:-false}"
 
+# IPs autorisées sur l'endpoint public RDB (CIDR). Ex. RDB_ALLOWED_IPS=1.2.3.4,5.6.7.8
+RDB_ALLOWED_IPS_TF=""
+if [[ -n "${RDB_ALLOWED_IPS:-}" ]]; then
+  RDB_ALLOWED_IPS_TF="["
+  first=true
+  IFS=',' read -ra _rdb_ips <<< "${RDB_ALLOWED_IPS}"
+  for ip in "${_rdb_ips[@]}"; do
+    ip="${ip// /}"
+    [[ -z "$ip" ]] && continue
+    [[ "$ip" == */* ]] || ip="${ip}/32"
+    $first || RDB_ALLOWED_IPS_TF+=","
+    RDB_ALLOWED_IPS_TF+="\"${ip}\""
+    first=false
+  done
+  RDB_ALLOWED_IPS_TF+="]"
+fi
+
+TF_EXTRA_ARGS=()
+if [[ -n "$RDB_ALLOWED_IPS_TF" && "$RDB_ALLOWED_IPS_TF" != "[]" ]]; then
+  TF_EXTRA_ARGS+=(-var="rdb_allowed_ips=${RDB_ALLOWED_IPS_TF}")
+fi
+
 # Le backend s3 lit les identifiants via les variables AWS_*
 export AWS_ACCESS_KEY_ID="${SCW_ACCESS_KEY}"
 export AWS_SECRET_ACCESS_KEY="${SCW_SECRET_KEY}"
@@ -35,4 +57,5 @@ terraform apply -auto-approve \
   -var="alert_smtp_user=${ALERT_SMTP_USER:-}" \
   -var="alert_smtp_password=${ALERT_SMTP_PASSWORD:-}" \
   -var="alert_smtp_from=${ALERT_SMTP_FROM:-}" \
+  "${TF_EXTRA_ARGS[@]}" \
   "$@"

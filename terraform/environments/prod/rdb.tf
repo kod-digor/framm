@@ -1,6 +1,8 @@
 # PostgreSQL managée : sauvegardes automatiques quotidiennes (rétention 30 j,
 # copie hors région), remplace le conteneur postgres de la VM App pour
-# l'app déployée sur Kapsule. Accessible uniquement via le réseau privé.
+# l'app déployée sur Kapsule.
+# - Kapsule : réseau privé (K8S_DATABASE_URL)
+# - Dev local : endpoint public TLS + ACL IP (DEV_DATABASE_URL, sans tunnel)
 
 resource "random_password" "rdb_password" {
   length           = 32
@@ -29,7 +31,25 @@ resource "scaleway_rdb_instance" "main" {
     enable_ipam = true
   }
 
+  # Endpoint public (load balancer) pour dev local direct — restreint par scaleway_rdb_acl
+  load_balancer {}
+
   tags = ["framm"]
+}
+
+resource "scaleway_rdb_acl" "main" {
+  count       = length(local.rdb_acl_ips) > 0 ? 1 : 0
+  instance_id = scaleway_rdb_instance.main.id
+
+  dynamic "acl_rules" {
+    for_each = local.rdb_acl_ips
+    content {
+      ip          = acl_rules.value
+      description = "Framm dev/admin"
+    }
+  }
+
+  depends_on = [scaleway_rdb_instance.main]
 }
 
 resource "scaleway_rdb_database" "framm" {

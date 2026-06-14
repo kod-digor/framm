@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tunnel localhost:5433 → base managée (RDB) via un pod proxy sur Kapsule
+# Fallback : tunnel localhost:5433 → RDB via pod proxy Kapsule (si IP non autorisée en ACL)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
