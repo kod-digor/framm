@@ -11,6 +11,6 @@ resources:
 images:
   # newTag mis à jour automatiquement par la CI (job build-push)
   - name: rg.fr-par.scw.cloud/framm-kod-digor/web
-    newTag: b8a8928528921151bbf34e80404b67cfc6f89d93
+    newTag: efbdf868f4f1700ee7759bcec9f4bd09d83cc53e
   - name: rg.fr-par.scw.cloud/framm-kod-digor/worker
-    newTag: b8a8928528921151bbf34e80404b67cfc6f89d93
+    newTag: efbdf868f4f1700ee7759bcec9f4bd09d83cc53e
