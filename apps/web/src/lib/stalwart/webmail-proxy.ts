@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { unsealSecret } from "@/lib/crypto/seal";
 import { auth } from "@/lib/auth";
 import { resolveAuthorizedMailbox } from "@/lib/mail/mailbox-access";
+import { repairMailboxSendIdentities } from "@/lib/mail/mailbox-send-sync";
 import { getBulwarkJmapUrl, getStalwartJmapUrl, getWebmailExternalUrl } from "@/lib/stalwart/client";
 
 const HOP_BY_HOP = new Set([
@@ -359,6 +360,7 @@ export async function handleWebmailProxy(
       const boot = await bootstrapBulwarkSession(webmailBase, mailbox.address, mailbox.credentialsEnc);
       bootstrapCookies = boot.setCookies;
       cookieHeader = mergeCookieHeaders(cookieHeader, boot.cookieHeader);
+      void repairMailboxSendIdentities(mailboxId).catch(() => undefined);
     } catch (err) {
       if (isHtmlNavigation(req, pathSegments)) {
         return accountErrorHtml(502, mapWebmailAuthError(err));

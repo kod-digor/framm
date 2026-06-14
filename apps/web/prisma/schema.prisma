@@ -31,12 +31,39 @@ enum WalletTransactionType {
   RECHARGE
 }
 
+enum SubscriptionStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum MailboxAddressPatternType {
+  EXACT
+  WILDCARD_LOCAL
+  WILDCARD_DOMAIN
+}
+
+enum MailboxDelegationPermission {
+  READ
+  SEND
+}
+
+enum MailboxFilterAction {
+  MOVE_TO
+  MARK_READ
+  MARK_FLAGGED
+  DELETE
+  STOP
+}
+
 model Organization {
   id                 String               @id @default(cuid())
   name               String
   slug               String               @unique
-  presentation       String
-  status             OrganizationStatus   @default(PENDING)
+  /// Conservé pour le bureau plateforme ; plus requis à l'inscription
+  presentation       String?
+  status             OrganizationStatus   @default(APPROVED)
   rejectReason       String?
   approvedAt         DateTime?
   walletBalanceCents Int                  @default(0)
@@ -46,20 +73,36 @@ model Organization {
   domains            Domain[]
   mailboxes          Mailbox[]
   emailAliases       EmailAlias[]
+  /// Adresses secondaires d'une boîte utilisateur (plusieurs emails → une boîte)
+  mailboxAddresses   MailboxAddress[]
+  /// Boîtes partagées / alias génériques avec plusieurs destinataires
+  sharedMailboxes    SharedMailbox[]
+  userMailboxes      UserMailbox[]
+  mailboxDelegations MailboxDelegation[]
+  mailboxFilters     MailboxFilter[]
+  modules            OrganizationModule?
+  subscription       Subscription?
   usageSnapshots     UsageSnapshot[]
   walletTransactions WalletTransaction[]
   auditLogs          AuditLog[]
 }
 
 model User {
-  id           String               @id @default(cuid())
-  email        String               @unique
-  passwordHash String
-  role         UserRole
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  memberships  OrganizationMember[]
-  auditLogs    AuditLog[]
+  id                     String                   @id @default(cuid())
+  email                  String                   @unique
+  passwordHash           String
+  /// Nom affiché (indépendant de la boîte mail pour les utilisateurs legacy)
+  displayName            String?
+  /// Oblige l'utilisateur à changer son mot de passe à la prochaine connexion
+  mustChangePassword     Boolean                  @default(false)
+  role                   UserRole
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  memberships            OrganizationMember[]
+  auditLogs              AuditLog[]
+  mailboxes              UserMailbox[]
+  sharedMailboxMembers     SharedMailboxMember[]
+  mailboxDelegationsReceived MailboxDelegation[] @relation("MailboxDelegationsReceived")
 }
 
 model OrganizationMember {
@@ -72,6 +115,29 @@ model OrganizationMember {
   createdAt      DateTime     @default(now())
 
   @@unique([userId, organizationId])
+}
+
+model OrganizationModule {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mail           Boolean      @default(true)
+  calendar       Boolean      @default(false)
+  accounting     Boolean      @default(false)
+  members        Boolean      @default(false)
+  updatedAt      DateTime     @updatedAt
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  organizationId    String             @unique
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status            SubscriptionStatus @default(PENDING_PAYMENT)
+  payplugCustomerId String?
+  payplugPaymentId  String?
+  plan              String             @default("workspace_starter")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 model Domain {
@@ -100,11 +166,113 @@ model Mailbox {
   stalwartAccountId String?
   /// Mot de passe boîte chiffré (AES-GCM) pour SSO webmail — jamais en clair
   credentialsEnc    String?
+  /// Boîte partagée organisation (compte Stalwart dédié, accès multi-utilisateurs via Framm)
+  isShared          Boolean      @default(false)
   /// Limite stockage en octets ; null = illimité (défaut serveur Stalwart)
   quotaBytes        BigInt?
   usedBytes         BigInt       @default(0)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+  /// Adresses supplémentaires qui arrivent sur cette boîte
+  alternateAddresses MailboxAddress[]
+  userLinks         UserMailbox[]
+  sharedMailbox     SharedMailbox?
+  delegations       MailboxDelegation[]
+  filters           MailboxFilter[]
+}
+
+/// Adresse email secondaire rattachée à une boîte utilisateur (Workspace-style)
+model MailboxAddress {
+  id              String                        @id @default(cuid())
+  organizationId  String
+  organization    Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mailboxId       String
+  mailbox         Mailbox                       @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  /// Adresse exacte ou motif canonique (ex. igor.*@domain.bzh, *@domain.bzh)
+  address         String                        @unique
+  patternType     MailboxAddressPatternType     @default(EXACT)
+  stalwartAliasId String?
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @updatedAt
+
+  @@unique([organizationId, address])
+}
+
+/// Lien utilisateur ↔ boîte principale
+model UserMailbox {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mailboxId      String
+  mailbox        Mailbox      @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  isPrimary      Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, mailboxId])
+}
+
+/// Boîte partagée organisation — compte mail unique, accès multi-utilisateurs via Framm
+model SharedMailbox {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mailboxId       String       @unique
+  mailbox         Mailbox      @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  address         String       @unique
+  displayName     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  members         SharedMailboxMember[]
+}
+
+/// Membre autorisé à accéder à une boîte partagée (webmail JMAP commun)
+model SharedMailboxMember {
+  id              String        @id @default(cuid())
+  sharedMailboxId String
+  sharedMailbox   SharedMailbox @relation(fields: [sharedMailboxId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+
+  @@unique([sharedMailboxId, userId])
+}
+
+/// Délégation : un utilisateur accède à la boîte d'un autre via Framm (SSO webmail)
+model MailboxDelegation {
+  id             String                      @id @default(cuid())
+  organizationId String
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mailboxId      String
+  mailbox        Mailbox                     @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  delegateUserId String
+  delegateUser   User                        @relation("MailboxDelegationsReceived", fields: [delegateUserId], references: [id], onDelete: Cascade)
+  permission     MailboxDelegationPermission @default(SEND)
+  createdAt      DateTime                    @default(now())
+
+  @@unique([mailboxId, delegateUserId])
+  @@index([delegateUserId, organizationId])
+}
+
+/// Règle de filtrage utilisateur — compilée en script Sieve sur Stalwart
+model MailboxFilter {
+  id              String             @id @default(cuid())
+  organizationId  String
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mailboxId       String
+  mailbox         Mailbox            @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  name            String
+  sortOrder       Int                @default(0)
+  isEnabled       Boolean            @default(true)
+  fromAddress     String?
+  subjectContains String?
+  action          MailboxFilterAction
+  targetFolder    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([mailboxId, sortOrder])
 }
 
 model EmailAlias {

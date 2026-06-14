@@ -6,8 +6,9 @@ import { deleteAliasAction } from "@/app/actions/aliases";
 import { AliasEmailBadge } from "@/components/aliases/alias-email-badge";
 import { AliasStatusBadge } from "@/components/aliases/alias-status-badge";
 import { DeleteAliasForm } from "@/components/aliases/delete-alias-form";
-import { EditAliasDestination, EditAliasForm } from "@/components/aliases/edit-alias-form";
+import { EditAliasForm } from "@/components/aliases/edit-alias-form";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { CrudRowActions, CRUD_ACTIONS_CELL_CLASS, CRUD_ACTIONS_HEADER_CLASS } from "@/components/ui/crud-row-actions";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 
 export type AliasRow = {
@@ -76,7 +77,7 @@ function AliasMobileCard({
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
           {labels.colActions}
         </p>
-        <div className="flex items-center gap-1">
+        <CrudRowActions>
           <EditAliasForm
             aliasId={alias.id}
             source={alias.source}
@@ -87,7 +88,7 @@ function AliasMobileCard({
             aliasId={alias.id}
             source={alias.source}
           />
-        </div>
+        </CrudRowActions>
       </div>
     </article>
   );
@@ -125,7 +126,7 @@ export function AliasList({
               <th className="pb-2 pr-4 font-medium">{labels.colDestination}</th>
               <th className="pb-2 pr-4 font-medium">{labels.colDomain}</th>
               <th className="pb-2 pr-4 font-medium">{labels.colStatus}</th>
-              <th className="pb-2 font-medium">{labels.colActions}</th>
+              <th className={`${CRUD_ACTIONS_HEADER_CLASS} pb-2 font-medium`}>{labels.colActions}</th>
             </tr>
           </thead>
           <tbody>
@@ -135,22 +136,25 @@ export function AliasList({
                   <AliasEmailBadge email={alias.source} />
                 </td>
                 <td className="max-w-sm py-3 pr-4">
-                  <EditAliasDestination
-                    aliasId={alias.id}
-                    source={alias.source}
-                    destination={alias.destination}
-                  />
+                  <AliasEmailBadge email={alias.destination} />
                 </td>
                 <td className="py-3 pr-4 font-mono text-zinc-700">{alias.domain}</td>
                 <td className="py-3 pr-4">
                   <AliasStatusBadge label={labels.statusActive} />
                 </td>
-                <td className="py-3">
-                  <DeleteAliasForm
-                    action={deleteAction}
-                    aliasId={alias.id}
-                    source={alias.source}
-                  />
+                <td className={`${CRUD_ACTIONS_CELL_CLASS} py-3`}>
+                  <CrudRowActions>
+                    <EditAliasForm
+                      aliasId={alias.id}
+                      source={alias.source}
+                      destination={alias.destination}
+                    />
+                    <DeleteAliasForm
+                      action={deleteAction}
+                      aliasId={alias.id}
+                      source={alias.source}
+                    />
+                  </CrudRowActions>
                 </td>
               </tr>
             ))}

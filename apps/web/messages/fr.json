@@ -1,37 +1,62 @@
 {
   "common": {
     "appName": "Kod Digor",
-    "appTagline": "Plateforme associations",
+    "appTagline": "Votre espace numérique multi-tenant",
     "login": "Se connecter",
     "signup": "S'inscrire",
     "logout": "Se déconnecter",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer",
-    "loading": "Chargement..."
+    "edit": "Modifier",
+    "actions": "Actions",
+    "loading": "Chargement…",
+    "skipToContent": "Aller au contenu principal",
+    "close": "Fermer"
   },
   "landing": {
-    "title": "Infrastructure numérique pour les associations",
-    "subtitle": "Hébergement, messagerie et gestion de domaines pour les associations.",
+    "title": "Vos outils numériques. Vos données. Votre liberté.",
+    "subtitle": "Kod Digor construit un écosystème complet — messagerie, drive, bureautique, IA et plus — hébergé en Europe, chiffré, à prix justes, sans objectif commercial.",
     "ctaLogin": "Se connecter",
-    "ctaSignup": "Inscrire mon association"
+    "ctaSignup": "Créer un espace",
+    "audiences": {
+      "family": "Familles et particuliers — un espace mail pour tous",
+      "association": "Associations — domaines, membres et messagerie",
+      "business": "Entreprises — multi-utilisateurs et boîtes partagées",
+      "mail": "Messagerie type Workspace — plusieurs adresses, une boîte"
+    },
+    "schematicDomain": "Domaine",
+    "schematicMail": "Messagerie",
+    "schematicInbox": "Boîtes"
   },
   "auth": {
     "email": "Adresse e-mail",
     "password": "Mot de passe",
     "loginTitle": "Connexion",
-    "signupTitle": "Inscription association",
-    "orgName": "Nom de l'association",
-    "presentation": "Présentation du projet",
-    "presentationHint": "Décrivez votre association et l'usage prévu de la plateforme.",
-    "signupPending": "Votre demande a été envoyée. Le bureau Kod Digor la validera sous peu.",
-    "signupExistingHint": "Vous avez déjà un compte ? Utilisez le même e-mail et mot de passe pour inscrire une nouvelle association.",
+    "signupTitle": "Créer votre espace",
+    "orgName": "Nom de l'espace",
+    "signupBillingHint": "Une carte bancaire est requise pour activer votre espace. Vous serez redirigé vers notre partenaire de paiement sécurisé.",
+    "signupPayplugStub": "Mode développement : PayPlug n'est pas configuré. Vous pourrez activer l'abonnement manuellement depuis la page Facturation.",
+    "signupSubmit": "Continuer vers le paiement",
+    "signupPriceHint": "Montant d'activation : {price}.",
+    "signupExistingHint": "Vous avez déjà un compte ? Utilisez le même e-mail et mot de passe pour créer un nouvel espace.",
     "invalidCredentials": "Identifiants incorrects",
     "dbUnavailable": "Base de données inaccessible. Lancez le tunnel : bin/framm db-tunnel",
     "sessionExpired": "Votre session n'est plus valide pour cette base de données. Reconnectez-vous.",
     "emailLocalPlaceholder": "prenom.nom",
     "emailDomainLabel": "Domaine e-mail",
     "emailHint": "Utilisez une adresse @{domain} fournie par Kod Digor."
+  },
+  "changePassword": {
+    "title": "Changer votre mot de passe",
+    "subtitle": "Pour des raisons de sécurité, vous devez définir un nouveau mot de passe avant de continuer.",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "submit": "Enregistrer le mot de passe",
+    "submitting": "Enregistrement…",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "stalwartError": "Erreur serveur mail. Réessayez ou contactez le support."
   },
   "bureau": {
     "title": "Administration",
@@ -69,10 +94,10 @@
     "pricingNote": "Estimation basée sur le tarif de stockage {rate} / Go / mois (mis à jour le {date})."
   },
   "tenant": {
-    "select": "Choisir une association",
-    "associations": "Mes associations",
+    "select": "Choisir une organisation",
+    "associations": "Mes organisations",
     "pending": "En attente",
-    "addAssociation": "Ajouter une association",
+    "addAssociation": "Ajouter une organisation",
     "logout": "Se déconnecter"
   },
   "dashboard": {
@@ -80,16 +105,232 @@
     "members": "Adhérents",
     "domains": "Domaines",
     "mailboxes": "Boîtes email",
+    "users": "Utilisateurs",
+    "sharedMailboxes": "Boîtes partagées",
     "aliases": "Redirections",
     "usage": "Consommation",
     "bureau": "Administration",
     "healthDiagnostics": "Diagnostics",
-    "welcome": "Bienvenue sur votre espace association",
+    "welcome": "Bienvenue sur votre espace",
+    "welcomeHint": "État de votre messagerie et de vos domaines.",
+    "serviceStatus": "État des services",
+    "domainsActive": "Domaines actifs",
+    "dnsPending": "DNS en attente",
     "sections": {
-      "association": "Association",
+      "organization": "Organisation",
       "accounting": "Comptabilité",
       "messaging": "Messagerie",
+      "calendar": "Calendrier",
       "platform": "Plateforme"
+    },
+    "modules": "Modules",
+    "billing": "Facturation",
+    "delegatedMailbox": "déléguée"
+  },
+  "modules": {
+    "title": "Modules",
+    "subtitle": "Activez ou désactivez les fonctionnalités de votre espace.",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "comingSoon": "Bientôt",
+    "mailLocked": "Désactivez d'abord toutes les boîtes mail et partagées pour couper la messagerie.",
+    "items": {
+      "mail": {
+        "title": "Messagerie",
+        "description": "Boîtes email, domaines et redirections."
+      },
+      "calendar": {
+        "title": "Calendrier",
+        "description": "Agenda partagé et événements (bientôt disponible)."
+      },
+      "accounting": {
+        "title": "Comptabilité",
+        "description": "Suivi financier et factures (bientôt disponible)."
+      },
+      "members": {
+        "title": "Adhérents",
+        "description": "Gestion des membres et cotisations (bientôt disponible)."
+      }
+    }
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "subtitle": "Chaque utilisateur dispose d'une boîte principale et peut recevoir plusieurs adresses email.",
+    "add": "Ajouter un utilisateur",
+    "creating": "Création en cours…",
+    "listTitle": "Utilisateurs de l'espace",
+    "empty": "Aucun utilisateur pour le moment.",
+    "noDomain": "Ajoutez d'abord un domaine pour créer des utilisateurs.",
+    "noMailbox": "Aucune boîte mail associée",
+    "displayName": "Nom affiché",
+    "primaryEmail": "E-mail principal",
+    "primaryEmailHint": "Adresse de connexion et boîte mail principale sur votre domaine.",
+    "tempPassword": "Mot de passe temporaire",
+    "tempPasswordHint": "Minimum 8 caractères, évitez les mots courants (password, 12345678…). L'utilisateur devra le changer à sa première connexion.",
+    "domain": "Domaine",
+    "domainDnsUnverified": "DNS non vérifié",
+    "dnsUnverifiedWarning": "Le DNS n'est pas encore vérifié — la boîte sera créée mais l'envoi/réception attend la propagation DNS.",
+    "secondaryAddresses": "Adresses supplémentaires (arrivent sur la même boîte)",
+    "secondaryAddress": "Adresse secondaire",
+    "addAddress": "Ajouter",
+    "addingAddress": "Ajout…",
+    "addAddressTitle": "Ajouter une adresse secondaire",
+    "addAddressHint": "Nouvelle adresse pour {email}",
+    "addAddressAria": "Ajouter une adresse secondaire pour {email}",
+    "removeAddress": "Retirer",
+    "removeAddressAria": "Retirer l'adresse {address}",
+    "confirmRemoveAddress": "Retirer cette adresse secondaire ?",
+    "colLoginEmail": "E-mail de connexion",
+    "colPrimaryAddress": "Adresse principale",
+    "colSecondaryAddresses": "Adresses secondaires",
+    "colActions": "Actions",
+    "cancel": "Annuler",
+    "editTitle": "Modifier l'utilisateur",
+    "editHint": "Boîte principale : {address}",
+    "editHintNoMailbox": "Utilisateur sans boîte mail — {email}",
+    "editAria": "Modifier {email}",
+    "editDrawer": {
+      "loginEmail": "E-mail de connexion : {email}",
+      "close": "Fermer",
+      "profileTitle": "Profil",
+      "profileDescription": "Nom affiché et réinitialisation du mot de passe.",
+      "saveProfile": "Enregistrer le profil",
+      "mustChangePasswordBadge": "Mot de passe à changer",
+      "mustChangePasswordInfo": "Changement obligatoire à la prochaine connexion.",
+      "mailboxTitle": "Boîte principale",
+      "mailboxPresent": "Adresse de la boîte mail principale.",
+      "mailboxAbsent": "Aucune boîte mail — créez-la ci-dessous.",
+      "aliasesTitle": "Alias",
+      "aliasesEmpty": "Aucun alias pour le moment.",
+      "aliasesListLabel": "Liste des alias",
+      "addAliasTitle": "Ajouter un alias",
+      "addressOrPattern": "Adresse ou motif",
+      "addressOrPatternPlaceholder": "marie.martin@domaine.bzh ou igor.*",
+      "patternHint": "Adresse complète, motif local (igor.*) ou catch-all (*@domaine.bzh). Le caractère * remplace une partie de l'adresse.",
+      "patternDomainFallback": "Domaine par défaut",
+      "patternDomainFallbackHint": "Utilisé si le motif ne contient pas de domaine (ex. igor.*).",
+      "badgeExact": "Exact",
+      "badgePattern": "Motif",
+      "colType": "Type",
+      "delegationsTitle": "Délégation",
+      "delegationsHint": "Autorisez d'autres utilisateurs à lire ou envoyer depuis cette boîte via Framm."
+    },
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "updated": "Utilisateur mis à jour : {detail}",
+    "newPassword": "Nouveau mot de passe",
+    "newPasswordHint": "Laissez vide pour conserver le mot de passe actuel.",
+    "passwordError": "Le mot de passe doit contenir au moins 8 caractères.",
+    "passwordWeak": "Mot de passe refusé par le serveur mail : trop prévisible.",
+    "deleteAria": "Supprimer {email}",
+    "deleting": "Suppression…",
+    "confirmDelete": "Retirer {email} de cet espace ? Sa boîte mail et ses adresses seront supprimées.",
+    "deleted": "Utilisateur retiré : {detail}",
+    "cannotDeleteSelf": "Vous ne pouvez pas vous retirer vous-même de l'espace.",
+    "created": "Utilisateur créé : {detail}",
+    "addressAdded": "Adresse ajoutée : {detail}",
+    "invalidPattern": "Motif ou adresse invalide. Exemples : marie@domaine.bzh, igor.*, *@domaine.bzh.",
+    "patternTooBroad": "Ce motif est trop large ou non autorisé.",
+    "catchAllConflict": "Un catch-all existe déjà pour ce domaine sur une autre boîte.",
+    "localPatternConflict": "Ce motif entre en conflit avec une adresse ou un motif existant.",
+    "sendIdentityError": "Impossible de configurer l'envoi pour cette adresse sur le serveur mail.",
+    "invalid": "Vérifiez les champs du formulaire.",
+    "exists": "Cette adresse e-mail est déjà utilisée.",
+    "userExists": "Cet utilisateur fait déjà partie de cet espace.",
+    "sameAsPrimary": "Cette adresse est déjà l'adresse principale.",
+    "domainError": "Domaine introuvable ou non utilisable.",
+    "notfound": "Élément introuvable.",
+    "stalwartUnavailable": "Le serveur mail est indisponible. Réessayez plus tard.",
+    "stalwartError": "Erreur serveur mail. Réessayez ou contactez le support.",
+    "stalwartUnconfigured": "Le serveur mail n'est pas configuré. La création d'utilisateurs est suspendue.",
+    "associateMailbox": "Créer boîte",
+    "associatingMailbox": "Création…",
+    "associateMailboxTitle": "Associer une boîte mail",
+    "associateMailboxDescription": "Créer la boîte principale pour {email}",
+    "associateMailboxAria": "Associer une boîte mail pour {email}",
+    "associateMailboxAddress": "Adresse de la boîte",
+    "associateMailboxHint": "La boîte sera créée avec l'e-mail de connexion de l'utilisateur.",
+    "associatePasswordHint": "Mot de passe temporaire pour la connexion et le webmail. L'utilisateur devra le changer à sa première connexion.",
+    "mailboxAssociated": "Boîte mail associée : {detail}",
+    "mailboxExists": "Cet utilisateur a déjà une boîte mail.",
+    "invalidEmail": "L'e-mail de connexion n'est pas valide.",
+    "emailDomainMismatch": "Le domaine de l'e-mail de connexion ne correspond à aucun domaine de cet espace."
+  },
+  "sharedMailboxes": {
+    "title": "Boîtes partagées",
+    "subtitle": "Adresses communes (contact@, info@…) avec une boîte unique : tous les membres voient les mêmes messages et réponses.",
+    "add": "Créer une boîte partagée",
+    "creating": "Création en cours…",
+    "saving": "Enregistrement…",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "editTitle": "Modifier la boîte partagée",
+    "editHint": "Membres et nom affiché pour {address}",
+    "editAria": "Modifier {address}",
+    "openMail": "Ouvrir",
+    "openMailAria": "Ouvrir la messagerie de {address}",
+    "listTitle": "Boîtes partagées actives",
+    "empty": "Aucune boîte partagée pour le moment.",
+    "noDomain": "Ajoutez d'abord un domaine pour créer des boîtes partagées.",
+    "noOrgMembers": "Ajoutez d'abord des utilisateurs à votre espace pour leur donner accès.",
+    "address": "Adresse partagée",
+    "displayName": "Nom affiché",
+    "domain": "Domaine",
+    "domainDnsUnverified": "DNS non vérifié",
+    "membersLabel": "Membres",
+    "membersHint": "Utilisateurs de l'espace qui pourront lire et répondre depuis la même boîte.",
+    "membersSearchPlaceholder": "Rechercher un utilisateur…",
+    "membersEmpty": "Aucun utilisateur ne correspond à la recherche.",
+    "membersSelected": "{count, plural, one {# membre sélectionné} other {# membres sélectionnés}}",
+    "delete": "Supprimer",
+    "deleteAria": "Supprimer la boîte partagée {address}",
+    "colAddress": "Adresse",
+    "colMembers": "Membres",
+    "colActions": "Actions",
+    "cancel": "Annuler",
+    "confirmDelete": "Supprimer cette boîte partagée ? Les messages seront définitivement perdus.",
+    "created": "Boîte partagée créée : {detail}",
+    "updated": "Boîte partagée mise à jour : {detail}",
+    "invalid": "Indiquez une adresse et au moins un membre.",
+    "invalidMembers": "Un ou plusieurs utilisateurs sélectionnés ne font pas partie de l'espace.",
+    "exists": "Cette adresse e-mail est déjà utilisée.",
+    "domainError": "Domaine introuvable ou non utilisable.",
+    "notfound": "Boîte partagée introuvable.",
+    "stalwartError": "Erreur serveur mail. Réessayez ou contactez le support.",
+    "stalwartUnconfigured": "Le serveur mail n'est pas configuré. La création de boîtes partagées est suspendue.",
+    "stalwartUnavailable": "Le serveur mail est indisponible. Réessayez plus tard."
+  },
+  "billing": {
+    "title": "Facturation",
+    "subtitle": "Abonnement et moyen de paiement.",
+    "cardTitle": "Abonnement workspace",
+    "active": "Votre abonnement est actif.",
+    "pending": "Finalisez l'enregistrement de votre carte bancaire pour accéder à toutes les fonctionnalités.",
+    "returnPending": "Paiement en cours de validation. Actualisez cette page dans quelques instants.",
+    "stubMode": "PayPlug non configuré — utilisez le bouton ci-dessous pour simuler l'activation en développement.",
+    "activateStub": "Activer l'abonnement (dev)",
+    "payplugRedirectHint": "Si vous n'avez pas été redirigé vers PayPlug, contactez le support.",
+    "payplugRequired": "L'activation manuelle n'est pas disponible lorsque PayPlug est configuré.",
+    "paymentFailed": "Le paiement n'a pas pu être initié. Réessayez ou contactez le support.",
+    "priceHint": "Montant d'activation : {price} — paiement sécurisé via PayPlug.",
+    "payWithCard": "Payer par carte bancaire",
+    "managePayment": "Gérer le paiement"
+  },
+  "modulePlaceholders": {
+    "calendar": {
+      "title": "Calendrier",
+      "subtitle": "Agenda partagé et événements.",
+      "body": "Ce module sera disponible prochainement. Vous pouvez déjà l'activer pour préparer votre espace."
+    },
+    "accounting": {
+      "title": "Comptabilité",
+      "subtitle": "Suivi financier simplifié.",
+      "body": "Ce module sera disponible prochainement. Vous pouvez déjà l'activer pour préparer votre espace."
+    },
+    "members": {
+      "title": "Adhérents",
+      "subtitle": "Gestion des membres et cotisations.",
+      "body": "Ce module sera disponible prochainement. Vous pouvez déjà l'activer pour préparer votre espace."
     }
   },
   "domains": {
@@ -121,7 +362,17 @@
     "verified": "Domaine vérifié — la messagerie est prête.",
     "pending": "DNS non encore vérifié — configurez les enregistrements ci-dessous.",
     "usableWhilePending": "Vous pouvez déjà créer des boîtes mail et des redirections. L'envoi et la réception ne fonctionneront qu'après vérification DNS.",
-    "empty": "Aucun domaine pour le moment. Ajoutez le vôtre ci-dessus.",
+    "empty": "Aucun domaine pour le moment.",
+    "colDomain": "Domaine",
+    "colStatus": "Statut",
+    "colActions": "Actions",
+    "cancel": "Annuler",
+    "viewDns": "Voir DNS",
+    "viewDnsAria": "Voir les enregistrements DNS pour {fqdn}",
+    "verifyAria": "Vérifier le DNS pour {fqdn}",
+    "deleteAria": "Supprimer le domaine {fqdn}",
+    "dnsDialogTitle": "Configuration DNS",
+    "dnsDialogHint": "Enregistrements pour {fqdn}",
     "dnsCurrentTitle": "Ce que nous détectons actuellement",
     "dnsExpected": "Attendu",
     "dnsFound": "Trouvé",
@@ -183,6 +434,7 @@
     "exists": "Cette adresse correspond déjà à une boîte mail.",
     "existsAsAlias": "Cette adresse est déjà utilisée par une redirection. Supprimez la redirection ou choisissez une autre adresse.",
     "notfound": "Cette boîte mail est introuvable.",
+    "isShared": "Cette boîte est gérée depuis Boîtes partagées.",
     "edit": "Modifier la boîte",
     "editTitle": "Modifier la boîte mail",
     "editHint": "Modifications pour {address}",
@@ -242,8 +494,67 @@
     "stalwartUnavailable": "Le serveur mail est indisponible. Vos redirections existantes restent listées ici ; la création reprendra quand Stalwart sera accessible.",
     "stalwartUnconfigured": "Le serveur mail n'est pas configuré. La création de redirections est suspendue jusqu'à la configuration de Stalwart."
   },
+  "mailDelegation": {
+    "add": "Ajouter",
+    "addDelegate": "Utilisateur délégué",
+    "selectMember": "Choisir un utilisateur",
+    "permission": "Droit d'accès",
+    "permissionRead": "Lecture seule",
+    "permissionSend": "Lecture et envoi",
+    "remove": "Retirer",
+    "empty": "Aucune délégation pour cette boîte.",
+    "confirmRemove": "Retirer cette délégation ?",
+    "delegationAdded": "Délégation ajoutée : {detail}",
+    "delegationUpdated": "Délégation mise à jour.",
+    "invalid": "Sélectionnez un utilisateur.",
+    "exists": "Cet utilisateur a déjà accès à cette boîte.",
+    "cannotDelegateSelf": "Impossible de déléguer la boîte à son propriétaire.",
+    "invalidDelegate": "Utilisateur introuvable dans cet espace.",
+    "notfound": "Délégation introuvable."
+  },
+  "mailFilters": {
+    "title": "Filtres et règles",
+    "subtitle": "Règles serveur pour {address} — appliquées à la réception.",
+    "add": "Ajouter une règle",
+    "save": "Enregistrer",
+    "backToMail": "Retour à la messagerie",
+    "name": "Nom de la règle",
+    "namePlaceholder": "Factures",
+    "fromAddress": "Expéditeur (optionnel)",
+    "fromPlaceholder": "compta@fournisseur.bzh",
+    "subjectContains": "Objet contient (optionnel)",
+    "subjectPlaceholder": "facture",
+    "conditionHint": "Au moins une condition (expéditeur ou objet) est requise.",
+    "action": "Action",
+    "targetFolder": "Dossier cible (pour « Déplacer »)",
+    "folderPlaceholder": "Comptabilité",
+    "actionMoveTo": "Déplacer vers un dossier",
+    "actionMarkRead": "Marquer comme lu",
+    "actionMarkFlagged": "Marquer comme suivi",
+    "actionDelete": "Supprimer",
+    "actionStop": "Arrêter le traitement",
+    "colName": "Règle",
+    "colAction": "Action",
+    "colEnabled": "Actif",
+    "colActions": "Actions",
+    "condFrom": "De : {value}",
+    "condSubject": "Objet : {value}",
+    "enabled": "Actif",
+    "disabled": "Inactif",
+    "delete": "Supprimer",
+    "empty": "Aucune règle pour le moment.",
+    "confirmDelete": "Supprimer cette règle ?",
+    "filterCreated": "Règle créée : {detail}",
+    "invalid": "Vérifiez les champs du formulaire.",
+    "filterConditionRequired": "Indiquez au moins une condition (expéditeur ou objet).",
+    "filterFolderRequired": "Indiquez le dossier cible pour un déplacement.",
+    "notfound": "Boîte introuvable.",
+    "stalwartUnavailable": "Serveur mail indisponible — règle enregistrée localement mais non synchronisée.",
+    "sieveSyncFailed": "Impossible de synchroniser la règle sur le serveur mail."
+  },
   "mail": {
     "settings": "Configuration client",
+    "filters": "Filtres",
     "openExternal": "Ouvrir dans un nouvel onglet",
     "loading": "Chargement de la messagerie…",
     "connectedHint": "Messagerie de {address} — connectée automatiquement.",
@@ -261,6 +572,10 @@
     "unconfigured": "Le webmail n'est pas configuré (WEBMAIL_URL). Contactez le support Kod Digor.",
     "webmailFrameTitle": "Webmail de {address}",
     "webmailFrameHint": "Webmail intégré de {address} — connecté automatiquement via Bulwark.",
+    "senderPrimaryAddress": "Adresse principale",
+    "senderExactAlias": "Alias",
+    "senderWildcardLocalPattern": "Motif local (réception)",
+    "senderWildcardDomainPattern": "Catch-all domaine (réception)",
     "errors": {
       "load_failed": "Impossible de charger la messagerie. Réessayez ou ouvrez le webmail dans un nouvel onglet.",
       "no_credentials": "Les identifiants de cette boîte ne sont pas enregistrés.",
@@ -365,6 +680,14 @@
         "label": "Infra — Stalwart JMAP",
         "description": "Ping API JMAP Stalwart (x:Domain/query)."
       },
+      "infra-stalwart-tls": {
+        "label": "Infra — TLS mail / webmail",
+        "description": "Certificats TLS valides et HTTPS fonctionnel sur STALWART_URL et WEBMAIL_URL."
+      },
+      "infra-encryption-at-rest": {
+        "label": "Infra — Chiffrement au repos",
+        "description": "Clé PGP plateforme ou STALWART_ENCRYPTION_PUBLIC_KEY_ID configurée pour les nouvelles boîtes."
+      },
       "infra-k8s-health": {
         "label": "Infra — App /api/health",
         "description": "Endpoint de santé de l'application Framm."
@@ -380,6 +703,946 @@
       "infra-s3": {
         "label": "Infra — S3 uploads",
         "description": "Head bucket sur le stockage objet Scaleway (uploads)."
+      }
+    }
+  },
+  "association": {
+    "nav": {
+      "home": "Accueil",
+      "roadmap": "Roadmap",
+      "login": "Se connecter",
+      "signup": "Créer un espace"
+    },
+    "hero": {
+      "eyebrow": "Association bretonne — numérique libre et souverain",
+      "title": "Vos outils numériques. Vos données. Votre liberté.",
+      "subtitle": "Kod Digor construit un écosystème complet — messagerie, drive, bureautique, IA et plus — hébergé en Europe, chiffré, à prix justes, sans objectif commercial.",
+      "ctaRoadmap": "Voir la roadmap",
+      "ctaSignup": "Créer un espace"
+    },
+    "values": {
+      "title": "Nos valeurs",
+      "subtitle": "Un numérique au service des personnes, pas l'inverse.",
+      "freedom": {
+        "title": "Liberté",
+        "description": "Des outils que vous contrôlez, sans enfermement propriétaire."
+      },
+      "sovereignty": {
+        "title": "Souveraineté",
+        "description": "Données hébergées en Europe, infrastructure maîtrisée, open source dès que possible."
+      },
+      "fairPricing": {
+        "title": "Prix justes",
+        "description": "Pas de modèle extractif : des tarifs transparents couvrant les coûts réels."
+      },
+      "privacy": {
+        "title": "Vie privée & RGPD",
+        "description": "Chiffrement, minimisation des données, conformité européenne."
+      },
+      "opensource": {
+        "title": "Open source",
+        "description": "Code auditable, standards ouverts, contribution à l'écosystème libre."
+      },
+      "accessibility": {
+        "title": "Accessibilité",
+        "description": "Des outils simples pour tous — familles, associations, entreprises, collectivités."
+      }
+    },
+    "comparison": {
+      "title": "Une alternative complète",
+      "subtitle": "Tout ce dont vous avez besoin, sans dépendre des géants du cloud.",
+      "vsMicrosoft": "Alternative à Microsoft 365",
+      "vsGoogle": "Alternative à Google Workspace",
+      "vsApple": "Alternative à iCloud",
+      "vsOdoo": "Alternative à Odoo pour les associations",
+      "pointSovereign": "Données en Europe, pas aux États-Unis",
+      "pointEncrypted": "Chiffrement et vie privée par conception",
+      "pointNoLockIn": "Standards ouverts, export à tout moment",
+      "pointNonProfit": "Association à but non lucratif, pas d'exploitation des données",
+      "pointAllInOne": "Un seul écosystème intégré — mail, drive, calendrier, IA…"
+    },
+    "products": {
+      "title": "Notre écosystème",
+      "subtitle": "Chaque service est conçu pour fonctionner ensemble, en toute souveraineté.",
+      "viewRoadmap": "Voir la roadmap",
+      "allProducts": "Tous les produits"
+    },
+    "audiences": {
+      "title": "Pour qui ?",
+      "family": "Familles et particuliers",
+      "familyDesc": "Un espace mail et des outils du quotidien, simples et privés.",
+      "association": "Associations",
+      "associationDesc": "Domaines, adhérents, messagerie et comptabilité pour votre structure.",
+      "business": "Entreprises & collectifs",
+      "businessDesc": "Multi-utilisateurs, boîtes partagées et collaboration sécurisée.",
+      "collectivity": "Collectivités",
+      "collectivityDesc": "Solutions souveraines pour les besoins numériques publics."
+    },
+    "schematic": {
+      "title": "Un domaine, tout l'écosystème",
+      "domain": "Votre domaine",
+      "mail": "Messagerie",
+      "drive": "Drive",
+      "calendar": "Calendrier",
+      "more": "Et bien plus…"
+    },
+    "cta": {
+      "title": "Rejoignez l'écosystème Kod Digor",
+      "subtitle": "Créez votre espace et commencez par la messagerie dès aujourd'hui.",
+      "signup": "Créer un espace",
+      "login": "Se connecter"
+    },
+    "footer": {
+      "tagline": "Association Kod Digor — numérique libre et souverain en Bretagne",
+      "mission": "Outils, cloud et liberté numérique pour tous.",
+      "nav": "Navigation",
+      "values": "Liberté · Souveraineté · Prix justes · RGPD · Open source"
+    }
+  },
+  "roadmap": {
+    "title": "Roadmap produit",
+    "subtitle": "Notre feuille de route vers un écosystème numérique complet, souverain et accessible à tous. Horizon 2026–2030.",
+    "horizon": "Horizon 2026–2030",
+    "filterCategory": "Catégorie",
+    "filterStatus": "Statut",
+    "filterAll": "Tous",
+    "phases": "{count, plural, one {# phase} other {# phases}}",
+    "tasks": "{count, plural, one {# tâche} other {# tâches}}",
+    "progress": "Progression",
+    "viewDetail": "Voir le détail",
+    "backToRoadmap": "Retour à la roadmap",
+    "ecosystem": {
+      "title": "Écosystème intégré",
+      "subtitle": "Les produits Kod Digor sont conçus pour fonctionner ensemble."
+    },
+    "productDetail": {
+      "replaces": "Alternative à",
+      "related": "Produits liés",
+      "phases": "Phases",
+      "gantt": "Diagramme de Gantt",
+      "taskList": "Liste des tâches",
+      "prev": "Produit précédent",
+      "next": "Produit suivant"
+    },
+    "gantt": {
+      "task": "Tâche",
+      "phase": "Phase",
+      "start": "Début",
+      "end": "Fin",
+      "dependsOn": "Dépend de",
+      "noDeps": "Aucune",
+      "legend": "Légende",
+      "scrollHint": "Faites défiler pour voir la timeline complète",
+      "statusColumn": "Statut"
+    },
+    "status": {
+      "live": "Disponible",
+      "beta": "Bêta",
+      "in_progress": "En cours",
+      "planned": "Planifié",
+      "research": "Recherche"
+    },
+    "taskStatus": {
+      "done": "Terminé",
+      "in_progress": "En cours",
+      "planned": "Planifié",
+      "blocked": "Bloqué"
+    }
+  },
+  "products": {
+    "categories": {
+      "communication": "Communication",
+      "productivity": "Productivité",
+      "collaboration": "Collaboration",
+      "security": "Sécurité",
+      "infrastructure": "Infrastructure",
+      "association": "Association",
+      "media": "Médias",
+      "opensource": "Open source"
+    },
+    "items": {
+      "mail": {
+        "title": "Messagerie",
+        "tagline": "E-mails souverains, chiffrés et hébergés en Bretagne",
+        "description": "Messagerie professionnelle et personnelle avec domaines personnalisés, boîtes partagées, webmail et conformité RGPD.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "security": {
+            "title": "Sécurité",
+            "goal": "Chiffrement, audit et conformité"
+          },
+          "collaboration": {
+            "title": "Collaboration",
+            "goal": "Partage et travail en équipe"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          },
+          "sovereignty": {
+            "title": "Souveraineté",
+            "goal": "Auto-hébergement, fédération et résilience"
+          }
+        },
+        "tasks": {
+          "domains": "Gestion des domaines personnalisés",
+          "mailboxes": "Création et gestion des boîtes mail",
+          "aliases": "Alias et redirections e-mail",
+          "webmail-jmap": "Webmail JMAP intégré",
+          "shared-mailboxes": "Boîtes mail partagées",
+          "tls-enforce": "Imposition TLS sur tous les flux",
+          "encryption-at-rest": "Chiffrement des données au repos",
+          "audit-logs": "Journaux d'audit et traçabilité",
+          "dlp-basic": "Prévention des fuites de données (DLP)",
+          "smime": "Chiffrement S/MIME",
+          "delegation": "Délégation d'accès aux boîtes",
+          "calendar-integration": "Intégration calendrier dans le webmail",
+          "contacts-sync": "Synchronisation des contacts",
+          "rules-filters": "Règles et filtres avancés",
+          "drive-attachments": "Pièces jointes via Drive",
+          "ai-triage": "Tri intelligent du courrier par IA",
+          "newsletter-bridge": "Pont vers l'outil Newsletter",
+          "multi-region": "Déploiement multi-région",
+          "federation": "Fédération inter-serveurs Stalwart",
+          "cross-site-backup": "Sauvegarde inter-sites"
+        }
+      },
+      "contacts": {
+        "title": "Contacts",
+        "tagline": "Carnet d'adresses unifié et synchronisé",
+        "description": "Gestion des contacts avec CardDAV, groupes, recherche et synchronisation avec la messagerie.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "sync": {
+            "title": "Synchronisation",
+            "goal": "Sync multi-appareils et déduplication"
+          },
+          "privacy": {
+            "title": "Vie privée",
+            "goal": "Protection des données personnelles"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "carddav-server": "Serveur CardDAV",
+          "vcard-import": "Import et export vCard",
+          "groups-tags": "Groupes et étiquettes de contacts",
+          "search-filter": "Recherche et filtrage avancé",
+          "mail-sync": "Synchronisation avec la messagerie",
+          "mobile-sync": "Synchronisation mobile CardDAV",
+          "deduplication": "Déduplication automatique",
+          "encryption-contacts": "Chiffrement du carnet d'adresses",
+          "sharing-permissions": "Permissions de partage granulaires",
+          "gdpr-export": "Export RGPD des contacts",
+          "calendar-link": "Lien avec le calendrier",
+          "chat-presence": "Présence et statut dans le chat",
+          "association-directory": "Annuaire des associations"
+        }
+      },
+      "chat": {
+        "title": "Chat",
+        "tagline": "Messagerie instantanée chiffrée pour équipes et associations",
+        "description": "Salons, messages directs, partage de fichiers et chiffrement de bout en bout.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "security": {
+            "title": "Sécurité",
+            "goal": "Chiffrement, audit et conformité"
+          },
+          "collaboration": {
+            "title": "Collaboration",
+            "goal": "Partage et travail en équipe"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "matrix-server": "Serveur Matrix auto-hébergé",
+          "rooms-channels": "Salons et canaux thématiques",
+          "direct-messages": "Messages directs chiffrés",
+          "file-sharing": "Partage de fichiers dans le chat",
+          "e2ee-rooms": "Salons chiffrés de bout en bout",
+          "sso-integration": "Intégration SSO Kod Digor",
+          "retention-policies": "Politiques de rétention des messages",
+          "threads-reactions": "Fil de discussion et réactions",
+          "bots-webhooks": "Bots et webhooks",
+          "bridge-mail": "Pont messagerie ↔ chat",
+          "conference-bridge": "Lancement visio depuis le chat",
+          "office-embed": "Édition collaborative embarquée",
+          "federation-external": "Fédération avec Matrix externe"
+        }
+      },
+      "newsletter": {
+        "title": "Newsletter",
+        "tagline": "Campagnes e-mail respectueuses de la vie privée",
+        "description": "Listes, modèles, envoi SMTP et analytics sans tracking invasif.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "analytics": {
+            "title": "Analytique",
+            "goal": "Statistiques respectueuses de la vie privée"
+          },
+          "automation": {
+            "title": "Automatisation",
+            "goal": "Campagnes et workflows automatisés"
+          }
+        },
+        "tasks": {
+          "list-management": "Gestion des listes d'abonnés",
+          "template-editor": "Éditeur de modèles d'e-mail",
+          "smtp-sending": "Envoi SMTP souverain",
+          "unsubscribe-rgpd": "Désabonnement et conformité RGPD",
+          "open-tracking": "Suivi d'ouverture (opt-in)",
+          "click-tracking": "Suivi des clics (opt-in)",
+          "privacy-analytics": "Analytics respectueux de la vie privée",
+          "drip-campaigns": "Campagnes drip automatisées",
+          "segmentation": "Segmentation des abonnés",
+          "forms-integration": "Intégration avec les formulaires"
+        }
+      },
+      "drive": {
+        "title": "Drive",
+        "tagline": "Stockage cloud souverain pour vos fichiers",
+        "description": "Navigateur de fichiers, partage, versioning, synchronisation bureau et mobile.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "sync": {
+            "title": "Synchronisation",
+            "goal": "Sync multi-appareils et déduplication"
+          },
+          "security": {
+            "title": "Sécurité",
+            "goal": "Chiffrement, audit et conformité"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "s3-storage": "Stockage objet S3 souverain",
+          "file-browser": "Navigateur de fichiers web",
+          "folders-sharing": "Dossiers et partage",
+          "versioning": "Historique des versions",
+          "webdav": "Accès WebDAV",
+          "desktop-sync": "Synchronisation bureau",
+          "mobile-app": "Application mobile Drive",
+          "client-encryption": "Chiffrement côté client",
+          "access-control": "Contrôle d'accès granulaire",
+          "audit-trail": "Piste d'audit des fichiers",
+          "office-integration": "Ouverture dans la bureautique",
+          "mail-attachments": "Pièces jointes mail via Drive",
+          "ai-indexing": "Indexation IA des documents"
+        }
+      },
+      "photos": {
+        "title": "Photos",
+        "tagline": "Bibliothèque photo privée et chiffrée",
+        "description": "Albums, détection locale, partage sécurisé et synchronisation mobile.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "privacy": {
+            "title": "Vie privée",
+            "goal": "Protection des données personnelles"
+          },
+          "features": {
+            "title": "Fonctionnalités",
+            "goal": "Fonctions avancées pour les utilisateurs"
+          }
+        },
+        "tasks": {
+          "photo-library": "Bibliothèque photo",
+          "albums": "Albums et collections",
+          "upload-mobile": "Upload depuis mobile",
+          "thumbnails": "Génération de vignettes",
+          "e2ee-albums": "Albums chiffrés de bout en bout",
+          "face-detection-local": "Détection de visages en local",
+          "sharing-links": "Liens de partage temporaires",
+          "search-tags": "Recherche par étiquettes",
+          "slideshow-export": "Diaporama et export",
+          "drive-bridge": "Pont avec le Drive"
+        }
+      },
+      "office": {
+        "title": "Bureautique",
+        "tagline": "Documents, tableurs et présentations collaboratifs",
+        "description": "Éditeur de documents alternatif à Word, Excel, PowerPoint et Notion.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "collaboration": {
+            "title": "Collaboration",
+            "goal": "Partage et travail en équipe"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "document-editor": "Éditeur de documents texte",
+          "spreadsheet-editor": "Éditeur de tableur",
+          "presentation-editor": "Éditeur de présentations",
+          "odf-support": "Support format ODF",
+          "realtime-editing": "Édition collaborative temps réel",
+          "comments-mentions": "Commentaires et mentions",
+          "version-history": "Historique des versions document",
+          "drive-storage": "Stockage via Drive",
+          "templates": "Modèles de documents",
+          "notion-blocks": "Blocs type Notion",
+          "ai-assistant": "Assistant IA rédactionnel"
+        }
+      },
+      "notes": {
+        "title": "Notes",
+        "tagline": "Prise de notes markdown et collaboration",
+        "description": "Carnets, recherche, partage en temps réel et mode hors-ligne.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "collaboration": {
+            "title": "Collaboration",
+            "goal": "Partage et travail en équipe"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "note-editor": "Éditeur de notes riche",
+          "notebooks": "Carnets et classement",
+          "markdown-support": "Support Markdown",
+          "search": "Recherche full-text",
+          "shared-notes": "Notes partagées",
+          "realtime-sync": "Synchronisation temps réel",
+          "attachments": "Pièces jointes dans les notes",
+          "office-bridge": "Pont avec la bureautique",
+          "ai-summarize": "Résumé automatique par IA",
+          "offline-mode": "Mode hors-ligne"
+        }
+      },
+      "forms": {
+        "title": "Formulaires",
+        "tagline": "Création et collecte de réponses RGPD",
+        "description": "Constructeur de formulaires, export, webhooks et intégration adhérents.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "privacy": {
+            "title": "Vie privée",
+            "goal": "Protection des données personnelles"
+          },
+          "automation": {
+            "title": "Automatisation",
+            "goal": "Campagnes et workflows automatisés"
+          }
+        },
+        "tasks": {
+          "form-builder": "Constructeur de formulaires",
+          "field-types": "Types de champs variés",
+          "response-collection": "Collecte des réponses",
+          "export-csv": "Export CSV et JSON",
+          "anonymous-mode": "Mode réponse anonyme",
+          "consent-checkboxes": "Cases de consentement RGPD",
+          "data-retention": "Politique de rétention des données",
+          "webhooks": "Webhooks et intégrations",
+          "newsletter-signup": "Inscription newsletter",
+          "members-registration": "Inscription adhérents"
+        }
+      },
+      "website": {
+        "title": "Sites web",
+        "tagline": "Création de sites pour associations et collectifs",
+        "description": "Constructeur, domaines personnalisés, blog et SEO respectueux.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "content": {
+            "title": "Contenu",
+            "goal": "Gestion et publication de contenus"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "site-builder": "Constructeur de sites",
+          "templates": "Modèles de documents",
+          "custom-domain": "Domaine personnalisé",
+          "ssl-auto": "Certificat SSL automatique",
+          "blog-module": "Module blog",
+          "media-gallery": "Galerie médias",
+          "seo-tools": "Outils SEO intégrés",
+          "forms-embed": "Formulaires embarqués",
+          "newsletter-widget": "Widget newsletter",
+          "analytics-privacy": "Analytics sans cookies tiers"
+        }
+      },
+      "calendar": {
+        "title": "Calendrier",
+        "tagline": "Agenda partagé et synchronisé",
+        "description": "CalDAV, événements récurrents, invitations et réservation de ressources.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "sharing": {
+            "title": "Partage",
+            "goal": "Partage sécurisé entre utilisateurs et organisations"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          },
+          "advanced": {
+            "title": "Avancé",
+            "goal": "Fonctionnalités pour usages complexes"
+          }
+        },
+        "tasks": {
+          "caldav-server": "Serveur CalDAV",
+          "event-crud": "Création et édition d'événements",
+          "recurrence": "Événements récurrents",
+          "reminders": "Rappels et notifications",
+          "shared-calendars": "Calendriers partagés",
+          "invitations": "Invitations et RSVP",
+          "free-busy": "Disponibilités libre/occupé",
+          "mail-integration": "Intégration messagerie",
+          "conference-links": "Liens visioconférence auto",
+          "contacts-attendees": "Participants depuis les contacts",
+          "resource-booking": "Réservation de salles et ressources",
+          "association-events": "Événements associatifs"
+        }
+      },
+      "conference": {
+        "title": "Visioconférence",
+        "tagline": "Réunions vidéo souveraines",
+        "description": "WebRTC, partage d'écran, enregistrement et transcription IA.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "features": {
+            "title": "Fonctionnalités",
+            "goal": "Fonctions avancées pour les utilisateurs"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "webrtc-core": "Moteur WebRTC",
+          "turn-stun": "Serveurs TURN/STUN",
+          "room-management": "Gestion des salles de réunion",
+          "screen-sharing": "Partage d'écran",
+          "recording": "Enregistrement des réunions",
+          "waiting-room": "Salle d'attente",
+          "breakout-rooms": "Salles de sous-groupe",
+          "calendar-scheduling": "Planification via calendrier",
+          "chat-integration": "Intégration chat en direct",
+          "ai-transcription": "Transcription IA des réunions"
+        }
+      },
+      "collab-tools": {
+        "title": "Outils collaboratifs",
+        "tagline": "Espace de travail unifié pour les équipes",
+        "description": "Salles, documents partagés, tableaux de tâches et fil d'activité.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "integration": {
+            "title": "Intégration",
+            "goal": "Connexion avec les services de la suite"
+          }
+        },
+        "tasks": {
+          "workspace-rooms": "Espaces de travail",
+          "shared-docs": "Documents partagés",
+          "task-boards": "Tableaux de tâches Kanban",
+          "activity-feed": "Fil d'activité",
+          "chat-bridge": "Pont avec le chat",
+          "calendar-bridge": "Pont avec le calendrier",
+          "drive-bridge": "Pont avec le Drive"
+        }
+      },
+      "passwords": {
+        "title": "Gestionnaire de mots de passe",
+        "tagline": "Coffre-fort zero-knowledge",
+        "description": "Extension navigateur, TOTP, coffres familiaux et passkeys.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "sharing": {
+            "title": "Partage",
+            "goal": "Partage sécurisé entre utilisateurs et organisations"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "vault-core": "Coffre-fort principal",
+          "zero-knowledge": "Architecture zero-knowledge",
+          "browser-extension": "Extension navigateur",
+          "totp-2fa": "Codes TOTP et 2FA",
+          "family-vault": "Coffre familial partagé",
+          "org-vault": "Coffre organisation",
+          "emergency-access": "Accès d'urgence",
+          "sso-bridge": "Pont SSO Kod Digor",
+          "passkeys": "Support des passkeys",
+          "audit-security": "Audit de sécurité du coffre"
+        }
+      },
+      "backups": {
+        "title": "Sauvegardes",
+        "tagline": "Protection et restauration de vos données",
+        "description": "Sauvegardes incrémentales mail, drive, base de données et réplication.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "coverage": {
+            "title": "Couverture",
+            "goal": "Sauvegarde de tous les services"
+          },
+          "sovereignty": {
+            "title": "Souveraineté",
+            "goal": "Auto-hébergement, fédération et résilience"
+          }
+        },
+        "tasks": {
+          "backup-engine": "Moteur de sauvegarde",
+          "scheduled-jobs": "Planification automatique",
+          "incremental-backup": "Sauvegarde incrémentale",
+          "restore-ui": "Interface de restauration",
+          "mail-backup": "Sauvegarde messagerie",
+          "drive-backup": "Sauvegarde Drive",
+          "db-backup": "Sauvegarde base de données",
+          "offsite-replication": "Réplication hors-site",
+          "client-encrypted": "Sauvegardes chiffrées client",
+          "disaster-recovery": "Plan de reprise après sinistre"
+        }
+      },
+      "ai": {
+        "title": "Intelligence artificielle",
+        "tagline": "IA locale et respectueuse de la vie privée",
+        "description": "LLM auto-hébergé, assistants mail et bureautique sans fuite de données.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "integration": {
+            "title": "Intégration",
+            "goal": "Connexion avec les services de la suite"
+          },
+          "sovereignty": {
+            "title": "Souveraineté",
+            "goal": "Auto-hébergement, fédération et résilience"
+          }
+        },
+        "tasks": {
+          "local-llm": "Modèle LLM local",
+          "privacy-gateway": "Passerelle IA respectueuse",
+          "prompt-library": "Bibliothèque de prompts",
+          "usage-quotas": "Quotas d'utilisation",
+          "mail-assistant": "Assistant mail IA",
+          "office-assistant": "Assistant bureautique IA",
+          "search-assistant": "Assistant recherche IA",
+          "self-hosted-models": "Modèles auto-hébergés",
+          "federated-learning": "Apprentissage fédéré"
+        }
+      },
+      "dns": {
+        "title": "DNS",
+        "tagline": "Gestion de domaines et enregistrements",
+        "description": "Hébergement DNS, DNSSEC, API et intégration messagerie.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "advanced": {
+            "title": "Avancé",
+            "goal": "Fonctionnalités pour usages complexes"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "dns-hosting": "Hébergement DNS",
+          "domain-registration": "Enregistrement de domaines",
+          "dnssec": "Activation DNSSEC",
+          "auto-records": "Enregistrements automatiques (mail, web)",
+          "split-horizon": "DNS split-horizon",
+          "api-management": "API de gestion DNS",
+          "health-checks": "Vérifications de santé DNS",
+          "mail-autoconfig": "Autoconfiguration messagerie",
+          "website-integration": "Intégration sites web",
+          "vpn-records": "Enregistrements VPN automatiques"
+        }
+      },
+      "vpn": {
+        "title": "VPN",
+        "tagline": "Tunnel sécurisé pour vos connexions",
+        "description": "WireGuard, split tunneling, site-à-site et contrôle d'accès.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "org": {
+            "title": "Organisation",
+            "goal": "Fonctionnalités pour les structures"
+          }
+        },
+        "tasks": {
+          "wireguard-core": "Cœur WireGuard",
+          "user-provisioning": "Provisionnement utilisateurs VPN",
+          "split-tunneling": "Split tunneling configurable",
+          "kill-switch": "Kill switch réseau",
+          "site-to-site": "VPN site-à-site",
+          "access-control": "Contrôle d'accès granulaire",
+          "audit-logs": "Journaux d'audit et traçabilité"
+        }
+      },
+      "proxy": {
+        "title": "Proxy",
+        "tagline": "Reverse et forward proxy souverain",
+        "description": "Terminaison SSL, équilibrage de charge et filtrage respectueux.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "privacy": {
+            "title": "Vie privée",
+            "goal": "Protection des données personnelles"
+          }
+        },
+        "tasks": {
+          "reverse-proxy": "Proxy inverse",
+          "ssl-termination": "Terminaison SSL",
+          "load-balancing": "Équilibrage de charge",
+          "rate-limiting": "Limitation de débit",
+          "forward-proxy": "Proxy forward",
+          "content-filtering": "Filtrage de contenu",
+          "logging-privacy": "Journaux respectueux de la vie privée"
+        }
+      },
+      "browser": {
+        "title": "Navigateur",
+        "tagline": "Navigateur intégré à l'écosystème Kod Digor",
+        "description": "Fork Chromium, blocage trackers, sync et raccourcis suite.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "integration": {
+            "title": "Intégration",
+            "goal": "Connexion avec les services de la suite"
+          }
+        },
+        "tasks": {
+          "chromium-fork": "Fork Chromium Kod Digor",
+          "tracker-blocking": "Blocage des traqueurs",
+          "kod-digor-sync": "Synchronisation compte Kod Digor",
+          "password-autofill": "Remplissage mots de passe",
+          "vpn-toggle": "Activation VPN intégrée",
+          "suite-shortcuts": "Raccourcis vers la suite"
+        }
+      },
+      "accounting": {
+        "title": "Comptabilité",
+        "tagline": "Comptabilité associative simplifiée",
+        "description": "Plan comptable, factures, cotisations et export FEC.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "association": {
+            "title": "Association",
+            "goal": "Outils dédiés aux associations"
+          },
+          "compliance": {
+            "title": "Conformité",
+            "goal": "Obligations légales et réglementaires"
+          }
+        },
+        "tasks": {
+          "chart-accounts": "Plan comptable",
+          "journal-entries": "Écritures comptables",
+          "invoices": "Facturation",
+          "bank-reconciliation": "Rapprochement bancaire",
+          "membership-fees": "Cotisations adhérents",
+          "donation-tracking": "Suivi des dons",
+          "annual-reports": "Rapports annuels",
+          "fec-export": "Export FEC",
+          "rgpd-accounting": "Conformité RGPD comptable",
+          "multi-org": "Multi-organisation"
+        }
+      },
+      "members": {
+        "title": "Gestion d'associations",
+        "tagline": "Adhérents, cotisations et événements",
+        "description": "Registre membres, rôles, cartes d'adhésion et bénévoles.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "engagement": {
+            "title": "Engagement",
+            "goal": "Mobilisation et participation des membres"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "member-registry": "Registre des adhérents",
+          "roles-permissions": "Rôles et permissions",
+          "membership-cards": "Cartes d'adhésion",
+          "dues-tracking": "Suivi des cotisations",
+          "event-registration": "Inscription aux événements",
+          "volunteer-management": "Gestion des bénévoles",
+          "communication-hub": "Hub de communication membres",
+          "accounting-bridge": "Pont comptabilité",
+          "forms-onboarding": "Formulaires d'adhésion",
+          "newsletter-segments": "Segments newsletter membres"
+        }
+      },
+      "maps": {
+        "title": "Cartes",
+        "tagline": "Cartographie open source pour vos projets",
+        "description": "Tuiles OSM, marqueurs, itinéraires et cartes d'événements.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "association": {
+            "title": "Association",
+            "goal": "Outils dédiés aux associations"
+          }
+        },
+        "tasks": {
+          "osm-tiles": "Tuiles OpenStreetMap",
+          "marker-management": "Gestion des marqueurs",
+          "route-display": "Affichage d'itinéraires",
+          "geocoding": "Géocodage",
+          "event-maps": "Cartes d'événements",
+          "member-locator": "Localisation membres (opt-in)",
+          "privacy-zones": "Zones de confidentialité"
+        }
+      },
+      "video": {
+        "title": "Vidéo",
+        "tagline": "Hébergement vidéo alternatif à YouTube",
+        "description": "Upload, transcodage, chaînes, live et fédération ActivityPub.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "community": {
+            "title": "Communauté",
+            "goal": "Interaction et modération communautaire"
+          },
+          "sovereignty": {
+            "title": "Souveraineté",
+            "goal": "Auto-hébergement, fédération et résilience"
+          }
+        },
+        "tasks": {
+          "upload-pipeline": "Pipeline d'upload vidéo",
+          "transcoding": "Transcodage multi-formats",
+          "player-embed": "Lecteur et embed",
+          "channels": "Chaînes vidéo",
+          "comments-moderation": "Commentaires et modération",
+          "playlists": "Listes de lecture",
+          "live-streaming": "Diffusion en direct",
+          "federation-activitypub": "Fédération ActivityPub",
+          "cdn-self-hosted": "CDN auto-hébergé"
+        }
+      },
+      "opensource-support": {
+        "title": "Soutien open source",
+        "tagline": "Financement et infrastructure pour le logiciel libre",
+        "description": "Annuaire projets, dons, CI/CD hébergé et audits de sécurité.",
+        "phases": {
+          "foundations": {
+            "title": "Fondations",
+            "goal": "Mise en place des fonctionnalités essentielles"
+          },
+          "infrastructure": {
+            "title": "Infrastructure",
+            "goal": "Hébergement et outils pour les projets libres"
+          },
+          "ecosystem": {
+            "title": "Écosystème",
+            "goal": "Intégration avec les autres services Kod Digor"
+          }
+        },
+        "tasks": {
+          "project-directory": "Annuaire de projets libres",
+          "donation-platform": "Plateforme de dons",
+          "volunteer-matching": "Mise en relation bénévoles",
+          "transparency-reports": "Rapports de transparence",
+          "ci-cd-hosting": "Hébergement CI/CD",
+          "mirror-registries": "Miroirs de registres",
+          "security-audits": "Audits de sécurité",
+          "kod-digor-integration": "Intégration écosystème Kod Digor",
+          "bretagne-network": "Réseau Bretagne numérique libre",
+          "eu-sovereignty-fund": "Fonds souveraineté numérique UE"
+        }
       }
     }
   }

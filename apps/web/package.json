@@ -8,11 +8,14 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint . && node scripts/check-i18n.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "i18n:check": "node scripts/check-i18n.mjs",
     "health-checks:infra": "node scripts/run-infra-health-checks.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "migrate:legacy-shared-mailboxes": "tsx scripts/migrate-legacy-shared-mailboxes.ts",
     "worker": "tsx src/worker/index.ts"
   },
   "dependencies": {
@@ -53,6 +56,7 @@
     "prisma": "^6.1.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.6"
   }
 }

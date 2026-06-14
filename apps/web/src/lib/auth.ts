@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { isDbUnavailableError } from "@/lib/auth-errors";
 import { prisma } from "@/lib/prisma";
 import { getDefaultMembership, getMembership } from "@/lib/tenant";
 import type { UserRole } from "@prisma/client";
@@ -11,6 +12,7 @@ declare module "next-auth" {
     organizationId: string | null;
     organizationStatus?: string | null;
     membershipRole?: UserRole | null;
+    mustChangePassword?: boolean;
   }
   interface Session {
     user: {
@@ -20,6 +22,7 @@ declare module "next-auth" {
       organizationId: string | null;
       organizationStatus?: string | null;
       membershipRole?: UserRole | null;
+      mustChangePassword?: boolean;
     };
   }
 }
@@ -36,22 +39,28 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         const password = credentials?.password as string;
         if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return null;
+        try {
+          const user = await prisma.user.findUnique({ where: { email } });
+          if (!user) return null;
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+          const valid = await bcrypt.compare(password, user.passwordHash);
+          if (!valid) return null;
 
-        const membership = await getDefaultMembership(user.id);
+          const membership = await getDefaultMembership(user.id);
 
-        return {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          organizationId: membership?.organizationId ?? null,
-          organizationStatus: membership?.organization.status ?? null,
-          membershipRole: membership?.role ?? null,
-        };
+          return {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            organizationId: membership?.organizationId ?? null,
+            organizationStatus: membership?.organization.status ?? null,
+            membershipRole: membership?.role ?? null,
+            mustChangePassword: user.mustChangePassword,
+          };
+        } catch (err) {
+          if (isDbUnavailableError(err)) throw err;
+          return null;
+        }
       },
     }),
   ],
@@ -65,6 +74,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         token.organizationId = user.organizationId;
         token.organizationStatus = user.organizationStatus;
         token.membershipRole = user.membershipRole;
+        token.mustChangePassword = user.mustChangePassword ?? false;
       }
 
       if (trigger === "update" && session?.user) {
@@ -76,6 +86,20 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
             token.organizationStatus = member.organization.status;
             token.membershipRole = member.role;
           }
+        }
+      }
+
+      if (token.id && !user) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { mustChangePassword: true },
+          });
+          if (dbUser) {
+            token.mustChangePassword = dbUser.mustChangePassword;
+          }
+        } catch (err) {
+          if (isDbUnavailableError(err)) throw err;
         }
       }
 
@@ -95,6 +119,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
       session.user.id = user.id;
       session.user.email = user.email;
       session.user.role = user.role;
+      session.user.mustChangePassword = user.mustChangePassword;
 
       const activeOrgId = (token.organizationId as string | null) ?? null;
       if (activeOrgId) {
@@ -115,16 +140,17 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
     },
     authorized({ auth, request }) {
       const path = request.nextUrl.pathname;
+      if (path.startsWith("/change-password")) {
+        return !!auth?.user;
+      }
       if (path.startsWith("/bureau")) {
         return auth?.user?.role === "BUREAU";
       }
       if (path.startsWith("/dashboard")) {
         if (!auth?.user) return false;
+        if (auth.user.mustChangePassword) return false;
         if (auth.user.role === "BUREAU") return !!auth.user.organizationId;
-        return (
-          auth.user.membershipRole === "ASSOC_ADMIN" &&
-          auth.user.organizationStatus === "APPROVED"
-        );
+        return auth.user.membershipRole === "ASSOC_ADMIN";
       }
       return true;
     },

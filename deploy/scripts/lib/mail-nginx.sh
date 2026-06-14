@@ -12,6 +12,26 @@ framm_mail_has_cert() {
   [[ -f "$(framm_mail_le_dir "$host" "$domain")/fullchain.pem" ]]
 }
 
+# Vhosts Stalwart (JMAP admin + autoconfig Mozilla / Autodiscover Microsoft).
+framm_mail_stalwart_vhosts() {
+  echo "mail autoconfig autodiscover"
+}
+
+framm_mail_nginx_stalwart_proxy_locations() {
+  local proto="$1"
+  cat <<EOF
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${proto};
+    }
+
+EOF
+}
+
 # Proxy JMAP Stalwart sur le vhost webmail (même origine que Bulwark → pas de CORS navigateur).
 framm_mail_nginx_jmap_locations() {
   local proto="$1"
@@ -42,12 +62,10 @@ EOF
 framm_mail_write_nginx_site() {
   local domain="${1:?domain requis}"
   local out="${2:-/etc/nginx/sites-available/framm-mail}"
-  local webmail_ssl mail_ssl
+  local webmail_ssl host
 
   webmail_ssl=false
-  mail_ssl=false
   framm_mail_has_cert webmail "$domain" && webmail_ssl=true
-  framm_mail_has_cert mail "$domain" && mail_ssl=true
 
   mkdir -p /var/www/acme
   : > "$out"
@@ -81,30 +99,25 @@ $(framm_mail_nginx_jmap_locations https)
 EOF
   fi
 
-  if $mail_ssl; then
-    cat >> "$out" <<EOF
+  for host in $(framm_mail_stalwart_vhosts); do
+    if framm_mail_has_cert "$host" "$domain"; then
+      cat >> "$out" <<EOF
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name mail.${domain};
+    server_name ${host}.${domain};
 
-    ssl_certificate     /etc/letsencrypt/live/mail.${domain}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/mail.${domain}/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/${host}.${domain}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${host}.${domain}/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers off;
 
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-    }
+$(framm_mail_nginx_stalwart_proxy_locations https)
 }
 
 EOF
-  fi
+    fi
+  done
 
   cat >> "$out" <<EOF
 server {
@@ -143,38 +156,34 @@ EOF
 EOF
   fi
 
-  cat >> "$out" <<EOF
+  for host in $(framm_mail_stalwart_vhosts); do
+    cat >> "$out" <<EOF
 server {
     listen 80;
     listen [::]:80;
-    server_name mail.${domain};
+    server_name ${host}.${domain};
 
     location /.well-known/acme-challenge/ {
         root /var/www/acme;
     }
 
-    location / {
 EOF
-  if $mail_ssl; then
-    cat >> "$out" <<'EOF'
+    if framm_mail_has_cert "$host" "$domain"; then
+      cat >> "$out" <<'EOF'
+    location / {
         return 301 https://$host$request_uri;
     }
 }
 
 EOF
-  else
-    cat >> "$out" <<'EOF'
-        proxy_pass http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+    else
+      framm_mail_nginx_stalwart_proxy_locations '$scheme' >> "$out"
+      cat >> "$out" <<'EOF'
 }
 
 EOF
-  fi
+    fi
+  done
 }
 
 framm_mail_obtain_missing_certs() {
@@ -183,7 +192,9 @@ framm_mail_obtain_missing_certs() {
   local domains=() d
 
   framm_mail_has_cert webmail "$domain" || domains+=("webmail.${domain}")
-  framm_mail_has_cert mail "$domain" || domains+=("mail.${domain}")
+  for host in $(framm_mail_stalwart_vhosts); do
+    framm_mail_has_cert "$host" "$domain" || domains+=("${host}.${domain}")
+  done
 
   [[ ${#domains[@]} -eq 0 ]] && return 0
   if [[ -z "$email" ]]; then

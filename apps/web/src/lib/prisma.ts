@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
 /** Delegates that must exist after `prisma generate` (stale dev singletons omit new models). */
-const REQUIRED_DELEGATES = ["platformPricing"] as const;
+const REQUIRED_DELEGATES = ["platformPricing", "mailboxDelegation", "mailboxFilter"] as const;
 
 function createPrismaClient() {
   return new PrismaClient({

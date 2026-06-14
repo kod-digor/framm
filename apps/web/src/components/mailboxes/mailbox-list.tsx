@@ -7,6 +7,7 @@ import { AliasEmailBadge } from "@/components/aliases/alias-email-badge";
 import { DeleteMailboxForm } from "@/components/mailboxes/delete-mailbox-form";
 import { EditMailboxForm } from "@/components/mailboxes/edit-mailbox-form";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { CrudRowActions, CRUD_ACTIONS_CELL_CLASS, CRUD_ACTIONS_HEADER_CLASS } from "@/components/ui/crud-row-actions";
 import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 import { formatBytes } from "@/lib/utils";
@@ -134,7 +135,7 @@ function MailboxMobileCard({
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
           {labels.colActions}
         </p>
-        <div className="flex items-center gap-1">
+        <CrudRowActions>
           <EditMailboxForm
             mailboxId={mailbox.id}
             address={mailbox.address}
@@ -146,7 +147,7 @@ function MailboxMobileCard({
             mailboxId={mailbox.id}
             address={mailbox.address}
           />
-        </div>
+        </CrudRowActions>
       </div>
     </article>
   );
@@ -184,7 +185,7 @@ export function MailboxList({
               <th className="pb-2 pr-4 font-medium">{labels.colDisplayName}</th>
               <th className="pb-2 pr-4 font-medium">{labels.colDomain}</th>
               <th className="pb-2 pr-4 font-medium">{labels.colQuota}</th>
-              <th className="pb-2 font-medium">{labels.colActions}</th>
+              <th className={`${CRUD_ACTIONS_HEADER_CLASS} pb-2 font-medium`}>{labels.colActions}</th>
             </tr>
           </thead>
           <tbody>
@@ -205,8 +206,8 @@ export function MailboxList({
                     unlimitedLabel={labels.quotaUnlimited}
                   />
                 </td>
-                <td className="py-3">
-                  <div className="flex items-center gap-1">
+                <td className={`${CRUD_ACTIONS_CELL_CLASS} py-3`}>
+                  <CrudRowActions>
                     <EditMailboxForm
                       mailboxId={mailbox.id}
                       address={mailbox.address}
@@ -218,7 +219,7 @@ export function MailboxList({
                       mailboxId={mailbox.id}
                       address={mailbox.address}
                     />
-                  </div>
+                  </CrudRowActions>
                 </td>
               </tr>
             ))}

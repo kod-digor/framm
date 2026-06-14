@@ -1,15 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { FormDrawer } from "@/components/ui/form-drawer";
 
 type FormEditDialogProps = {
   trigger: ReactNode;
@@ -19,8 +11,11 @@ type FormEditDialogProps = {
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
   footer?: ReactNode;
+  contentClassName?: string;
+  bodyClassName?: string;
 };
 
+/** @deprecated Prefer FormDrawer directly — kept for backward-compatible imports. */
 export function FormEditDialog({
   trigger,
   title,
@@ -29,18 +24,21 @@ export function FormEditDialog({
   onOpenChange,
   children,
   footer,
+  contentClassName,
+  bodyClassName,
 }: FormEditDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description ? <DialogDescription>{description}</DialogDescription> : null}
-        </DialogHeader>
-        {children}
-        {footer ? <DialogFooter>{footer}</DialogFooter> : null}
-      </DialogContent>
-    </Dialog>
+    <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      trigger={trigger}
+      footer={footer}
+      contentClassName={contentClassName}
+      bodyClassName={bodyClassName}
+    >
+      {children}
+    </FormDrawer>
   );
 }

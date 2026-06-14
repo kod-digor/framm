@@ -1,6 +1,7 @@
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
+import { ServiceStatusPanel } from "@/components/layout/brand-panels";
 import { getT } from "@/i18n/t";
 
 export default async function DashboardPage() {
@@ -10,37 +11,50 @@ export default async function DashboardPage() {
 
   const stats = orgId
     ? {
-        domains: await prisma.domain.count({ where: { organizationId: orgId } }),
+        domains: await prisma.domain.count({
+          where: {
+            organizationId: orgId,
+            status: { in: ["VERIFIED", "ACTIVE"] },
+          },
+        }),
         mailboxes: await prisma.mailbox.count({ where: { organizationId: orgId } }),
-        aliases: await prisma.emailAlias.count({ where: { organizationId: orgId } }),
+        dnsPending: await prisma.domain.count({
+          where: { organizationId: orgId, status: "PENDING_DNS" },
+        }),
       }
     : null;
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">{t("welcome")}</h1>
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("domains")}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-3xl font-bold">{stats.domains}</CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("mailboxes")}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-3xl font-bold">{stats.mailboxes}</CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("aliases")}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-3xl font-bold">{stats.aliases}</CardContent>
-          </Card>
-        </div>
-      )}
+      <PageHeader title={t("welcome")} description={t("welcomeHint")} />
+      {stats ? (
+        <ServiceStatusPanel
+          title={t("serviceStatus")}
+          items={[
+            {
+              id: "domains",
+              label: t("domainsActive"),
+              value: String(stats.domains),
+              href: "/dashboard/domains",
+              tone: stats.dnsPending > 0 ? "attention" : "ok",
+            },
+            {
+              id: "mailboxes",
+              label: t("mailboxes"),
+              value: String(stats.mailboxes),
+              href: "/dashboard/mailboxes",
+              tone: "neutral",
+            },
+            {
+              id: "dns",
+              label: t("dnsPending"),
+              value: stats.dnsPending > 0 ? String(stats.dnsPending) : "—",
+              href: stats.dnsPending > 0 ? "/dashboard/domains" : undefined,
+              tone: stats.dnsPending > 0 ? "attention" : "ok",
+            },
+          ]}
+        />
+      ) : null}
     </div>
   );
 }

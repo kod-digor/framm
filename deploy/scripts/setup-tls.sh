@@ -46,7 +46,7 @@ source /opt/framm/deploy/scripts/lib/mail-nginx.sh
 framm_mail_apply_nginx "$1"
 REMOTE
 
-  run_certbot "$MAIL_PUBLIC_IP" "webmail.${DOMAIN}" "mail.${DOMAIN}"
+  run_certbot "$MAIL_PUBLIC_IP" "webmail.${DOMAIN}" "mail.${DOMAIN}" "autoconfig.${DOMAIN}" "autodiscover.${DOMAIN}"
 
   framm_ssh "$MAIL_PUBLIC_IP" bash -s "$DOMAIN" <<'REMOTE'
 set -euo pipefail

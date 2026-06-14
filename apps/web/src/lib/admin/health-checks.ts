@@ -1,4 +1,5 @@
 import { connect } from "node:net";
+import { connect as tlsConnect } from "node:tls";
 import nodemailer from "nodemailer";
 import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,7 @@ import {
   getStalwartJmapUrl,
   getStalwartStatus,
   getWebmailExternalUrl,
+  isEncryptionAtRestConfigured,
   isStalwartFailure,
   resolveStalwartDomainId,
 } from "@/lib/stalwart/client";
@@ -101,8 +103,9 @@ async function checkOrgCreate() {
     data: {
       name: "Health Check (auto)",
       slug,
-      presentation: "Test automatique diagnostics Framm — suppression immédiate.",
-      status: "PENDING",
+      status: "APPROVED",
+      modules: { create: { mail: true, calendar: false, accounting: false, members: false } },
+      subscription: { create: { status: "PENDING_PAYMENT" } },
     },
   });
 
@@ -111,32 +114,32 @@ async function checkOrgCreate() {
 }
 
 async function checkOrgApproval() {
-  const pendingCount = await prisma.organization.count({ where: { status: "PENDING" } });
-  const slug = `health-approve-${Date.now()}`;
+  const slug = `health-sub-${Date.now()}`;
   const org = await prisma.organization.create({
     data: {
-      name: "Health Approve (auto)",
+      name: "Health Subscription (auto)",
       slug,
-      presentation: "Test workflow approbation — suppression immédiate.",
-      status: "PENDING",
+      status: "APPROVED",
+      modules: { create: { mail: true, calendar: false, accounting: false, members: false } },
+      subscription: { create: { status: "PENDING_PAYMENT" } },
     },
   });
 
-  await prisma.organization.update({
-    where: { id: org.id },
-    data: { status: "APPROVED", approvedAt: new Date() },
+  await prisma.subscription.update({
+    where: { organizationId: org.id },
+    data: { status: "ACTIVE" },
   });
 
-  const updated = await prisma.organization.findUnique({ where: { id: org.id } });
+  const updated = await prisma.subscription.findUnique({ where: { organizationId: org.id } });
   await prisma.organization.delete({ where: { id: org.id } });
 
-  if (updated?.status !== "APPROVED") {
-    return { status: "fail" as const, detail: "Approbation non persistée" };
+  if (updated?.status !== "ACTIVE") {
+    return { status: "fail" as const, detail: "Activation abonnement non persistée" };
   }
 
   return {
     status: "ok" as const,
-    detail: `${pendingCount} demande(s) en attente — workflow OK`,
+    detail: "Abonnement workspace OK",
   };
 }
 
@@ -697,6 +700,94 @@ async function checkInfraMailExternal() {
   }
 }
 
+async function checkInfraStalwartTls() {
+  const urls = [
+    { label: "STALWART_URL", url: process.env.STALWART_URL?.trim() },
+    { label: "WEBMAIL_URL", url: process.env.WEBMAIL_URL?.trim() },
+  ].filter((entry): entry is { label: string; url: string } => Boolean(entry.url));
+
+  if (urls.length === 0) {
+    return { status: "warn" as const, detail: "STALWART_URL / WEBMAIL_URL non configurés" };
+  }
+
+  const failures: string[] = [];
+  for (const { label, url } of urls) {
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      failures.push(`${label} : URL invalide`);
+      continue;
+    }
+
+    if (parsed.protocol !== "https:") {
+      failures.push(`${label} : HTTPS requis (${url})`);
+      continue;
+    }
+
+    const tlsOk = await new Promise<boolean>((resolve) => {
+      const socket = tlsConnect(
+        {
+          host: parsed.hostname,
+          port: Number(parsed.port) || 443,
+          servername: parsed.hostname,
+          timeout: 8_000,
+        },
+        () => {
+          socket.end();
+          resolve(true);
+        }
+      );
+      socket.on("error", () => resolve(false));
+      socket.on("timeout", () => {
+        socket.destroy();
+        resolve(false);
+      });
+    });
+
+    if (!tlsOk) {
+      failures.push(`${label} : handshake TLS échoué (${parsed.hostname})`);
+      continue;
+    }
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        redirect: "follow",
+        signal: AbortSignal.timeout(8_000),
+      });
+      if (res.status >= 500) {
+        failures.push(`${label} : HTTP ${res.status}`);
+      }
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      failures.push(`${label} : ${detail}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    return { status: "fail" as const, detail: failures.join(" ; ") };
+  }
+
+  return { status: "ok" as const, detail: "HTTPS + TLS OK (mail et webmail)" };
+}
+
+async function checkInfraEncryptionAtRest() {
+  if (isEncryptionAtRestConfigured()) {
+    return { status: "ok" as const, detail: "Clé chiffrement au repos configurée" };
+  }
+  if (process.env.NODE_ENV === "production") {
+    return {
+      status: "fail" as const,
+      detail: "STALWART_PLATFORM_PGP_PUBLIC_KEY ou STALWART_ENCRYPTION_PUBLIC_KEY_ID requis en prod",
+    };
+  }
+  return {
+    status: "warn" as const,
+    detail: "Fallback dev (config/stalwart-dev-public.pem) ou clé prod non configurée",
+  };
+}
+
 async function checkInfraTemRelay() {
   const host = process.env.OUTBOUND_SMTP_RELAY_HOST;
   const port = Number(process.env.OUTBOUND_SMTP_RELAY_PORT ?? "2587");
@@ -748,6 +839,8 @@ export const HEALTH_CHECK_DEFINITIONS: HealthCheckDefinition[] = [
   { id: "mail-server", run: checkMailServer },
   { id: "infra-postgresql", run: checkInfraPostgresql },
   { id: "infra-stalwart-jmap", run: checkInfraStalwartJmap },
+  { id: "infra-stalwart-tls", run: checkInfraStalwartTls },
+  { id: "infra-encryption-at-rest", run: checkInfraEncryptionAtRest },
   { id: "infra-k8s-health", run: checkInfraK8sHealth },
   { id: "infra-mail-external", run: checkInfraMailExternal },
   { id: "infra-tem-relay", run: checkInfraTemRelay },

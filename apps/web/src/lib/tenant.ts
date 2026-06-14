@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { OrganizationStatus, UserRole } from "@prisma/client";
+import type { UserRole } from "@prisma/client";
 
 export async function getUserMemberships(userId: string) {
   return prisma.organizationMember.findMany({
@@ -25,14 +25,10 @@ export async function getMembership(userId: string, organizationId: string) {
 
 export function canAccessDashboard(
   globalRole: UserRole,
-  membershipRole: UserRole | null,
-  orgStatus: OrganizationStatus | null
+  membershipRole: UserRole | null
 ) {
-  if (globalRole === "BUREAU") return !!orgStatus;
-  return (
-    membershipRole === "ASSOC_ADMIN" &&
-    orgStatus === "APPROVED"
-  );
+  if (globalRole === "BUREAU") return true;
+  return membershipRole === "ASSOC_ADMIN";
 }
 
 export function canAdminOrg(globalRole: UserRole, membershipRole: UserRole | null) {

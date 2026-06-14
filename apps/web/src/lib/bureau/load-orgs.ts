@@ -7,7 +7,7 @@ export type BureauOrgRow = {
   name: string;
   slug: string;
   status: OrganizationStatus;
-  presentation: string;
+  presentation: string | null;
   createdAt: Date;
   approvedAt: Date | null;
   rejectReason: string | null;

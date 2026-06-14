@@ -1,7 +1,7 @@
 import { getStalwartStatus } from "@/lib/stalwart/client";
 import { getT } from "@/i18n/t";
 
-type StalwartBannerNamespace = "domains" | "mailboxes" | "aliases";
+type StalwartBannerNamespace = "domains" | "mailboxes" | "aliases" | "users" | "sharedMailboxes";
 
 export async function StalwartStatusBanner({
   namespace,

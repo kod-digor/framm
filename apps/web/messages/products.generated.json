@@ -1,0 +1,797 @@
+{
+  "categories": {
+    "communication": "Communication",
+    "productivity": "Productivité",
+    "collaboration": "Collaboration",
+    "security": "Sécurité",
+    "infrastructure": "Infrastructure",
+    "association": "Association",
+    "media": "Médias",
+    "opensource": "Open source"
+  },
+  "items": {
+    "mail": {
+      "title": "Messagerie",
+      "tagline": "E-mails souverains, chiffrés et hébergés en Bretagne",
+      "description": "Messagerie professionnelle et personnelle avec domaines personnalisés, boîtes partagées, webmail et conformité RGPD.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "security": {
+          "title": "Sécurité",
+          "goal": "Chiffrement, audit et conformité"
+        },
+        "collaboration": {
+          "title": "Collaboration",
+          "goal": "Partage et travail en équipe"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        },
+        "sovereignty": {
+          "title": "Souveraineté",
+          "goal": "Auto-hébergement, fédération et résilience"
+        }
+      },
+      "tasks": {
+        "domains": "Gestion des domaines personnalisés",
+        "mailboxes": "Création et gestion des boîtes mail",
+        "aliases": "Alias et redirections e-mail",
+        "webmail-jmap": "Webmail JMAP intégré",
+        "shared-mailboxes": "Boîtes mail partagées",
+        "tls-enforce": "Imposition TLS sur tous les flux",
+        "encryption-at-rest": "Chiffrement des données au repos",
+        "audit-logs": "Journaux d'audit et traçabilité",
+        "dlp-basic": "Prévention des fuites de données (DLP)",
+        "smime": "Chiffrement S/MIME",
+        "delegation": "Délégation d'accès aux boîtes",
+        "calendar-integration": "Intégration calendrier dans le webmail",
+        "contacts-sync": "Synchronisation des contacts",
+        "rules-filters": "Règles et filtres avancés",
+        "drive-attachments": "Pièces jointes via Drive",
+        "ai-triage": "Tri intelligent du courrier par IA",
+        "newsletter-bridge": "Pont vers l'outil Newsletter",
+        "multi-region": "Déploiement multi-région",
+        "federation": "Fédération inter-serveurs Stalwart",
+        "cross-site-backup": "Sauvegarde inter-sites"
+      }
+    },
+    "contacts": {
+      "title": "Contacts",
+      "tagline": "Carnet d'adresses unifié et synchronisé",
+      "description": "Gestion des contacts avec CardDAV, groupes, recherche et synchronisation avec la messagerie.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "sync": {
+          "title": "Synchronisation",
+          "goal": "Sync multi-appareils et déduplication"
+        },
+        "privacy": {
+          "title": "Vie privée",
+          "goal": "Protection des données personnelles"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "carddav-server": "Serveur CardDAV",
+        "vcard-import": "Import et export vCard",
+        "groups-tags": "Groupes et étiquettes de contacts",
+        "search-filter": "Recherche et filtrage avancé",
+        "mail-sync": "Synchronisation avec la messagerie",
+        "mobile-sync": "Synchronisation mobile CardDAV",
+        "deduplication": "Déduplication automatique",
+        "encryption-contacts": "Chiffrement du carnet d'adresses",
+        "sharing-permissions": "Permissions de partage granulaires",
+        "gdpr-export": "Export RGPD des contacts",
+        "calendar-link": "Lien avec le calendrier",
+        "chat-presence": "Présence et statut dans le chat",
+        "association-directory": "Annuaire des associations"
+      }
+    },
+    "chat": {
+      "title": "Chat",
+      "tagline": "Messagerie instantanée chiffrée pour équipes et associations",
+      "description": "Salons, messages directs, partage de fichiers et chiffrement de bout en bout.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "security": {
+          "title": "Sécurité",
+          "goal": "Chiffrement, audit et conformité"
+        },
+        "collaboration": {
+          "title": "Collaboration",
+          "goal": "Partage et travail en équipe"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "matrix-server": "Serveur Matrix auto-hébergé",
+        "rooms-channels": "Salons et canaux thématiques",
+        "direct-messages": "Messages directs chiffrés",
+        "file-sharing": "Partage de fichiers dans le chat",
+        "e2ee-rooms": "Salons chiffrés de bout en bout",
+        "sso-integration": "Intégration SSO Kod Digor",
+        "retention-policies": "Politiques de rétention des messages",
+        "threads-reactions": "Fil de discussion et réactions",
+        "bots-webhooks": "Bots et webhooks",
+        "bridge-mail": "Pont messagerie ↔ chat",
+        "conference-bridge": "Lancement visio depuis le chat",
+        "office-embed": "Édition collaborative embarquée",
+        "federation-external": "Fédération avec Matrix externe"
+      }
+    },
+    "newsletter": {
+      "title": "Newsletter",
+      "tagline": "Campagnes e-mail respectueuses de la vie privée",
+      "description": "Listes, modèles, envoi SMTP et analytics sans tracking invasif.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "analytics": {
+          "title": "Analytique",
+          "goal": "Statistiques respectueuses de la vie privée"
+        },
+        "automation": {
+          "title": "Automatisation",
+          "goal": "Campagnes et workflows automatisés"
+        }
+      },
+      "tasks": {
+        "list-management": "Gestion des listes d'abonnés",
+        "template-editor": "Éditeur de modèles d'e-mail",
+        "smtp-sending": "Envoi SMTP souverain",
+        "unsubscribe-rgpd": "Désabonnement et conformité RGPD",
+        "open-tracking": "Suivi d'ouverture (opt-in)",
+        "click-tracking": "Suivi des clics (opt-in)",
+        "privacy-analytics": "Analytics respectueux de la vie privée",
+        "drip-campaigns": "Campagnes drip automatisées",
+        "segmentation": "Segmentation des abonnés",
+        "forms-integration": "Intégration avec les formulaires"
+      }
+    },
+    "drive": {
+      "title": "Drive",
+      "tagline": "Stockage cloud souverain pour vos fichiers",
+      "description": "Navigateur de fichiers, partage, versioning, synchronisation bureau et mobile.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "sync": {
+          "title": "Synchronisation",
+          "goal": "Sync multi-appareils et déduplication"
+        },
+        "security": {
+          "title": "Sécurité",
+          "goal": "Chiffrement, audit et conformité"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "s3-storage": "Stockage objet S3 souverain",
+        "file-browser": "Navigateur de fichiers web",
+        "folders-sharing": "Dossiers et partage",
+        "versioning": "Historique des versions",
+        "webdav": "Accès WebDAV",
+        "desktop-sync": "Synchronisation bureau",
+        "mobile-app": "Application mobile Drive",
+        "client-encryption": "Chiffrement côté client",
+        "access-control": "Contrôle d'accès granulaire",
+        "audit-trail": "Piste d'audit des fichiers",
+        "office-integration": "Ouverture dans la bureautique",
+        "mail-attachments": "Pièces jointes mail via Drive",
+        "ai-indexing": "Indexation IA des documents"
+      }
+    },
+    "photos": {
+      "title": "Photos",
+      "tagline": "Bibliothèque photo privée et chiffrée",
+      "description": "Albums, détection locale, partage sécurisé et synchronisation mobile.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "privacy": {
+          "title": "Vie privée",
+          "goal": "Protection des données personnelles"
+        },
+        "features": {
+          "title": "Fonctionnalités",
+          "goal": "Fonctions avancées pour les utilisateurs"
+        }
+      },
+      "tasks": {
+        "photo-library": "Bibliothèque photo",
+        "albums": "Albums et collections",
+        "upload-mobile": "Upload depuis mobile",
+        "thumbnails": "Génération de vignettes",
+        "e2ee-albums": "Albums chiffrés de bout en bout",
+        "face-detection-local": "Détection de visages en local",
+        "sharing-links": "Liens de partage temporaires",
+        "search-tags": "Recherche par étiquettes",
+        "slideshow-export": "Diaporama et export",
+        "drive-bridge": "Pont avec le Drive"
+      }
+    },
+    "office": {
+      "title": "Bureautique",
+      "tagline": "Documents, tableurs et présentations collaboratifs",
+      "description": "Éditeur de documents alternatif à Word, Excel, PowerPoint et Notion.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "collaboration": {
+          "title": "Collaboration",
+          "goal": "Partage et travail en équipe"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "document-editor": "Éditeur de documents texte",
+        "spreadsheet-editor": "Éditeur de tableur",
+        "presentation-editor": "Éditeur de présentations",
+        "odf-support": "Support format ODF",
+        "realtime-editing": "Édition collaborative temps réel",
+        "comments-mentions": "Commentaires et mentions",
+        "version-history": "Historique des versions document",
+        "drive-storage": "Stockage via Drive",
+        "templates": "Modèles de documents",
+        "notion-blocks": "Blocs type Notion",
+        "ai-assistant": "Assistant IA rédactionnel"
+      }
+    },
+    "notes": {
+      "title": "Notes",
+      "tagline": "Prise de notes markdown et collaboration",
+      "description": "Carnets, recherche, partage en temps réel et mode hors-ligne.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "collaboration": {
+          "title": "Collaboration",
+          "goal": "Partage et travail en équipe"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "note-editor": "Éditeur de notes riche",
+        "notebooks": "Carnets et classement",
+        "markdown-support": "Support Markdown",
+        "search": "Recherche full-text",
+        "shared-notes": "Notes partagées",
+        "realtime-sync": "Synchronisation temps réel",
+        "attachments": "Pièces jointes dans les notes",
+        "office-bridge": "Pont avec la bureautique",
+        "ai-summarize": "Résumé automatique par IA",
+        "offline-mode": "Mode hors-ligne"
+      }
+    },
+    "forms": {
+      "title": "Formulaires",
+      "tagline": "Création et collecte de réponses RGPD",
+      "description": "Constructeur de formulaires, export, webhooks et intégration adhérents.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "privacy": {
+          "title": "Vie privée",
+          "goal": "Protection des données personnelles"
+        },
+        "automation": {
+          "title": "Automatisation",
+          "goal": "Campagnes et workflows automatisés"
+        }
+      },
+      "tasks": {
+        "form-builder": "Constructeur de formulaires",
+        "field-types": "Types de champs variés",
+        "response-collection": "Collecte des réponses",
+        "export-csv": "Export CSV et JSON",
+        "anonymous-mode": "Mode réponse anonyme",
+        "consent-checkboxes": "Cases de consentement RGPD",
+        "data-retention": "Politique de rétention des données",
+        "webhooks": "Webhooks et intégrations",
+        "newsletter-signup": "Inscription newsletter",
+        "members-registration": "Inscription adhérents"
+      }
+    },
+    "website": {
+      "title": "Sites web",
+      "tagline": "Création de sites pour associations et collectifs",
+      "description": "Constructeur, domaines personnalisés, blog et SEO respectueux.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "content": {
+          "title": "Contenu",
+          "goal": "Gestion et publication de contenus"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "site-builder": "Constructeur de sites",
+        "templates": "Modèles de documents",
+        "custom-domain": "Domaine personnalisé",
+        "ssl-auto": "Certificat SSL automatique",
+        "blog-module": "Module blog",
+        "media-gallery": "Galerie médias",
+        "seo-tools": "Outils SEO intégrés",
+        "forms-embed": "Formulaires embarqués",
+        "newsletter-widget": "Widget newsletter",
+        "analytics-privacy": "Analytics sans cookies tiers"
+      }
+    },
+    "calendar": {
+      "title": "Calendrier",
+      "tagline": "Agenda partagé et synchronisé",
+      "description": "CalDAV, événements récurrents, invitations et réservation de ressources.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "sharing": {
+          "title": "Partage",
+          "goal": "Partage sécurisé entre utilisateurs et organisations"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        },
+        "advanced": {
+          "title": "Avancé",
+          "goal": "Fonctionnalités pour usages complexes"
+        }
+      },
+      "tasks": {
+        "caldav-server": "Serveur CalDAV",
+        "event-crud": "Création et édition d'événements",
+        "recurrence": "Événements récurrents",
+        "reminders": "Rappels et notifications",
+        "shared-calendars": "Calendriers partagés",
+        "invitations": "Invitations et RSVP",
+        "free-busy": "Disponibilités libre/occupé",
+        "mail-integration": "Intégration messagerie",
+        "conference-links": "Liens visioconférence auto",
+        "contacts-attendees": "Participants depuis les contacts",
+        "resource-booking": "Réservation de salles et ressources",
+        "association-events": "Événements associatifs"
+      }
+    },
+    "conference": {
+      "title": "Visioconférence",
+      "tagline": "Réunions vidéo souveraines",
+      "description": "WebRTC, partage d'écran, enregistrement et transcription IA.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "features": {
+          "title": "Fonctionnalités",
+          "goal": "Fonctions avancées pour les utilisateurs"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "webrtc-core": "Moteur WebRTC",
+        "turn-stun": "Serveurs TURN/STUN",
+        "room-management": "Gestion des salles de réunion",
+        "screen-sharing": "Partage d'écran",
+        "recording": "Enregistrement des réunions",
+        "waiting-room": "Salle d'attente",
+        "breakout-rooms": "Salles de sous-groupe",
+        "calendar-scheduling": "Planification via calendrier",
+        "chat-integration": "Intégration chat en direct",
+        "ai-transcription": "Transcription IA des réunions"
+      }
+    },
+    "collab-tools": {
+      "title": "Outils collaboratifs",
+      "tagline": "Espace de travail unifié pour les équipes",
+      "description": "Salles, documents partagés, tableaux de tâches et fil d'activité.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "integration": {
+          "title": "Intégration",
+          "goal": "Connexion avec les services de la suite"
+        }
+      },
+      "tasks": {
+        "workspace-rooms": "Espaces de travail",
+        "shared-docs": "Documents partagés",
+        "task-boards": "Tableaux de tâches Kanban",
+        "activity-feed": "Fil d'activité",
+        "chat-bridge": "Pont avec le chat",
+        "calendar-bridge": "Pont avec le calendrier",
+        "drive-bridge": "Pont avec le Drive"
+      }
+    },
+    "passwords": {
+      "title": "Gestionnaire de mots de passe",
+      "tagline": "Coffre-fort zero-knowledge",
+      "description": "Extension navigateur, TOTP, coffres familiaux et passkeys.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "sharing": {
+          "title": "Partage",
+          "goal": "Partage sécurisé entre utilisateurs et organisations"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "vault-core": "Coffre-fort principal",
+        "zero-knowledge": "Architecture zero-knowledge",
+        "browser-extension": "Extension navigateur",
+        "totp-2fa": "Codes TOTP et 2FA",
+        "family-vault": "Coffre familial partagé",
+        "org-vault": "Coffre organisation",
+        "emergency-access": "Accès d'urgence",
+        "sso-bridge": "Pont SSO Kod Digor",
+        "passkeys": "Support des passkeys",
+        "audit-security": "Audit de sécurité du coffre"
+      }
+    },
+    "backups": {
+      "title": "Sauvegardes",
+      "tagline": "Protection et restauration de vos données",
+      "description": "Sauvegardes incrémentales mail, drive, base de données et réplication.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "coverage": {
+          "title": "Couverture",
+          "goal": "Sauvegarde de tous les services"
+        },
+        "sovereignty": {
+          "title": "Souveraineté",
+          "goal": "Auto-hébergement, fédération et résilience"
+        }
+      },
+      "tasks": {
+        "backup-engine": "Moteur de sauvegarde",
+        "scheduled-jobs": "Planification automatique",
+        "incremental-backup": "Sauvegarde incrémentale",
+        "restore-ui": "Interface de restauration",
+        "mail-backup": "Sauvegarde messagerie",
+        "drive-backup": "Sauvegarde Drive",
+        "db-backup": "Sauvegarde base de données",
+        "offsite-replication": "Réplication hors-site",
+        "client-encrypted": "Sauvegardes chiffrées client",
+        "disaster-recovery": "Plan de reprise après sinistre"
+      }
+    },
+    "ai": {
+      "title": "Intelligence artificielle",
+      "tagline": "IA locale et respectueuse de la vie privée",
+      "description": "LLM auto-hébergé, assistants mail et bureautique sans fuite de données.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "integration": {
+          "title": "Intégration",
+          "goal": "Connexion avec les services de la suite"
+        },
+        "sovereignty": {
+          "title": "Souveraineté",
+          "goal": "Auto-hébergement, fédération et résilience"
+        }
+      },
+      "tasks": {
+        "local-llm": "Modèle LLM local",
+        "privacy-gateway": "Passerelle IA respectueuse",
+        "prompt-library": "Bibliothèque de prompts",
+        "usage-quotas": "Quotas d'utilisation",
+        "mail-assistant": "Assistant mail IA",
+        "office-assistant": "Assistant bureautique IA",
+        "search-assistant": "Assistant recherche IA",
+        "self-hosted-models": "Modèles auto-hébergés",
+        "federated-learning": "Apprentissage fédéré"
+      }
+    },
+    "dns": {
+      "title": "DNS",
+      "tagline": "Gestion de domaines et enregistrements",
+      "description": "Hébergement DNS, DNSSEC, API et intégration messagerie.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "advanced": {
+          "title": "Avancé",
+          "goal": "Fonctionnalités pour usages complexes"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "dns-hosting": "Hébergement DNS",
+        "domain-registration": "Enregistrement de domaines",
+        "dnssec": "Activation DNSSEC",
+        "auto-records": "Enregistrements automatiques (mail, web)",
+        "split-horizon": "DNS split-horizon",
+        "api-management": "API de gestion DNS",
+        "health-checks": "Vérifications de santé DNS",
+        "mail-autoconfig": "Autoconfiguration messagerie",
+        "website-integration": "Intégration sites web",
+        "vpn-records": "Enregistrements VPN automatiques"
+      }
+    },
+    "vpn": {
+      "title": "VPN",
+      "tagline": "Tunnel sécurisé pour vos connexions",
+      "description": "WireGuard, split tunneling, site-à-site et contrôle d'accès.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "org": {
+          "title": "Organisation",
+          "goal": "Fonctionnalités pour les structures"
+        }
+      },
+      "tasks": {
+        "wireguard-core": "Cœur WireGuard",
+        "user-provisioning": "Provisionnement utilisateurs VPN",
+        "split-tunneling": "Split tunneling configurable",
+        "kill-switch": "Kill switch réseau",
+        "site-to-site": "VPN site-à-site",
+        "access-control": "Contrôle d'accès granulaire",
+        "audit-logs": "Journaux d'audit et traçabilité"
+      }
+    },
+    "proxy": {
+      "title": "Proxy",
+      "tagline": "Reverse et forward proxy souverain",
+      "description": "Terminaison SSL, équilibrage de charge et filtrage respectueux.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "privacy": {
+          "title": "Vie privée",
+          "goal": "Protection des données personnelles"
+        }
+      },
+      "tasks": {
+        "reverse-proxy": "Proxy inverse",
+        "ssl-termination": "Terminaison SSL",
+        "load-balancing": "Équilibrage de charge",
+        "rate-limiting": "Limitation de débit",
+        "forward-proxy": "Proxy forward",
+        "content-filtering": "Filtrage de contenu",
+        "logging-privacy": "Journaux respectueux de la vie privée"
+      }
+    },
+    "browser": {
+      "title": "Navigateur",
+      "tagline": "Navigateur intégré à l'écosystème Kod Digor",
+      "description": "Fork Chromium, blocage trackers, sync et raccourcis suite.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "integration": {
+          "title": "Intégration",
+          "goal": "Connexion avec les services de la suite"
+        }
+      },
+      "tasks": {
+        "chromium-fork": "Fork Chromium Kod Digor",
+        "tracker-blocking": "Blocage des traqueurs",
+        "kod-digor-sync": "Synchronisation compte Kod Digor",
+        "password-autofill": "Remplissage mots de passe",
+        "vpn-toggle": "Activation VPN intégrée",
+        "suite-shortcuts": "Raccourcis vers la suite"
+      }
+    },
+    "accounting": {
+      "title": "Comptabilité",
+      "tagline": "Comptabilité associative simplifiée",
+      "description": "Plan comptable, factures, cotisations et export FEC.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "association": {
+          "title": "Association",
+          "goal": "Outils dédiés aux associations"
+        },
+        "compliance": {
+          "title": "Conformité",
+          "goal": "Obligations légales et réglementaires"
+        }
+      },
+      "tasks": {
+        "chart-accounts": "Plan comptable",
+        "journal-entries": "Écritures comptables",
+        "invoices": "Facturation",
+        "bank-reconciliation": "Rapprochement bancaire",
+        "membership-fees": "Cotisations adhérents",
+        "donation-tracking": "Suivi des dons",
+        "annual-reports": "Rapports annuels",
+        "fec-export": "Export FEC",
+        "rgpd-accounting": "Conformité RGPD comptable",
+        "multi-org": "Multi-organisation"
+      }
+    },
+    "members": {
+      "title": "Gestion d'associations",
+      "tagline": "Adhérents, cotisations et événements",
+      "description": "Registre membres, rôles, cartes d'adhésion et bénévoles.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "engagement": {
+          "title": "Engagement",
+          "goal": "Mobilisation et participation des membres"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "member-registry": "Registre des adhérents",
+        "roles-permissions": "Rôles et permissions",
+        "membership-cards": "Cartes d'adhésion",
+        "dues-tracking": "Suivi des cotisations",
+        "event-registration": "Inscription aux événements",
+        "volunteer-management": "Gestion des bénévoles",
+        "communication-hub": "Hub de communication membres",
+        "accounting-bridge": "Pont comptabilité",
+        "forms-onboarding": "Formulaires d'adhésion",
+        "newsletter-segments": "Segments newsletter membres"
+      }
+    },
+    "maps": {
+      "title": "Cartes",
+      "tagline": "Cartographie open source pour vos projets",
+      "description": "Tuiles OSM, marqueurs, itinéraires et cartes d'événements.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "association": {
+          "title": "Association",
+          "goal": "Outils dédiés aux associations"
+        }
+      },
+      "tasks": {
+        "osm-tiles": "Tuiles OpenStreetMap",
+        "marker-management": "Gestion des marqueurs",
+        "route-display": "Affichage d'itinéraires",
+        "geocoding": "Géocodage",
+        "event-maps": "Cartes d'événements",
+        "member-locator": "Localisation membres (opt-in)",
+        "privacy-zones": "Zones de confidentialité"
+      }
+    },
+    "video": {
+      "title": "Vidéo",
+      "tagline": "Hébergement vidéo alternatif à YouTube",
+      "description": "Upload, transcodage, chaînes, live et fédération ActivityPub.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "community": {
+          "title": "Communauté",
+          "goal": "Interaction et modération communautaire"
+        },
+        "sovereignty": {
+          "title": "Souveraineté",
+          "goal": "Auto-hébergement, fédération et résilience"
+        }
+      },
+      "tasks": {
+        "upload-pipeline": "Pipeline d'upload vidéo",
+        "transcoding": "Transcodage multi-formats",
+        "player-embed": "Lecteur et embed",
+        "channels": "Chaînes vidéo",
+        "comments-moderation": "Commentaires et modération",
+        "playlists": "Listes de lecture",
+        "live-streaming": "Diffusion en direct",
+        "federation-activitypub": "Fédération ActivityPub",
+        "cdn-self-hosted": "CDN auto-hébergé"
+      }
+    },
+    "opensource-support": {
+      "title": "Soutien open source",
+      "tagline": "Financement et infrastructure pour le logiciel libre",
+      "description": "Annuaire projets, dons, CI/CD hébergé et audits de sécurité.",
+      "phases": {
+        "foundations": {
+          "title": "Fondations",
+          "goal": "Mise en place des fonctionnalités essentielles"
+        },
+        "infrastructure": {
+          "title": "Infrastructure",
+          "goal": "Hébergement et outils pour les projets libres"
+        },
+        "ecosystem": {
+          "title": "Écosystème",
+          "goal": "Intégration avec les autres services Kod Digor"
+        }
+      },
+      "tasks": {
+        "project-directory": "Annuaire de projets libres",
+        "donation-platform": "Plateforme de dons",
+        "volunteer-matching": "Mise en relation bénévoles",
+        "transparency-reports": "Rapports de transparence",
+        "ci-cd-hosting": "Hébergement CI/CD",
+        "mirror-registries": "Miroirs de registres",
+        "security-audits": "Audits de sécurité",
+        "kod-digor-integration": "Intégration écosystème Kod Digor",
+        "bretagne-network": "Réseau Bretagne numérique libre",
+        "eu-sovereignty-fund": "Fonds souveraineté numérique UE"
+      }
+    }
+  }
+}

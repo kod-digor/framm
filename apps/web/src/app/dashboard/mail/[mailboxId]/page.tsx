@@ -5,7 +5,7 @@ import { WebmailFrame } from "@/components/mail/webmail-frame";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { requireOrgAdmin } from "@/lib/auth-utils";
+import { requireAuth } from "@/lib/auth-utils";
 import { resolveAuthorizedMailbox } from "@/lib/mail/mailbox-access";
 import { getWebmailExternalUrl } from "@/lib/stalwart/client";
 import { getT } from "@/i18n/t";
@@ -16,7 +16,7 @@ export default async function MailPage({
   params: Promise<{ mailboxId: string }>;
 }) {
   const { mailboxId } = await params;
-  await requireOrgAdmin();
+  await requireAuth();
   const t = await getT("mail");
 
   const access = await resolveAuthorizedMailbox(mailboxId);
@@ -25,6 +25,9 @@ export default async function MailPage({
     throw new Error(access.error);
   }
   const mailbox = access.mailbox;
+  const settingsHref = mailbox.isShared
+    ? "/dashboard/shared-mailboxes"
+    : `/dashboard/mailboxes/${mailbox.id}`;
 
   const webmailConfigured = Boolean(getWebmailExternalUrl());
   const externalUrl = getWebmailExternalUrl();
@@ -38,9 +41,14 @@ export default async function MailPage({
             {mailbox.address}
           </h1>
         </div>
-        <Button asChild variant="outline" size="sm" className="shrink-0">
-          <Link href={`/dashboard/mailboxes/${mailbox.id}`}>{t("settings")}</Link>
-        </Button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href={`/dashboard/mail/${mailboxId}/filters`}>{t("filters")}</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href={settingsHref}>{t("settings")}</Link>
+          </Button>
+        </div>
       </div>
 
       <StalwartStatusBanner namespace="mailboxes" />

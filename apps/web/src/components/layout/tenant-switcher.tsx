@@ -45,19 +45,18 @@ export function TenantSwitcher({
           <p className="truncate text-xs text-zinc-500">{userEmail}</p>
         </div>
         <DropdownMenuSeparator />
-        <p className="px-2 py-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <p className="px-2 py-1 text-xs font-medium tracking-wide text-zinc-400">
           {t("associations")}
         </p>
         {tenants.map((tenant) => {
           const isActive = tenant.id === activeTenantId;
-          const isApproved = tenant.status === "APPROVED";
 
           return (
             <DropdownMenuItem
               key={tenant.id}
-              disabled={!isApproved}
+              disabled={false}
               onSelect={() => {
-                if (!isApproved || isActive) return;
+                if (isActive) return;
                 void switchTenantAction(tenant.id);
               }}
             >

@@ -6,7 +6,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { updateMailboxAction } from "@/app/actions/mailboxes";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { FormEditDialog } from "@/components/ui/form-edit-dialog";
+import { FormDrawer } from "@/components/ui/form-drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,33 +62,35 @@ function EditMailboxFields({
       <input type="hidden" name="mailboxId" value={mailboxId} />
       <FormFeedback state={state} namespace="mailboxes" paramKey="address" />
 
-      <div className="space-y-2">
-        <Label htmlFor={`displayName-${mailboxId}`}>{t("displayName")}</Label>
-        <Input
-          id={`displayName-${mailboxId}`}
-          name="displayName"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={t("displayNamePlaceholder")}
-        />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor={`displayName-${mailboxId}`}>{t("displayName")}</Label>
+          <Input
+            id={`displayName-${mailboxId}`}
+            name="displayName"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder={t("displayNamePlaceholder")}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`password-${mailboxId}`}>{t("newPassword")}</Label>
+          <Input
+            id={`password-${mailboxId}`}
+            name="password"
+            type="password"
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="••••••••"
+          />
+          <p className="text-xs text-zinc-500">{t("newPasswordHint")}</p>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`password-${mailboxId}`}>{t("newPassword")}</Label>
-        <Input
-          id={`password-${mailboxId}`}
-          name="password"
-          type="password"
-          minLength={8}
-          autoComplete="new-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="••••••••"
-        />
-        <p className="text-xs text-zinc-500">{t("newPasswordHint")}</p>
-      </div>
-
-      <fieldset className="space-y-3">
+      <fieldset className="space-y-3 rounded-lg border border-canal bg-neutral-50/50 p-4">
         <legend className="text-sm font-medium">{t("quotaLimit")}</legend>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -146,7 +148,7 @@ export function EditMailboxForm({
   const handleClose = useCallback(() => setOpen(false), []);
 
   return (
-    <FormEditDialog
+    <FormDrawer
       open={open}
       onOpenChange={setOpen}
       title={t("editTitle")}
@@ -170,6 +172,6 @@ export function EditMailboxForm({
         quotaBytes={quotaBytes}
         onClose={handleClose}
       />
-    </FormEditDialog>
+    </FormDrawer>
   );
 }

@@ -2,16 +2,44 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { canAdminOrg, getMembership } from "@/lib/tenant";
+import { getSubscription, requiresBillingSetup } from "@/lib/modules";
+import { prisma } from "@/lib/prisma";
 
-export async function requireAuth(roles?: UserRole[]) {
+type RequireAuthOptions = {
+  /** Autorise l'accès même si le changement de mot de passe est requis. */
+  skipPasswordChange?: boolean;
+};
+
+type RequireOrgAdminOptions = {
+  /** Autorise l'accès même si le paiement CB n'est pas finalisé (page facturation). */
+  allowPendingBilling?: boolean;
+  skipPasswordChange?: boolean;
+};
+
+async function enforcePasswordChange(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { mustChangePassword: true },
+  });
+  if (user?.mustChangePassword) {
+    redirect("/change-password");
+  }
+}
+
+export async function requireAuth(roles?: UserRole[], options?: RequireAuthOptions) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   if (roles && !roles.includes(session.user.role)) redirect("/");
+  if (!options?.skipPasswordChange) {
+    await enforcePasswordChange(session.user.id);
+  }
   return session;
 }
 
-export async function requireOrgAdmin() {
-  const session = await requireAuth();
+export async function requireOrgAdmin(options?: RequireOrgAdminOptions) {
+  const session = await requireAuth(undefined, {
+    skipPasswordChange: options?.skipPasswordChange,
+  });
   if (!session.user.organizationId) redirect("/dashboard?tenant=none");
 
   const membership = await getMembership(session.user.id, session.user.organizationId);
@@ -21,8 +49,11 @@ export async function requireOrgAdmin() {
     redirect("/dashboard");
   }
 
-  if (session.user.role !== "BUREAU" && membership.organization.status !== "APPROVED") {
-    redirect("/dashboard?tenant=pending");
+  if (!options?.allowPendingBilling && session.user.role !== "BUREAU") {
+    const subscription = await getSubscription(membership.organizationId);
+    if (requiresBillingSetup(subscription?.status)) {
+      redirect("/dashboard/billing");
+    }
   }
 
   return session;

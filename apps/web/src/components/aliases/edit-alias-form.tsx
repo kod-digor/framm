@@ -1,14 +1,16 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { Loader2, Pencil, X } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { updateAliasAction } from "@/app/actions/aliases";
-import { AliasEmailBadge } from "@/components/aliases/alias-email-badge";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { FormDrawer } from "@/components/ui/form-drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 
 function SaveButton() {
@@ -16,77 +18,55 @@ function SaveButton() {
   const t = useTranslations("aliases");
 
   return (
-    <Button type="submit" size="sm" disabled={pending} aria-busy={pending}>
+    <Button type="submit" disabled={pending} aria-busy={pending}>
       {pending && <Loader2 className="size-4 animate-spin" />}
       {pending ? t("saving") : t("save")}
     </Button>
   );
 }
 
-export function EditAliasDestination({
+function EditAliasFields({
   aliasId,
   source,
   destination,
+  onClose,
 }: {
   aliasId: string;
   source: string;
   destination: string;
+  onClose: () => void;
 }) {
   const t = useTranslations("aliases");
   const [state, formAction] = useActionState(updateAliasAction, INITIAL_ACTION_RESULT);
-  const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(destination);
 
-  if (!editing) {
-    return (
-      <div className="flex items-center gap-2">
-        <AliasEmailBadge email={destination} />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="size-8 shrink-0 p-0 text-zinc-500 hover:text-zinc-900"
-          onClick={() => setEditing(true)}
-          aria-label={t("edit")}
-        >
-          <Pencil className="size-4" />
-        </Button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!state?.ok) return;
+    onClose();
+  }, [state, onClose]);
 
   return (
-    <form
-      action={formAction}
-      className="flex flex-col gap-2"
-      onSubmit={() => setEditing(false)}
-    >
+    <form action={formAction} className="space-y-4">
       <input type="hidden" name="aliasId" value={aliasId} />
       <FormFeedback state={state} namespace="aliases" paramKey="source" />
-      <Input
-        name="destination"
-        type="email"
-        required
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        placeholder={t("destinationPlaceholder")}
-        className="h-9 font-mono text-sm"
-        aria-label={t("destination")}
-      />
-      <div className="flex flex-wrap items-center gap-2">
-        <SaveButton />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setValue(destination);
-            setEditing(false);
-          }}
-        >
-          <X className="size-4" />
+      <div className="space-y-2">
+        <Label htmlFor={`destination-${aliasId}`}>{t("destination")}</Label>
+        <Input
+          id={`destination-${aliasId}`}
+          name="destination"
+          type="email"
+          required
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder={t("destinationPlaceholder")}
+        />
+        <p className="text-xs text-zinc-500">{t("destinationHint")}</p>
+      </div>
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+        <Button type="button" variant="outline" onClick={onClose} className="cursor-pointer">
           {t("cancel")}
         </Button>
+        <SaveButton />
       </div>
       <p className="text-xs text-zinc-500">{t("editHint", { source })}</p>
     </form>
@@ -103,59 +83,42 @@ export function EditAliasForm({
   destination: string;
 }) {
   const t = useTranslations("aliases");
-  const [state, formAction] = useActionState(updateAliasAction, INITIAL_ACTION_RESULT);
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(destination);
-
-  if (!editing) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="size-8 p-0 text-zinc-500 hover:text-zinc-900"
-        onClick={() => setEditing(true)}
-        aria-label={t("edit")}
-      >
-        <Pencil className="size-4" />
-      </Button>
-    );
-  }
+  const [open, setOpen] = useState(false);
+  const handleClose = useCallback(() => setOpen(false), []);
 
   return (
-    <form
-      action={formAction}
-      className="flex min-w-0 flex-col gap-2"
-      onSubmit={() => setEditing(false)}
-    >
-      <input type="hidden" name="aliasId" value={aliasId} />
-      <FormFeedback state={state} namespace="aliases" paramKey="source" />
-      <Input
-        name="destination"
-        type="email"
-        required
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        placeholder={t("destinationPlaceholder")}
-        className="h-9 font-mono text-sm"
-        aria-label={t("destination")}
-      />
-      <div className="flex items-center gap-2">
-        <SaveButton />
+    <FormDrawer
+      open={open}
+      onOpenChange={setOpen}
+      title={t("edit")}
+      description={t("editHint", { source })}
+      trigger={
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => {
-            setValue(destination);
-            setEditing(false);
-          }}
+          className="size-8 cursor-pointer p-0 text-zinc-500 hover:text-zinc-900"
+          aria-label={t("edit")}
         >
-          <X className="size-4" />
-          {t("cancel")}
+          <Pencil className="size-4" />
         </Button>
-      </div>
-      <p className="text-xs text-zinc-500">{t("editHint", { source })}</p>
-    </form>
+      }
+    >
+      <EditAliasFields
+        aliasId={aliasId}
+        source={source}
+        destination={destination}
+        onClose={handleClose}
+      />
+    </FormDrawer>
   );
+}
+
+/** Affiche le bouton d'édition en drawer — alias conservé pour imports existants. */
+export function EditAliasDestination(props: {
+  aliasId: string;
+  source: string;
+  destination: string;
+}) {
+  return <EditAliasForm {...props} />;
 }

@@ -45,11 +45,15 @@ output "manual_dns_records" {
   value = var.dns_enabled ? null : {
     domain = var.primary_platform_domain
     records = {
-      "@"       = local.app_ingress_ip
-      "www"     = local.app_ingress_ip
-      "mail"    = module.mail_vm.public_ip
-      "webmail" = module.mail_vm.public_ip
-      "MX"      = "10 mail.${var.primary_platform_domain}."
+      "@"            = local.app_ingress_ip
+      "www"          = local.app_ingress_ip
+      "mail"         = module.mail_vm.public_ip
+      "webmail"      = module.mail_vm.public_ip
+      "autoconfig"   = "CNAME mail.${var.primary_platform_domain}."
+      "autodiscover" = "CNAME mail.${var.primary_platform_domain}."
+      "_imaps._tcp"  = "SRV 0 1 993 mail.${var.primary_platform_domain}."
+      "_submission._tcp" = "SRV 0 1 587 mail.${var.primary_platform_domain}."
+      "MX"           = "10 mail.${var.primary_platform_domain}."
     }
   }
 }

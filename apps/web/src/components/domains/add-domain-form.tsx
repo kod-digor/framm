@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -23,18 +23,33 @@ function SubmitButton() {
   );
 }
 
-export function AddDomainForm() {
+export function AddDomainForm({
+  onSuccess,
+  onCancel,
+}: {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}) {
   const t = useTranslations("domains");
   const [state, formAction] = useActionState(addDomainAction, INITIAL_ACTION_RESULT);
+
+  useEffect(() => {
+    if (state?.ok && onSuccess) onSuccess();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="space-y-4">
       <FormFeedback state={state} namespace="domains" paramKey="domain" />
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <Label htmlFor="fqdn">{t("fqdn")}</Label>
-          <Input id="fqdn" name="fqdn" placeholder="monasso.bzh" required />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="fqdn">{t("fqdn")}</Label>
+        <Input id="fqdn" name="fqdn" placeholder="monasso.bzh" required />
+      </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {onCancel ? (
+          <Button type="button" variant="outline" onClick={onCancel} className="cursor-pointer">
+            {t("cancel")}
+          </Button>
+        ) : null}
         <SubmitButton />
       </div>
     </form>

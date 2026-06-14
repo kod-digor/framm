@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 const STALWART_URL = process.env.STALWART_URL ?? "";
 const STALWART_API_KEY = process.env.STALWART_API_KEY ?? "";
 
@@ -120,16 +123,25 @@ export async function getStalwartStatus(): Promise<StalwartStatus> {
   return isStalwartFailure(result) ? "unreachable" : "ok";
 }
 
+const JMAP_CORE_USING = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"] as const;
+const JMAP_MAIL_USING = [
+  "urn:ietf:params:jmap:core",
+  "urn:ietf:params:jmap:mail",
+  "urn:ietf:params:jmap:submission",
+  "urn:stalwart:jmap",
+] as const;
+
 async function jmapCall(
   methodCalls: JmapRequest["methodCalls"],
-  timeoutMs = 15_000
+  timeoutMs = 15_000,
+  using: readonly string[] = JMAP_CORE_USING
 ) {
   if (!STALWART_API_KEY) {
     return { unavailable: true as const };
   }
 
   const body: JmapRequest = {
-    using: ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"],
+    using: [...using],
     methodCalls,
   };
 
@@ -184,10 +196,145 @@ export async function createDomain(fqdn: string) {
   ]);
 }
 
+export type StalwartSubAddressingRule = {
+  match: { if: string; then: string }[];
+  else: string;
+};
+
+export async function getDomain(stalwartDomainId: string) {
+  return jmapCall([["x:Domain/get", { ids: [stalwartDomainId] }, "g1"]]);
+}
+
+function extractDomainRecord(
+  res: unknown,
+  stalwartDomainId: string
+): Record<string, unknown> | null {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return null;
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("list" in body)) return null;
+  const list = (body as { list: unknown }).list;
+  if (!Array.isArray(list)) return null;
+  const row = list.find(
+    (item): item is Record<string, unknown> =>
+      typeof item === "object" && item !== null && (item as { id?: string }).id === stalwartDomainId
+  );
+  return row ?? null;
+}
+
+export function extractDomainSubAddressingRule(res: unknown, stalwartDomainId: string): StalwartSubAddressingRule | null {
+  const row = extractDomainRecord(res, stalwartDomainId);
+  if (!row) return null;
+  const sub = row.subAddressing;
+  if (!sub || typeof sub !== "object") return null;
+  const typed = sub as { "@type"?: string; customRule?: StalwartSubAddressingRule };
+  if (typed["@type"] !== "Custom" || !typed.customRule) return null;
+  return typed.customRule;
+}
+
+export function extractDomainCatchAllAddress(res: unknown, stalwartDomainId: string): string | null {
+  const row = extractDomainRecord(res, stalwartDomainId);
+  if (!row) return null;
+  const value = row.catchAllAddress;
+  return typeof value === "string" ? value : null;
+}
+
+export async function updateDomainCatchAll(stalwartDomainId: string, catchAllAddress: string | null) {
+  return jmapCall([
+    [
+      "x:Domain/set",
+      {
+        update: {
+          [stalwartDomainId]: {
+            catchAllAddress,
+          },
+        },
+      },
+      "u1",
+    ],
+  ]);
+}
+
+export async function updateDomainSubAddressingCustom(
+  stalwartDomainId: string,
+  customRule: StalwartSubAddressingRule
+) {
+  return jmapCall([
+    [
+      "x:Domain/set",
+      {
+        update: {
+          [stalwartDomainId]: {
+            subAddressing: {
+              "@type": "Custom",
+              customRule,
+            },
+          },
+        },
+      },
+      "u1",
+    ],
+  ]);
+}
+
+export async function resetDomainSubAddressingEnabled(stalwartDomainId: string) {
+  return jmapCall([
+    [
+      "x:Domain/set",
+      {
+        update: {
+          [stalwartDomainId]: {
+            subAddressing: { "@type": "Enabled" },
+          },
+        },
+      },
+      "u1",
+    ],
+  ]);
+}
+
 const STALWART_DEFAULT_LOCALE = "fr_FR";
 const STALWART_DEFAULT_TIMEZONE = "Europe/Paris";
 const STALWART_ENCRYPTION_PUBLIC_KEY_ID = process.env.STALWART_ENCRYPTION_PUBLIC_KEY_ID ?? "";
-const STALWART_PLATFORM_PGP_PUBLIC_KEY = process.env.STALWART_PLATFORM_PGP_PUBLIC_KEY ?? "";
+
+function normalizePgpKey(raw: string): string {
+  return raw.replace(/\\n/g, "\n").trim();
+}
+
+function decodePlatformPgpFromEnv(): string {
+  const b64 = process.env.STALWART_PLATFORM_PGP_PUBLIC_KEY_B64?.trim();
+  if (b64) {
+    return Buffer.from(b64, "base64").toString("utf8").trim();
+  }
+  const inline = process.env.STALWART_PLATFORM_PGP_PUBLIC_KEY?.trim();
+  if (inline) return normalizePgpKey(inline);
+  return "";
+}
+
+export function resolvePlatformPgpPublicKey(): string {
+  const fromEnv = decodePlatformPgpFromEnv();
+  if (fromEnv) return fromEnv;
+  if (process.env.NODE_ENV === "development") {
+    try {
+      return readFileSync(join(process.cwd(), "config/stalwart-dev-public.pem"), "utf8").trim();
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+/** Chiffrement au repos configuré (prod : clé plateforme ou ID Stalwart). */
+export function isEncryptionAtRestConfigured(): boolean {
+  if (STALWART_ENCRYPTION_PUBLIC_KEY_ID) return true;
+  return Boolean(resolvePlatformPgpPublicKey());
+}
+
+function assertHttpsServiceUrl(url: string, label: string) {
+  if (!url || process.env.NODE_ENV !== "production") return;
+  if (!url.startsWith("https://")) {
+    throw new Error(`${label} must use HTTPS in production`);
+  }
+}
 
 function defaultEncryptionAtRest():
   | { "@type": "Disabled" }
@@ -280,6 +427,10 @@ export async function createAccount(
   password: string,
   displayName?: string | null
 ) {
+  if (process.env.NODE_ENV === "production" && !isEncryptionAtRestConfigured()) {
+    return { error: "encryption_not_configured" as const };
+  }
+
   const id = `account-${Date.now()}`;
   const res = await jmapCall([
     [
@@ -303,21 +454,15 @@ export async function createAccount(
     ],
   ]);
 
-  if (
-    isStalwartFailure(res) ||
-    !STALWART_PLATFORM_PGP_PUBLIC_KEY ||
-    STALWART_ENCRYPTION_PUBLIC_KEY_ID
-  ) {
+  const platformKey = resolvePlatformPgpPublicKey();
+  if (isStalwartFailure(res) || !platformKey || STALWART_ENCRYPTION_PUBLIC_KEY_ID) {
     return res;
   }
 
   const accountId = extractStalwartCreatedId(res);
   if (!accountId) return res;
 
-  const encRes = await enableAccountEncryptionAtRest(
-    accountId,
-    STALWART_PLATFORM_PGP_PUBLIC_KEY
-  );
+  const encRes = await enableAccountEncryptionAtRest(accountId, platformKey);
   if (isStalwartFailure(encRes)) return encRes;
 
   return res;
@@ -384,8 +529,8 @@ export function extractJmapQueryIds(res: unknown): string[] {
   return Array.isArray(ids) ? (ids as string[]) : [];
 }
 
-function recipientsMap(destination: string): Record<string, boolean> {
-  return { [destination]: true };
+function recipientsMapMulti(destinations: string[]): Record<string, boolean> {
+  return Object.fromEntries(destinations.map((email) => [email, true]));
 }
 
 function parseEmailLocalPart(email: string): string {
@@ -417,10 +562,18 @@ export async function resolveStalwartDomainId(
   return { id: ids[0] ?? null, unavailable: false };
 }
 
-/** Redirection email → Stalwart MailingList (destinataire externe). */
+/** Redirection email → Stalwart MailingList (un ou plusieurs destinataires). */
 export async function createAlias(
   source: string,
   destination: string,
+  stalwartDomainId: string
+) {
+  return createMailingListWithRecipients(source, [destination], stalwartDomainId);
+}
+
+export async function createMailingListWithRecipients(
+  source: string,
+  destinations: string[],
   stalwartDomainId: string
 ) {
   const id = `ml-${Date.now()}`;
@@ -432,11 +585,35 @@ export async function createAlias(
           [id]: {
             name: parseEmailLocalPart(source),
             domainId: stalwartDomainId,
-            recipients: recipientsMap(destination),
+            recipients: recipientsMapMulti(destinations),
           },
         },
       },
       "c1",
+    ],
+  ]);
+}
+
+export async function patchMailingListRecipients(
+  stalwartListId: string,
+  toAdd: string[],
+  toRemove: string[]
+) {
+  const patch: Record<string, unknown> = {};
+  for (const email of toAdd) patch[`recipients/${email}`] = true;
+  for (const email of toRemove) patch[`recipients/${email}`] = null;
+
+  if (Object.keys(patch).length === 0) return { methodResponses: [] };
+
+  return jmapCall([
+    [
+      "x:MailingList/set",
+      {
+        update: {
+          [stalwartListId]: patch,
+        },
+      },
+      "u1",
     ],
   ]);
 }
@@ -526,6 +703,203 @@ function extractAccountRecords(res: unknown): { id: string; emailAddress?: strin
   );
 }
 
+export type StalwartEmailAlias = {
+  name: string;
+  domainId: string;
+  enabled?: boolean;
+};
+
+export async function getAccount(stalwartAccountId: string) {
+  return jmapCall([["x:Account/get", { ids: [stalwartAccountId] }, "g1"]]);
+}
+
+function extractAccountRecordById(
+  res: unknown,
+  stalwartAccountId: string
+): Record<string, unknown> | null {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return null;
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("list" in body)) return null;
+  const list = (body as { list: unknown }).list;
+  if (!Array.isArray(list)) return null;
+  const row = list.find(
+    (item): item is Record<string, unknown> =>
+      typeof item === "object" && item !== null && (item as { id?: string }).id === stalwartAccountId
+  );
+  return row ?? null;
+}
+
+export function extractAccountEmailAliases(
+  res: unknown,
+  stalwartAccountId: string
+): Map<string, StalwartEmailAlias> {
+  const row = extractAccountRecordById(res, stalwartAccountId);
+  const aliases = row?.aliases;
+  const map = new Map<string, StalwartEmailAlias>();
+  if (!aliases || typeof aliases !== "object") return map;
+
+  for (const [index, value] of Object.entries(aliases as Record<string, unknown>)) {
+    if (!value || typeof value !== "object") continue;
+    const alias = value as StalwartEmailAlias;
+    if (typeof alias.name !== "string" || typeof alias.domainId !== "string") continue;
+    map.set(index, alias);
+  }
+  return map;
+}
+
+function findAccountAliasIndex(
+  aliases: Map<string, StalwartEmailAlias>,
+  localPart: string,
+  domainId: string
+): string | null {
+  for (const [index, alias] of aliases) {
+    if (alias.name === localPart && alias.domainId === domainId) return index;
+  }
+  return null;
+}
+
+export async function addAccountEmailAlias(
+  stalwartAccountId: string,
+  aliasEmail: string,
+  domainId: string
+) {
+  const localPart = parseEmailLocalPart(aliasEmail);
+  const accountRes = await getAccount(stalwartAccountId);
+  if (isStalwartFailure(accountRes)) return accountRes;
+
+  const aliases = extractAccountEmailAliases(accountRes, stalwartAccountId);
+  if (findAccountAliasIndex(aliases, localPart, domainId) !== null) {
+    return accountRes;
+  }
+
+  const numericKeys = [...aliases.keys()].map((k) => Number.parseInt(k, 10)).filter(Number.isFinite);
+  const nextIndex = numericKeys.length > 0 ? Math.max(...numericKeys) + 1 : 0;
+
+  return jmapCall([
+    [
+      "x:Account/set",
+      {
+        update: {
+          [stalwartAccountId]: {
+            [`aliases/${nextIndex}`]: {
+              name: localPart,
+              domainId,
+              enabled: true,
+            },
+          },
+        },
+      },
+      "u1",
+    ],
+  ]);
+}
+
+export async function removeAccountEmailAlias(
+  stalwartAccountId: string,
+  aliasEmail: string,
+  domainId: string
+) {
+  const localPart = parseEmailLocalPart(aliasEmail);
+  const accountRes = await getAccount(stalwartAccountId);
+  if (isStalwartFailure(accountRes)) return accountRes;
+
+  const aliases = extractAccountEmailAliases(accountRes, stalwartAccountId);
+  const index = findAccountAliasIndex(aliases, localPart, domainId);
+  if (index === null) return accountRes;
+
+  return jmapCall([
+    [
+      "x:Account/set",
+      {
+        update: {
+          [stalwartAccountId]: {
+            [`aliases/${index}`]: null,
+          },
+        },
+      },
+      "u1",
+    ],
+  ]);
+}
+
+type StalwartSendIdentity = { id: string; email?: string; name?: string };
+
+function extractSendIdentities(res: unknown): StalwartSendIdentity[] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const body = (res as { methodResponses: unknown[][] }).methodResponses?.[0]?.[1];
+  if (!body || typeof body !== "object" || !("list" in body)) return [];
+  const list = (body as { list: unknown }).list;
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (item): item is StalwartSendIdentity =>
+      typeof item === "object" && item !== null && "id" in item
+  );
+}
+
+export async function listAccountSendIdentities(stalwartAccountId: string) {
+  return jmapCall(
+    [["Identity/get", { accountId: stalwartAccountId }, "g1"]],
+    15_000,
+    JMAP_MAIL_USING
+  );
+}
+
+export async function createAccountSendIdentity(
+  stalwartAccountId: string,
+  email: string,
+  name?: string | null
+) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const createId = `identity-${Date.now()}`;
+  return jmapCall(
+    [
+      [
+        "Identity/set",
+        {
+          accountId: stalwartAccountId,
+          create: {
+            [createId]: {
+              name: name?.trim() || normalizedEmail,
+              email: normalizedEmail,
+            },
+          },
+        },
+        "c1",
+      ],
+    ],
+    15_000,
+    JMAP_MAIL_USING
+  );
+}
+
+export async function deleteAccountSendIdentity(stalwartAccountId: string, identityId: string) {
+  return jmapCall(
+    [
+      [
+        "Identity/set",
+        {
+          accountId: stalwartAccountId,
+          destroy: [identityId],
+        },
+        "d1",
+      ],
+    ],
+    15_000,
+    JMAP_MAIL_USING
+  );
+}
+
+export function findSendIdentityIdByEmail(
+  res: unknown,
+  email: string
+): string | null {
+  const normalized = email.trim().toLowerCase();
+  const match = extractSendIdentities(res).find(
+    (identity) => identity.email?.trim().toLowerCase() === normalized
+  );
+  return match?.id ?? null;
+}
+
 export async function resolveStalwartAccountId(
   stalwartAccountId: string | null,
   address: string
@@ -561,12 +935,16 @@ export function getMailConfig() {
 
 /** URL JMAP Stalwart (API admin + auth OAuth portail). Bulwark (WEBMAIL_URL) n'expose pas JMAP. */
 export function getStalwartJmapUrl(): string {
-  return STALWART_URL.replace(/\/$/, "");
+  const url = STALWART_URL.replace(/\/$/, "");
+  assertHttpsServiceUrl(url, "STALWART_URL");
+  return url;
 }
 
 /** URL webmail externe (Bulwark, nouvel onglet). */
 export function getWebmailExternalUrl(): string {
-  return (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
+  const url = (process.env.WEBMAIL_URL || STALWART_URL).replace(/\/$/, "");
+  assertHttpsServiceUrl(url, "WEBMAIL_URL");
+  return url;
 }
 
 /** JMAP same-origin Bulwark (nginx webmail → Stalwart). Évite CORS navigateur. */

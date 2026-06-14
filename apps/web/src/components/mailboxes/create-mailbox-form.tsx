@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -99,10 +99,16 @@ function CreateMailboxFields({
 
 export function CreateMailboxForm({
   domains,
+  onSuccess,
 }: {
   domains: { id: string; fqdn: string; isDnsVerified: boolean }[];
+  onSuccess?: () => void;
 }) {
   const [state, formAction] = useActionState(createMailboxAction, INITIAL_ACTION_RESULT);
+
+  useEffect(() => {
+    if (state?.ok && onSuccess) onSuccess();
+  }, [state, onSuccess]);
   const fieldsKey =
     state?.ok && state.message === "created" && state.detail
       ? `created-${state.detail}`

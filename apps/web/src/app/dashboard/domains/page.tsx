@@ -1,9 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { AddDomainForm } from "@/components/domains/add-domain-form";
-import { DomainsList } from "@/components/domains/domains-list";
-import { Card, CardContent } from "@/components/ui/card";
+import { DomainsCrud } from "@/components/domains/domains-crud";
 import { getT } from "@/i18n/t";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import {
@@ -70,26 +68,13 @@ export default async function DomainsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{t("title")}</h1>
-
       <StalwartStatusBanner namespace="domains" />
-
-      <Card>
-        <CardContent className="pt-6">
-          <AddDomainForm />
-        </CardContent>
-      </Card>
-
-      {domains.length === 0 ? (
-        <p className="text-sm text-zinc-500">{t("empty")}</p>
-      ) : (
-        <DomainsList
-          domains={domainCards}
-          labels={listLabels}
-          tableLabels={tableLabels}
-          mailHost={platformHost}
-        />
-      )}
+      <DomainsCrud
+        domains={domainCards}
+        labels={listLabels}
+        tableLabels={tableLabels}
+        mailHost={platformHost}
+      />
     </div>
   );
 }

@@ -48,11 +48,28 @@ function spfMatchesExpected(value: string, platformHost: string) {
   return value.toLowerCase().includes(getSpfIncludeToken(platformHost));
 }
 
+export function mailAutoconfigTarget(platformHost: string) {
+  return `mail.${platformHost}.`;
+}
+
 export function expectedRecords(fqdn: string, mailHost?: string): DnsRecord[] {
   const platformHost = mailHost ?? getPlatformMailHost();
+  const mailTarget = mailAutoconfigTarget(platformHost);
   return [
-    { type: "MX", name: fqdn, value: `10 mail.${platformHost}.` },
+    { type: "MX", name: fqdn, value: `10 ${mailTarget}` },
     { type: "TXT", name: fqdn, value: getExpectedSpfValue(platformHost) },
+    { type: "CNAME", name: `autoconfig.${fqdn}`, value: mailTarget },
+    { type: "CNAME", name: `autodiscover.${fqdn}`, value: mailTarget },
+    {
+      type: "SRV",
+      name: `_imaps._tcp.${fqdn}`,
+      value: `0 1 993 mail.${platformHost}.`,
+    },
+    {
+      type: "SRV",
+      name: `_submission._tcp.${fqdn}`,
+      value: `0 1 587 mail.${platformHost}.`,
+    },
   ];
 }
 
@@ -78,6 +95,14 @@ function formatFoundValue(entries: string[], issue: DnsLookupIssue) {
   return "—";
 }
 
+function normalizeCnameTarget(target: string) {
+  return target.replace(/\.$/, "").toLowerCase();
+}
+
+function formatSrvRecord(entry: { priority: number; weight: number; port: number; name: string }) {
+  return `${entry.priority} ${entry.weight} ${entry.port} ${entry.name}`;
+}
+
 export async function verifyDomainDns(fqdn: string, mailHost?: string) {
   const platformHost = mailHost ?? getPlatformMailHost();
 
@@ -87,6 +112,7 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
 
   const expected = expectedRecords(fqdn, platformHost);
   const expectedMx = normalizeHost(`mail.${platformHost}`);
+  const expectedCname = normalizeCnameTarget(mailAutoconfigTarget(platformHost));
   const results: DnsCheckRow[] = [];
 
   let domainExists = true;
@@ -141,6 +167,44 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
         issue,
         txtRecords,
         found: formatFoundValue(entries, issue),
+      });
+    }
+    if (record.type === "CNAME") {
+      let cnames: string[] = [];
+      let issue: DnsLookupIssue = null;
+      try {
+        cnames = await dns.resolveCname(record.name);
+      } catch (err) {
+        issue = formatLookupError((err as NodeJS.ErrnoException).code);
+        if (issue === "NXDOMAIN") domainExists = false;
+      }
+      const ok = cnames.some((c) => normalizeCnameTarget(c) === expectedCname);
+      results.push({
+        record,
+        ok,
+        issue,
+        found: formatFoundValue(cnames, issue),
+      });
+    }
+    if (record.type === "SRV") {
+      let srv: { priority: number; weight: number; port: number; name: string }[] = [];
+      let issue: DnsLookupIssue = null;
+      try {
+        srv = await dns.resolveSrv(record.name);
+      } catch (err) {
+        issue = formatLookupError((err as NodeJS.ErrnoException).code);
+        if (issue === "NXDOMAIN") domainExists = false;
+      }
+      const ok = srv.some(
+        (entry) =>
+          entry.port === (record.name.startsWith("_imaps") ? 993 : 587) &&
+          normalizeHost(entry.name) === expectedMx
+      );
+      results.push({
+        record,
+        ok,
+        issue,
+        found: formatFoundValue(srv.map(formatSrvRecord), issue),
       });
     }
   }

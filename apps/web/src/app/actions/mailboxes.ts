@@ -205,6 +205,7 @@ export async function updateMailboxAction(
     where: { id: mailboxId, organizationId: orgId },
   });
   if (!mailbox) return { ok: false, message: "notfound" };
+  if (mailbox.isShared) return { ok: false, message: "isShared" };
 
   const currentQuotaBytes =
     mailbox.quotaBytes !== null && mailbox.quotaBytes !== undefined
@@ -288,6 +289,7 @@ export async function deleteMailboxAction(
     where: { id: mailboxId, organizationId: orgId },
   });
   if (!mailbox) return { ok: false, message: "notfound" };
+  if (mailbox.isShared) return { ok: false, message: "isShared" };
 
   const resolved = await resolveStalwartAccountId(mailbox.stalwartAccountId, mailbox.address);
   if (resolved.unavailable) {

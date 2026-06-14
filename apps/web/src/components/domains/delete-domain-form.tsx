@@ -5,9 +5,29 @@ import { Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
-function DeleteSubmitButton() {
+function DeleteSubmitButton({ compact, fqdn }: { compact?: boolean; fqdn: string }) {
   const { pending } = useFormStatus();
   const t = useTranslations("domains");
+
+  if (compact) {
+    return (
+      <Button
+        type="submit"
+        variant="ghost"
+        size="sm"
+        className="size-8 shrink-0 p-0 text-ardoise/60 hover:text-red-600"
+        disabled={pending}
+        aria-busy={pending}
+        aria-label={pending ? t("deleting") : t("deleteAria", { fqdn })}
+      >
+        {pending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Trash2 className="size-4" aria-hidden />
+        )}
+      </Button>
+    );
+  }
 
   return (
     <Button
@@ -31,10 +51,12 @@ export function DeleteDomainForm({
   action,
   domainId,
   fqdn,
+  compact = false,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   domainId: string;
   fqdn: string;
+  compact?: boolean;
 }) {
   const t = useTranslations("domains");
 
@@ -48,7 +70,7 @@ export function DeleteDomainForm({
       }}
     >
       <input type="hidden" name="domainId" value={domainId} />
-      <DeleteSubmitButton />
+      <DeleteSubmitButton compact={compact} fqdn={fqdn} />
     </form>
   );
 }

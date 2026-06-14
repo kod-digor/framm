@@ -2,15 +2,24 @@
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { resolveSignInRedirectError, isDbUnavailableError } from "@/lib/auth-errors";
 import { signIn } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-utils";
+import { createSignupPayment, isPayplugConfigured } from "@/lib/billing/payplug";
+import { sealSecret } from "@/lib/crypto/seal";
+import { DEFAULT_ORG_MODULES } from "@/lib/modules";
 import { prisma } from "@/lib/prisma";
+import {
+  isStalwartFailure,
+  resolveStalwartAccountId,
+  updateAccountPassword,
+} from "@/lib/stalwart/client";
 import { slugify } from "@/lib/utils";
 import { UserRole } from "@prisma/client";
 import { z } from "zod";
 
 const signupSchema = z.object({
   orgName: z.string().min(2),
-  presentation: z.string().min(20),
   email: z.string().email(),
   password: z.string().min(8),
 });
@@ -29,7 +38,6 @@ function resolveAuthEmail(formData: FormData) {
 export async function signupAction(formData: FormData) {
   const parsed = signupSchema.safeParse({
     orgName: formData.get("orgName"),
-    presentation: formData.get("presentation"),
     email: resolveAuthEmail(formData),
     password: formData.get("password"),
   });
@@ -38,53 +46,146 @@ export async function signupAction(formData: FormData) {
     redirect("/signup?error=invalid");
   }
 
-  const { orgName, presentation, email, password } = parsed.data;
+  const { orgName, email, password } = parsed.data;
   const existing = await prisma.user.findUnique({ where: { email } });
   const hash = await bcrypt.hash(password, 12);
   const slug = slugify(orgName);
+  const orgSlug = `${slug}-${Date.now()}`;
+
+  let organizationId: string;
 
   if (existing) {
     const valid = await bcrypt.compare(password, existing.passwordHash);
     if (!valid) redirect("/signup?error=invalid");
 
-    await prisma.organization.create({
+    const org = await prisma.organization.create({
       data: {
         name: orgName,
-        slug: `${slug}-${Date.now()}`,
-        presentation,
+        slug: orgSlug,
+        status: "APPROVED",
+        approvedAt: new Date(),
         members: {
           create: {
             userId: existing.id,
             role: UserRole.ASSOC_ADMIN,
           },
         },
+        modules: { create: DEFAULT_ORG_MODULES },
+        subscription: { create: { status: "PENDING_PAYMENT" } },
       },
     });
-
-    redirect("/signup?success=pending");
-  }
-
-  await prisma.organization.create({
-    data: {
-      name: orgName,
-      slug: `${slug}-${Date.now()}`,
-      presentation,
-      members: {
-        create: {
-          role: UserRole.ASSOC_ADMIN,
-          user: {
-            create: {
-              email,
-              passwordHash: hash,
-              role: UserRole.ASSOC_ADMIN,
+    organizationId = org.id;
+  } else {
+    const org = await prisma.organization.create({
+      data: {
+        name: orgName,
+        slug: orgSlug,
+        status: "APPROVED",
+        approvedAt: new Date(),
+        members: {
+          create: {
+            role: UserRole.ASSOC_ADMIN,
+            user: {
+              create: {
+                email,
+                passwordHash: hash,
+                role: UserRole.ASSOC_ADMIN,
+              },
             },
           },
         },
+        modules: { create: DEFAULT_ORG_MODULES },
+        subscription: { create: { status: "PENDING_PAYMENT" } },
+      },
+    });
+    organizationId = org.id;
+  }
+
+  const paymentResult = isPayplugConfigured()
+    ? await createSignupPayment({ email, organizationId, organizationName: orgName })
+    : null;
+
+  if (paymentResult?.paymentUrl) {
+    if (paymentResult.paymentId || paymentResult.customerId) {
+      await prisma.subscription.update({
+        where: { organizationId },
+        data: {
+          payplugPaymentId: paymentResult.paymentId ?? undefined,
+          payplugCustomerId: paymentResult.customerId ?? undefined,
+        },
+      });
+    }
+    redirect(paymentResult.paymentUrl);
+  }
+
+  const loginEmail = existing?.email ?? email;
+  try {
+    await signIn("credentials", {
+      email: loginEmail,
+      password,
+      redirect: false,
+    });
+  } catch (err) {
+    redirect(`/login?error=${resolveSignInRedirectError(err)}`);
+  }
+
+  redirect(isPayplugConfigured() ? "/dashboard/billing?setup=1" : "/dashboard/billing?stub=1");
+}
+
+export async function changePasswordAction(
+  _prev: { ok: boolean; message: string },
+  formData: FormData
+): Promise<{ ok: boolean; message: string }> {
+  const session = await requireAuth(undefined, { skipPasswordChange: true });
+
+  const password = (formData.get("password") as string) ?? "";
+  const confirm = (formData.get("confirm") as string) ?? "";
+
+  if (password.length < 8) {
+    return { ok: false, message: "passwordTooShort" };
+  }
+  if (password !== confirm) {
+    return { ok: false, message: "passwordMismatch" };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: {
+      mailboxes: {
+        include: { mailbox: true },
       },
     },
   });
+  if (!user?.mustChangePassword) {
+    redirect("/dashboard");
+  }
 
-  redirect("/signup?success=pending");
+  const hash = await bcrypt.hash(password, 12);
+
+  for (const link of user.mailboxes) {
+    const mailbox = link.mailbox;
+    const resolved = await resolveStalwartAccountId(mailbox.stalwartAccountId, mailbox.address);
+    if (resolved.id) {
+      const pwdRes = await updateAccountPassword(resolved.id, password);
+      if (isStalwartFailure(pwdRes)) {
+        return { ok: false, message: "stalwartError" };
+      }
+      await prisma.mailbox.update({
+        where: { id: mailbox.id },
+        data: { credentialsEnc: await sealSecret(password) },
+      });
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash: hash,
+      mustChangePassword: false,
+    },
+  });
+
+  redirect("/dashboard");
 }
 
 export async function loginAction(formData: FormData) {
@@ -94,18 +195,25 @@ export async function loginAction(formData: FormData) {
 
   if (!email || !password) redirect("/login?error=invalid");
 
-  const result = await signIn("credentials", {
-    email,
-    password,
-    redirect: false,
-  });
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+  } catch (err) {
+    redirect(`/login?error=${resolveSignInRedirectError(err)}`);
+  }
 
-  if (result?.error) redirect("/login?error=invalid");
-
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: { memberships: true },
-  });
+  let user;
+  try {
+    user = await prisma.user.findUnique({
+      where: { email },
+      include: { memberships: true },
+    });
+  } catch (err) {
+    redirect(`/login?error=${isDbUnavailableError(err) ? "db" : "invalid"}`);
+  }
 
   const safeCallback =
     callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")
@@ -114,6 +222,10 @@ export async function loginAction(formData: FormData) {
 
   if (user?.role === "BUREAU" && user.memberships.length === 0) {
     redirect("/bureau");
+  }
+
+  if (user?.mustChangePassword) {
+    redirect("/change-password");
   }
 
   redirect(safeCallback ?? "/dashboard");

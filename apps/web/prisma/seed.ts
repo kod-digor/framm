@@ -1,5 +1,6 @@
 import { PrismaClient, OrganizationStatus, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { DEFAULT_ORG_MODULES } from "../src/lib/modules";
 
 const prisma = new PrismaClient();
 
@@ -23,10 +24,23 @@ async function main() {
     create: {
       name: orgName,
       slug: orgSlug,
-      presentation: "Association hébergeuse de la plateforme Framm.",
       status: OrganizationStatus.APPROVED,
       approvedAt: new Date(),
+      modules: { create: DEFAULT_ORG_MODULES },
+      subscription: { create: { status: "ACTIVE" } },
     },
+  });
+
+  await prisma.organizationModule.upsert({
+    where: { organizationId: org.id },
+    create: { organizationId: org.id, ...DEFAULT_ORG_MODULES },
+    update: {},
+  });
+
+  await prisma.subscription.upsert({
+    where: { organizationId: org.id },
+    create: { organizationId: org.id, status: "ACTIVE" },
+    update: { status: "ACTIVE" },
   });
 
   const user = await prisma.user.upsert({

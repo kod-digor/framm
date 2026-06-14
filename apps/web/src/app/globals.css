@@ -1,12 +1,39 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ardoise: #1a2332;
+  --color-encre: #0c4a6e;
+  --color-encre-muted: #e8f1f6;
+  --color-ambre: #b45309;
+  --color-canal: #e8e6e1;
+  --color-verin: #166534;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #18181b;
+  --foreground: #1a2332;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@layer utilities {
+  .font-mono-data {
+    font-family: var(--font-mono), ui-monospace, monospace;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

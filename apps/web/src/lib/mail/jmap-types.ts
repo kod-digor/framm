@@ -1,5 +1,6 @@
 export type JmapSession = {
   apiUrl: string;
+  uploadUrl?: string;
   downloadUrl?: string;
   primaryAccounts?: Record<string, string>;
   accounts?: Record<string, { name?: string }>;
