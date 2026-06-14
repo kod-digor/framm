@@ -1,14 +1,19 @@
 import { PrismaClient, OrganizationStatus, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { loadDevEnv } from "../load-dev-env";
 import { DEFAULT_ORG_MODULES } from "../src/lib/modules";
+
+loadDevEnv({ override: true });
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.env.BUREAU_ADMIN_EMAIL;
+  const email = process.env.BUREAU_ADMIN_EMAIL?.toLowerCase().trim();
   const password = process.env.BUREAU_ADMIN_PASSWORD;
   if (!email || !password) {
-    throw new Error("BUREAU_ADMIN_EMAIL et BUREAU_ADMIN_PASSWORD requis pour le seed");
+    throw new Error(
+      "BUREAU_ADMIN_EMAIL et BUREAU_ADMIN_PASSWORD requis pour le seed (apps/web/.env.local)"
+    );
   }
   const hash = await bcrypt.hash(password, 12);
   const orgName = process.env.BUREAU_ORG_NAME ?? "Kod Digor";

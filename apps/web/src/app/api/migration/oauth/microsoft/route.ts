@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveMigrationForAdmin } from "@/lib/migration/access";
 import { signOAuthState } from "@/lib/migration/oauth-state";
-import { buildMicrosoftAuthUrl, isMicrosoftOAuthConfigured } from "@/lib/migration/providers/microsoft";
+import {
+  buildMicrosoftAuthUrl,
+  getMicrosoftOAuthMissingEnvVars,
+  isMicrosoftOAuthConfigured,
+} from "@/lib/migration/providers/microsoft";
+
+const OAUTH_ENV_HINT =
+  "Définissez ces variables dans le .env à la racine du dépôt (voir .env.example). apps/web/.env.local peut surcharger.";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +33,29 @@ export async function GET(req: NextRequest) {
   }
 
   if (!isMicrosoftOAuthConfigured()) {
-    return NextResponse.json({ error: "oauth_not_configured" }, { status: 503 });
+    return NextResponse.json(
+      {
+        error: "oauth_not_configured",
+        provider: "microsoft",
+        missingEnvVars: getMicrosoftOAuthMissingEnvVars(),
+        hint: OAUTH_ENV_HINT,
+      },
+      { status: 503 }
+    );
   }
 
   const state = signOAuthState(migrationId);
   const url = buildMicrosoftAuthUrl(redirectUri(req), state);
   if (!url) {
-    return NextResponse.json({ error: "oauth_not_configured" }, { status: 503 });
+    return NextResponse.json(
+      {
+        error: "oauth_not_configured",
+        provider: "microsoft",
+        missingEnvVars: getMicrosoftOAuthMissingEnvVars(),
+        hint: OAUTH_ENV_HINT,
+      },
+      { status: 503 }
+    );
   }
 
   return NextResponse.redirect(url);

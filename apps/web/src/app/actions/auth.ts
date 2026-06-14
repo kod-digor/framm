@@ -220,7 +220,7 @@ export async function loginAction(formData: FormData) {
       ? callbackUrl
       : null;
 
-  if (user?.role === "BUREAU" && user.memberships.length === 0) {
+  if (user?.role === "BUREAU") {
     redirect("/bureau");
   }
 

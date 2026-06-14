@@ -50,6 +50,26 @@ if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
   fi
 fi
 
+# Conserver AUTH_SECRET entre les runs pour ne pas invalider les JWT NextAuth (sessions dev).
+framm_env_get() {
+  local file="$1"
+  local key="$2"
+  [[ -f "$file" ]] || return 0
+  grep "^${key}=" "$file" 2>/dev/null | head -1 | cut -d= -f2- || true
+}
+
+PRESERVED_AUTH_SECRET="$(framm_env_get "$OUT" "AUTH_SECRET")"
+if [[ -z "$PRESERVED_AUTH_SECRET" ]]; then
+  PRESERVED_AUTH_SECRET="$(framm_env_get "${ROOT}/.env" "DEV_AUTH_SECRET")"
+fi
+if [[ -n "$PRESERVED_AUTH_SECRET" ]]; then
+  AUTH_SECRET="$PRESERVED_AUTH_SECRET"
+  echo "AUTH_SECRET dev conservé (sessions NextAuth stables)"
+elif [[ -z "${AUTH_SECRET:-}" ]]; then
+  AUTH_SECRET="dev-secret-change-in-production"
+  echo "AUTH_SECRET dev par défaut (fixe — voir apps/web/env.example)"
+fi
+
 cat > "$OUT" <<EOF
 # Dev local → RDB prod (TLS direct, sans tunnel)
 DATABASE_URL=${DEV_DATABASE_URL}

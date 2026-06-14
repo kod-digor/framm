@@ -4,6 +4,8 @@ import {
   decodeSourceCredentials,
   runImapsync,
 } from "@/lib/migration/imapsync-runner";
+import { runContactsMigration } from "@/lib/migration/contacts-runner";
+import { runCalendarMigration } from "@/lib/migration/calendar-runner";
 import {
   completeMigration,
   failMigration,
@@ -13,9 +15,17 @@ import {
 } from "@/lib/migration/orchestrator";
 import { refreshGoogleAccessToken } from "@/lib/migration/providers/google";
 import { refreshMicrosoftAccessToken } from "@/lib/migration/providers/microsoft";
-import type { ImapSourceCredentials } from "@/lib/migration/types";
+import type { ImapSourceCredentials, MigrationProgress } from "@/lib/migration/types";
+import type { MigrationPhase } from "@prisma/client";
 
 const POLL_INTERVAL_MS = 15_000;
+const DEFAULT_WORKER_CONCURRENCY = 1;
+
+function resolveWorkerConcurrency(): number {
+  const raw = Number(process.env.MIGRATION_WORKER_CONCURRENCY ?? DEFAULT_WORKER_CONCURRENCY);
+  if (!Number.isFinite(raw)) return DEFAULT_WORKER_CONCURRENCY;
+  return Math.min(4, Math.max(1, Math.round(raw)));
+}
 
 function resolveStalwartImapHost(): string {
   const url = process.env.STALWART_URL ?? process.env.WEBMAIL_URL ?? "";
@@ -25,6 +35,29 @@ function resolveStalwartImapHost(): string {
     // ignore
   }
   return "localhost";
+}
+
+function computeWeights(scopeMail: boolean, scopeContacts: boolean, scopeCalendar: boolean) {
+  const count = [scopeMail, scopeContacts, scopeCalendar].filter(Boolean).length;
+  const weight = count > 0 ? Math.floor(100 / count) : 0;
+  let mail = 0;
+  let contacts = 0;
+  let calendar = 0;
+  let offset = 0;
+
+  if (scopeMail) {
+    mail = weight;
+    offset += weight;
+  }
+  if (scopeContacts) {
+    contacts = weight;
+    offset += weight;
+  }
+  if (scopeCalendar) {
+    calendar = 100 - offset;
+  }
+
+  return { mail, contacts, calendar };
 }
 
 async function refreshOAuthIfNeeded(
@@ -57,8 +90,8 @@ async function processMigration(migrationId: string) {
 
   if (!migration || migration.status !== "QUEUED") return;
 
-  if (!migration.scopeMail) {
-    await failMigration(migrationId, "mail_scope_disabled");
+  if (!migration.scopeMail && !migration.scopeContacts && !migration.scopeCalendar) {
+    await failMigration(migrationId, "no_scope_selected");
     return;
   }
 
@@ -87,46 +120,120 @@ async function processMigration(migrationId: string) {
     return;
   }
 
-  await markMigrationRunning(migrationId);
+  const weights = computeWeights(
+    migration.scopeMail,
+    migration.scopeContacts,
+    migration.scopeCalendar
+  );
 
-  const targetHost = process.env.MIGRATION_STALWART_IMAP_HOST ?? resolveStalwartImapHost();
-  const targetPort = Number(process.env.MIGRATION_STALWART_IMAP_PORT ?? "993");
+  const firstPhase: MigrationPhase = migration.scopeMail
+    ? "SYNCING_MAIL"
+    : migration.scopeContacts
+      ? "SYNCING_CONTACTS"
+      : "SYNCING_CALENDAR";
 
-  const result = await runImapsync({
-    source,
-    targetHost,
-    targetPort,
-    targetUser: migration.mailbox.address,
-    targetPassword: mailboxPassword,
-    onProgress: (progress, line) => {
-      void updateMigrationProgress(migrationId, progress, "SYNCING_MAIL");
-      if (line.trim()) {
-        void logMigrationEvent(migrationId, line.trim().slice(0, 500), "SYNCING_MAIL");
-      }
-    },
-  });
+  await markMigrationRunning(migrationId, firstPhase);
 
-  if (result.ok) {
-    await completeMigration(migrationId);
-  } else {
-    const error =
-      result.error === "imapsync_not_found"
-        ? "imapsync_not_found"
-        : result.error ?? "imapsync_failed";
-    await failMigration(migrationId, error);
+  let basePercent = 0;
+  let currentProgress: MigrationProgress = { percent: 0 };
+
+  if (migration.scopeMail) {
+    const targetHost = process.env.MIGRATION_STALWART_IMAP_HOST ?? resolveStalwartImapHost();
+    const targetPort = Number(process.env.MIGRATION_STALWART_IMAP_PORT ?? "993");
+
+    const result = await runImapsync({
+      source,
+      targetHost,
+      targetPort,
+      targetUser: migration.mailbox.address,
+      targetPassword: mailboxPassword,
+      onProgress: (progress, line) => {
+        const scaled: MigrationProgress = {
+          ...progress,
+          percent: Math.round((progress.percent / 100) * weights.mail),
+        };
+        currentProgress = scaled;
+        void updateMigrationProgress(migrationId, scaled, "SYNCING_MAIL");
+        if (line.trim()) {
+          void logMigrationEvent(migrationId, line.trim().slice(0, 500), "SYNCING_MAIL");
+        }
+      },
+    });
+
+    if (!result.ok) {
+      const error =
+        result.error === "imapsync_not_found"
+          ? "imapsync_not_found"
+          : result.error ?? "imapsync_failed";
+      await failMigration(migrationId, error);
+      return;
+    }
+
+    basePercent += weights.mail;
+    currentProgress = { ...result.progress, percent: basePercent };
   }
+
+  if (migration.scopeContacts) {
+    await updateMigrationProgress(migrationId, { ...currentProgress, percent: basePercent }, "SYNCING_CONTACTS");
+
+    const contactsResult = await runContactsMigration({
+      provider: migration.provider,
+      sourceCredentialsEnc: migration.sourceCredentialsEnc,
+      oauthRefreshTokenEnc: migration.oauthRefreshTokenEnc,
+      targetAddress: migration.mailbox.address,
+      targetPassword: mailboxPassword,
+      basePercent,
+      weightPercent: weights.contacts,
+      onProgress: (progress) => {
+        currentProgress = progress;
+        void updateMigrationProgress(migrationId, progress, "SYNCING_CONTACTS");
+      },
+    });
+
+    if (!contactsResult.ok) {
+      await failMigration(migrationId, contactsResult.error ?? "contacts_import_failed");
+      return;
+    }
+
+    basePercent += weights.contacts;
+    currentProgress = contactsResult.progress;
+  }
+
+  if (migration.scopeCalendar) {
+    await updateMigrationProgress(migrationId, { ...currentProgress, percent: basePercent }, "SYNCING_CALENDAR");
+
+    const calendarResult = await runCalendarMigration({
+      provider: migration.provider,
+      sourceCredentialsEnc: migration.sourceCredentialsEnc,
+      oauthRefreshTokenEnc: migration.oauthRefreshTokenEnc,
+      targetAddress: migration.mailbox.address,
+      targetPassword: mailboxPassword,
+      basePercent,
+      weightPercent: weights.calendar,
+      onProgress: (progress) => {
+        currentProgress = progress;
+        void updateMigrationProgress(migrationId, progress, "SYNCING_CALENDAR");
+      },
+    });
+
+    if (!calendarResult.ok) {
+      await failMigration(migrationId, calendarResult.error ?? "calendar_import_failed");
+      return;
+    }
+  }
+
+  await completeMigration(migrationId);
 }
 
 export async function pollMailboxMigrations() {
+  const concurrency = resolveWorkerConcurrency();
   const queued = await prisma.mailboxMigration.findMany({
     where: { status: "QUEUED" },
     orderBy: { createdAt: "asc" },
-    take: 3,
+    take: concurrency,
   });
 
-  for (const migration of queued) {
-    await processMigration(migration.id);
-  }
+  await Promise.all(queued.map((migration) => processMigration(migration.id)));
 }
 
 export function startMigrationPoller() {

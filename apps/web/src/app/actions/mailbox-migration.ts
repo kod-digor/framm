@@ -10,10 +10,15 @@ import {
   createMigrationDraft,
   cancelMigration,
   getActiveMigrationForMailbox,
+  getActiveMigrationsForOrg,
   queueMigration,
   serializeMigrationStatus,
   storeImapCredentials,
+  storeSourceStats,
 } from "@/lib/migration/orchestrator";
+import { discoverMigrationSource } from "@/lib/migration/discovery";
+import { AUTH_UNAVAILABLE_REASONS } from "@/lib/migration/discovery/api-error";
+import type { MigrationSourceStats } from "@/lib/migration/discovery/types";
 import {
   normalizeImapCredentials,
   validateImapHost,
@@ -123,6 +128,10 @@ export async function confirmMigrationAction(
 
   if (!migrationId) return { ok: false, message: "invalid" };
 
+  if (!scopeMail && !scopeContacts && !scopeCalendar) {
+    return { ok: false, message: "noScopeSelected" };
+  }
+
   const migration = await prisma.mailboxMigration.findFirst({
     where: { id: migrationId, organizationId: orgId },
   });
@@ -175,6 +184,21 @@ export async function cancelMigrationAction(
   return { ok: true, message: "migrationCancelled", detail: migrationId };
 }
 
+export async function listActiveMigrationsAction(): Promise<
+  Record<string, MigrationStatusPayload>
+> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) return {};
+
+  const migrations = await getActiveMigrationsForOrg(orgId);
+  const map: Record<string, MigrationStatusPayload> = {};
+  for (const migration of migrations) {
+    map[migration.mailboxId] = serializeMigrationStatus(migration);
+  }
+  return map;
+}
+
 export async function getMigrationStatusAction(
   mailboxId: string
 ): Promise<MigrationStatusPayload | null> {
@@ -189,4 +213,40 @@ export async function getMigrationStatusAction(
   if (!migration) return null;
 
   return serializeMigrationStatus(migration);
+}
+
+export async function discoverMigrationSourceAction(
+  migrationId: string
+): Promise<MigrationSourceStats | null> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) return null;
+
+  const migration = await prisma.mailboxMigration.findFirst({
+    where: { id: migrationId, organizationId: orgId },
+  });
+  if (!migration) return null;
+
+  const cached = migration.sourceStatsJson as MigrationSourceStats | null;
+  if (cached?.discoveredAt) {
+    const age = Date.now() - new Date(cached.discoveredAt).getTime();
+    const hasAuthFailure = [cached.mail, cached.contacts, cached.calendar].some(
+      (section) =>
+        !section.available &&
+        section.unavailableReason &&
+        AUTH_UNAVAILABLE_REASONS.has(section.unavailableReason)
+    );
+    if (age < 30 * 60 * 1000 && !hasAuthFailure) return cached;
+  }
+
+  const stats = await discoverMigrationSource({
+    provider: migration.provider,
+    sourceCredentialsEnc: migration.sourceCredentialsEnc,
+    oauthRefreshTokenEnc: migration.oauthRefreshTokenEnc,
+  });
+
+  await storeSourceStats(migrationId, stats);
+  revalidatePath("/dashboard/users");
+
+  return stats;
 }

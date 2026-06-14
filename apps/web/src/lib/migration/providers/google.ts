@@ -10,6 +10,9 @@ export const GOOGLE_IMAP = {
 
 export const GOOGLE_OAUTH_SCOPES = [
   "https://mail.google.com/",
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/contacts.readonly",
+  "https://www.googleapis.com/auth/calendar.readonly",
   "email",
   "openid",
 ] as const;
@@ -19,6 +22,17 @@ function getGoogleConfig() {
   const clientSecret = process.env.GOOGLE_MIGRATION_CLIENT_SECRET;
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret };
+}
+
+export function getGoogleOAuthMissingEnvVars(): string[] {
+  const missing: string[] = [];
+  if (!process.env.GOOGLE_MIGRATION_CLIENT_ID?.trim()) {
+    missing.push("GOOGLE_MIGRATION_CLIENT_ID");
+  }
+  if (!process.env.GOOGLE_MIGRATION_CLIENT_SECRET?.trim()) {
+    missing.push("GOOGLE_MIGRATION_CLIENT_SECRET");
+  }
+  return missing;
 }
 
 export function isGoogleOAuthConfigured(): boolean {

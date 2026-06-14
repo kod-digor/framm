@@ -10,6 +10,10 @@ import type {
   OAuthTokens,
 } from "@/lib/migration/types";
 import { ACTIVE_MIGRATION_STATUSES } from "@/lib/migration/types";
+import {
+  parseSourceStatsJson,
+  type MigrationSourceStats,
+} from "@/lib/migration/discovery/types";
 
 function parseProgressJson(value: unknown): MigrationProgress | null {
   if (!value || typeof value !== "object") return null;
@@ -31,6 +35,7 @@ export function serializeMigrationStatus(
     scopeContacts: boolean;
     scopeCalendar: boolean;
     progressJson: unknown;
+    sourceStatsJson?: unknown;
     errorMessage: string | null;
     startedAt: Date | null;
     completedAt: Date | null;
@@ -54,6 +59,7 @@ export function serializeMigrationStatus(
     scopeContacts: migration.scopeContacts,
     scopeCalendar: migration.scopeCalendar,
     progress: parseProgressJson(migration.progressJson),
+    sourceStats: parseSourceStatsJson(migration.sourceStatsJson),
     errorMessage: migration.errorMessage,
     startedAt: migration.startedAt?.toISOString() ?? null,
     completedAt: migration.completedAt?.toISOString() ?? null,
@@ -66,6 +72,10 @@ export function serializeMigrationStatus(
   };
 }
 
+const migrationWithEventsInclude = {
+  events: { orderBy: { createdAt: "asc" as const }, take: 50 },
+};
+
 export async function getActiveMigrationForMailbox(mailboxId: string) {
   return prisma.mailboxMigration.findFirst({
     where: {
@@ -73,9 +83,18 @@ export async function getActiveMigrationForMailbox(mailboxId: string) {
       status: { in: ACTIVE_MIGRATION_STATUSES },
     },
     orderBy: { createdAt: "desc" },
-    include: {
-      events: { orderBy: { createdAt: "asc" }, take: 50 },
+    include: migrationWithEventsInclude,
+  });
+}
+
+export async function getActiveMigrationsForOrg(organizationId: string) {
+  return prisma.mailboxMigration.findMany({
+    where: {
+      organizationId,
+      status: { in: ACTIVE_MIGRATION_STATUSES },
     },
+    orderBy: { createdAt: "desc" },
+    include: migrationWithEventsInclude,
   });
 }
 
@@ -159,9 +178,24 @@ export async function storeOAuthTokens(
       sourceCredentialsEnc: sourceEnc,
       oauthRefreshTokenEnc: refreshEnc,
       sourceAddress: tokens.email ?? imapUser,
+      sourceStatsJson: Prisma.DbNull,
       status: "PENDING_OAUTH",
     },
   });
+}
+
+export async function storeSourceStats(
+  migrationId: string,
+  stats: MigrationSourceStats
+) {
+  await prisma.mailboxMigration.update({
+    where: { id: migrationId },
+    data: {
+      sourceStatsJson: stats as unknown as Prisma.InputJsonValue,
+      phase: "SCANNING",
+    },
+  });
+  await logMigrationEvent(migrationId, "source_discovered", "SCANNING");
 }
 
 export async function queueMigration(
@@ -197,16 +231,16 @@ export async function cancelMigration(migrationId: string) {
   await logMigrationEvent(migrationId, "migration_cancelled");
 }
 
-export async function markMigrationRunning(migrationId: string) {
+export async function markMigrationRunning(migrationId: string, firstPhase: MigrationPhase = "SYNCING_MAIL") {
   await prisma.mailboxMigration.update({
     where: { id: migrationId },
     data: {
       status: "RUNNING",
-      phase: "SYNCING_MAIL",
+      phase: firstPhase,
       startedAt: new Date(),
     },
   });
-  await logMigrationEvent(migrationId, "migration_started", "SYNCING_MAIL");
+  await logMigrationEvent(migrationId, "migration_started", firstPhase);
 }
 
 export async function updateMigrationProgress(

@@ -1,17 +1,19 @@
 "use client";
 
-import { useActionState, useState, type ComponentProps } from "react";
+import { useActionState, useEffect, useState, type ComponentProps } from "react";
 import { useFormStatus } from "react-dom";
 import {
   ArrowLeft,
   ArrowRightLeft,
   Cloud,
+  Loader2,
   Mail,
   Server,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   confirmMigrationAction,
+  discoverMigrationSourceAction,
   saveImapCredentialsAction,
   startMigrationAction,
 } from "@/app/actions/mailbox-migration";
@@ -23,6 +25,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 import type { ActionResult } from "@/lib/action-result";
+import type { MigrationSourceStats } from "@/lib/migration/discovery/types";
+import { statsNeedReauth } from "@/lib/migration/discovery/api-error";
+import {
+  providerSupportsCalendar,
+  providerSupportsContacts,
+} from "@/lib/migration/discovery/provider-support";
 import { ICLOUD_IMAP_PRESET } from "@/lib/migration/providers/imap-generic";
 import type { MigrationProvider } from "@prisma/client";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
@@ -55,6 +63,33 @@ const PROVIDER_LABELS: Record<
 };
 
 type WizardStep = "provider" | "credentials" | "scope" | "confirm" | "status";
+
+function formatFrNumber(value: number): string {
+  return new Intl.NumberFormat("fr-FR").format(value);
+}
+
+function formatFrDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function formatCalendarRangeStart(
+  calendar: NonNullable<MigrationSourceStats["calendar"]>
+): string {
+  const iso =
+    calendar.activityFirstEventDate ??
+    calendar.firstEventDate;
+  return iso ? formatFrDate(iso) : "—";
+}
+
+function formatCalendarRangeEnd(
+  calendar: NonNullable<MigrationSourceStats["calendar"]>
+): string {
+  const iso =
+    calendar.activityLastEventDate ??
+    calendar.lastEventDate;
+  return iso ? formatFrDate(iso) : "—";
+}
 
 function StepActions({
   label,
@@ -103,10 +138,60 @@ function MigrationWizardBody({
   const t = useTranslations("users");
   const [step, setStep] = useState<WizardStep>(initialStep ?? "provider");
   const [migrationId, setMigrationId] = useState<string | null>(initialMigrationId ?? null);
-  const [provider, setProvider] = useState<MigrationProvider | null>(null);
+  const [provider, setProvider] = useState<MigrationProvider | null>(
+    activeStatus?.provider ?? null
+  );
   const [sourceAddress, setSourceAddress] = useState(
     activeStatus?.sourceAddress ?? ""
   );
+  const [scopeMail, setScopeMail] = useState(true);
+  const [scopeContacts, setScopeContacts] = useState(true);
+  const [scopeCalendar, setScopeCalendar] = useState(true);
+  const [sourceStats, setSourceStats] = useState<MigrationSourceStats | null>(
+    activeStatus?.sourceStats ?? null
+  );
+
+  const effectiveProvider = provider ?? activeStatus?.provider ?? null;
+  const contactsSupported = effectiveProvider
+    ? providerSupportsContacts(effectiveProvider)
+    : true;
+  const calendarSupported = effectiveProvider
+    ? providerSupportsCalendar(effectiveProvider)
+    : true;
+  const showReauth =
+    !!sourceStats &&
+    !!migrationId &&
+    (effectiveProvider === "GOOGLE" || effectiveProvider === "MICROSOFT") &&
+    statsNeedReauth(sourceStats);
+
+  const reauthHref =
+    effectiveProvider === "GOOGLE"
+      ? `/api/migration/oauth/google?migrationId=${encodeURIComponent(migrationId ?? "")}`
+      : effectiveProvider === "MICROSOFT"
+        ? `/api/migration/oauth/microsoft?migrationId=${encodeURIComponent(migrationId ?? "")}`
+        : null;
+
+  const needsDiscovery =
+    step === "scope" &&
+    !!migrationId &&
+    (!sourceStats?.discoveredAt ||
+      statsNeedReauth(sourceStats) ||
+      (!sourceStats.mail.available &&
+        !sourceStats.contacts.available &&
+        !sourceStats.calendar.available));
+
+  useEffect(() => {
+    if (!needsDiscovery || !migrationId) return;
+
+    let cancelled = false;
+    void discoverMigrationSourceAction(migrationId).then((stats) => {
+      if (!cancelled && stats) setSourceStats(stats);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsDiscovery, migrationId]);
 
   const [startState, startAction] = useActionState(
     async (prev: ActionResult, formData: FormData) => {
@@ -251,28 +336,51 @@ function MigrationWizardBody({
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-encre">{t("migration.scopeTitle")}</h3>
             <p className="text-sm text-ardoise/70">{t("migration.scopeIntro")}</p>
+
+            {needsDiscovery ? (
+              <div className="flex items-center gap-2 rounded-md border border-canal bg-neutral-50 px-4 py-3 text-sm text-ardoise/70">
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                {t("migration.statsDiscovering")}
+              </div>
+            ) : sourceStats ? (
+              <SourceStatsPanel
+                stats={sourceStats}
+                provider={effectiveProvider}
+                t={t}
+              />
+            ) : null}
+
+            {showReauth && reauthHref ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p>{t("migration.statsReauthHint")}</p>
+                <Button asChild variant="outline" size="sm" className="mt-2">
+                  <a href={reauthHref}>{t("migration.reconnectOAuth")}</a>
+                </Button>
+              </div>
+            ) : null}
+
             <ScopeRow
               id="scope-mail"
               name="scopeMail"
               label={t("migration.scopeMail")}
-              checked
-              disabled
+              checked={scopeMail}
+              onChange={setScopeMail}
             />
             <ScopeRow
               id="scope-contacts"
               name="scopeContacts"
               label={t("migration.scopeContacts")}
-              badge={t("migration.comingSoon")}
-              checked={false}
-              disabled
+              checked={scopeContacts}
+              onChange={setScopeContacts}
+              disabled={!contactsSupported}
             />
             <ScopeRow
               id="scope-calendar"
               name="scopeCalendar"
               label={t("migration.scopeCalendar")}
-              badge={t("migration.comingSoon")}
-              checked={false}
-              disabled
+              checked={scopeCalendar}
+              onChange={setScopeCalendar}
+              disabled={!calendarSupported}
             />
           </div>
 
@@ -281,7 +389,11 @@ function MigrationWizardBody({
               <ArrowLeft className="mr-1 size-4" aria-hidden />
               {t("migration.back")}
             </Button>
-            <Button type="button" onClick={() => setStep("confirm")}>
+            <Button
+              type="button"
+              onClick={() => setStep("confirm")}
+              disabled={!scopeMail && !scopeContacts && !scopeCalendar}
+            >
               {t("migration.continue")}
             </Button>
           </div>
@@ -291,7 +403,19 @@ function MigrationWizardBody({
       {!showStatus && step === "confirm" ? (
         <form action={confirmAction} className="space-y-6">
           <input type="hidden" name="migrationId" value={migrationId ?? ""} />
-          <input type="hidden" name="scopeMail" value="true" />
+          {scopeMail ? <input type="hidden" name="scopeMail" value="true" /> : null}
+          {scopeContacts ? <input type="hidden" name="scopeContacts" value="on" /> : null}
+          {scopeCalendar ? <input type="hidden" name="scopeCalendar" value="on" /> : null}
+
+          {sourceStats ? (
+            <SourceStatsPanel
+              stats={sourceStats}
+              provider={effectiveProvider}
+              t={t}
+            />
+          ) : null}
+
+          <p className="text-sm text-ardoise/70">{t("migration.confirmBackgroundHint")}</p>
 
           <div className="rounded-lg border border-canal bg-neutral-50/50 p-4">
             <div className="flex items-center gap-2 text-sm font-medium text-encre">
@@ -332,20 +456,148 @@ function MigrationWizardBody({
   );
 }
 
+const STATS_ERROR_KEYS = [
+  "token_expired",
+  "insufficient_scope",
+  "oauth_refresh_failed",
+  "oauth_token_missing",
+  "source_credentials_missing",
+  "gmail_api_error",
+  "people_api_error",
+  "calendar_api_error",
+  "calendar_api_disabled",
+  "graph_mail_error",
+  "graph_contacts_error",
+  "graph_calendar_error",
+  "imap_error",
+  "carddav_error",
+  "caldav_error",
+  "imap_no_contacts",
+  "imap_no_calendar",
+  "unsupported",
+] as const;
+
+type StatsErrorKey = (typeof STATS_ERROR_KEYS)[number];
+
+function isStatsErrorKey(value: string): value is StatsErrorKey {
+  return (STATS_ERROR_KEYS as readonly string[]).includes(value);
+}
+
+function formatStatsError(
+  t: ReturnType<typeof useTranslations<"users">>,
+  reason?: string
+): string {
+  if (reason && isStatsErrorKey(reason)) {
+    return t(`migration.statsError_${reason}`);
+  }
+  return t("migration.statsError_generic");
+}
+
+function SourceStatsPanel({
+  stats,
+  provider,
+  t,
+}: {
+  stats: MigrationSourceStats;
+  provider: MigrationProvider | null;
+  t: ReturnType<typeof useTranslations<"users">>;
+}) {
+  const showContacts = provider ? providerSupportsContacts(provider) : true;
+  const showCalendar = provider ? providerSupportsCalendar(provider) : true;
+
+  return (
+    <div className="space-y-2 rounded-md border border-canal bg-neutral-50/80 px-4 py-3 text-sm">
+      {stats.mail.available ? (
+        <>
+          <p className="text-encre">
+            {t("migration.statsMail", {
+              count: formatFrNumber(stats.mail.messageCount ?? 0),
+              folders: formatFrNumber(stats.mail.folderCount ?? 0),
+            })}
+          </p>
+          {typeof stats.mail.attachmentCount === "number" ? (
+            <p className="text-encre">
+              {t("migration.stats.attachments", {
+                count: formatFrNumber(stats.mail.attachmentCount),
+              })}
+              {stats.mail.attachmentCountIsEstimate ? (
+                <span className="text-ardoise/60">
+                  {" "}
+                  {t("migration.statsAttachmentsEstimate")}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <p className="text-ardoise/70">
+          {t("migration.statsMailError", {
+            error: formatStatsError(t, stats.mail.unavailableReason),
+          })}
+        </p>
+      )}
+      {showContacts ? (
+        stats.contacts.available ? (
+          <p className="text-encre">
+            {t("migration.statsContacts", {
+              count: formatFrNumber(stats.contacts.contactCount ?? 0),
+              groups: formatFrNumber(stats.contacts.groupCount ?? 0),
+            })}
+          </p>
+        ) : (
+          <p className="text-ardoise/70">
+            {t("migration.statsContactsError", {
+              error: formatStatsError(t, stats.contacts.unavailableReason),
+            })}
+          </p>
+        )
+      ) : null}
+      {showCalendar ? (
+        stats.calendar.available ? (
+          stats.calendar.eventCount && stats.calendar.eventCount > 0 ? (
+            <p className="text-encre">
+              {stats.calendar.recurringCount && stats.calendar.recurringCount > 0
+                ? t("migration.statsCalendarWithRecurring", {
+                    count: formatFrNumber(stats.calendar.eventCount),
+                    recurring: formatFrNumber(stats.calendar.recurringCount),
+                    from: formatCalendarRangeStart(stats.calendar),
+                    to: formatCalendarRangeEnd(stats.calendar),
+                  })
+                : t("migration.statsCalendar", {
+                    count: formatFrNumber(stats.calendar.eventCount),
+                    from: formatCalendarRangeStart(stats.calendar),
+                    to: formatCalendarRangeEnd(stats.calendar),
+                  })}
+            </p>
+          ) : (
+            <p className="text-encre">{t("migration.statsCalendarEmpty")}</p>
+          )
+        ) : (
+          <p className="text-ardoise/70">
+            {t("migration.statsCalendarError", {
+              error: formatStatsError(t, stats.calendar.unavailableReason),
+            })}
+          </p>
+        )
+      ) : null}
+    </div>
+  );
+}
+
 function ScopeRow({
   id,
   name,
   label,
-  badge,
   checked,
   disabled,
+  onChange,
 }: {
   id: string;
   name: string;
   label: string;
-  badge?: string;
   checked: boolean;
   disabled?: boolean;
+  onChange: (checked: boolean) => void;
 }) {
   return (
     <div className="flex items-center justify-between rounded-md border border-canal bg-white px-4 py-3">
@@ -356,15 +608,12 @@ function ScopeRow({
           name={name}
           checked={checked}
           disabled={disabled}
-          readOnly={disabled}
+          onChange={(e) => onChange(e.target.checked)}
           className="size-4 rounded border-canal"
         />
-        <Label htmlFor={id} className="font-normal">{label}</Label>
-        {badge ? (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-            {badge}
-          </span>
-        ) : null}
+        <Label htmlFor={id} className={cn("font-normal", disabled && "text-ardoise/50")}>
+          {label}
+        </Label>
       </div>
     </div>
   );

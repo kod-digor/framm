@@ -77,6 +77,8 @@ enum MigrationPhase {
   CONNECTING
   SCANNING
   SYNCING_MAIL
+  SYNCING_CONTACTS
+  SYNCING_CALENDAR
   FINALIZING
 }
 
@@ -382,6 +384,8 @@ model MailboxMigration {
   scopeMail            Boolean            @default(true)
   scopeContacts        Boolean            @default(false)
   scopeCalendar        Boolean            @default(false)
+  /// Statistiques source découvertes avant migration (mail, contacts, calendrier)
+  sourceStatsJson      Json?
   progressJson         Json?
   errorMessage         String?
   startedAt            DateTime?

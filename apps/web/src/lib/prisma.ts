@@ -1,6 +1,12 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { loadDevEnv } from "../../load-dev-env";
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
+loadDevEnv();
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+  prismaDatabaseUrl: string | undefined;
+};
 
 /** Delegates that must exist after `prisma generate` (stale dev singletons omit new models). */
 const REQUIRED_DELEGATES = [
@@ -9,7 +15,28 @@ const REQUIRED_DELEGATES = [
   "sharedMailboxMember",
   "mailboxDelegation",
   "mailboxFilter",
+  "mailboxMigration",
+  "migrationEvent",
 ] as const;
+
+/** Champs récents à vérifier sur le runtime embarqué (singleton dev avant `prisma generate`). */
+const REQUIRED_MAILBOX_MIGRATION_FIELDS = [
+  "sourceStatsJson",
+  "scopeContacts",
+  "scopeCalendar",
+] as const satisfies readonly (keyof typeof Prisma.MailboxMigrationScalarFieldEnum)[];
+
+const REQUIRED_MIGRATION_PHASES = [
+  "SCANNING",
+  "SYNCING_CONTACTS",
+  "SYNCING_CALENDAR",
+] as const;
+
+
+type RuntimeDataModel = {
+  models: Record<string, { fields: Array<{ name: string }> }>;
+  enums: Record<string, { values: Array<{ name: string }> }>;
+};
 
 function createPrismaClient() {
   return new PrismaClient({
@@ -23,16 +50,48 @@ function hasDelegate(client: PrismaClient, key: string): boolean {
   return typeof (delegate as { findFirst?: unknown }).findFirst === "function";
 }
 
+function getRuntimeDataModel(client: PrismaClient): RuntimeDataModel | null {
+  const runtime = (client as unknown as { _runtimeDataModel?: RuntimeDataModel })._runtimeDataModel;
+  return runtime ?? null;
+}
+
+function clientHasMailboxMigrationSchema(client: PrismaClient): boolean {
+  const runtime = getRuntimeDataModel(client);
+  if (!runtime) return true;
+
+  const fields = runtime.models.MailboxMigration?.fields ?? [];
+  const fieldNames = new Set(fields.map((field) => field.name));
+  if (!REQUIRED_MAILBOX_MIGRATION_FIELDS.every((name) => fieldNames.has(name))) {
+    return false;
+  }
+
+  const phaseValues = new Set(
+    (runtime.enums.MigrationPhase?.values ?? []).map((value) => value.name)
+  );
+  return REQUIRED_MIGRATION_PHASES.every((name) => phaseValues.has(name));
+}
+
 function isStalePrismaClient(client: PrismaClient): boolean {
   if (process.env.NODE_ENV !== "development") return false;
 
-  return REQUIRED_DELEGATES.some((key) => !hasDelegate(client, key));
+  if (REQUIRED_DELEGATES.some((key) => !hasDelegate(client, key))) {
+    return true;
+  }
+
+  return !clientHasMailboxMigrationSchema(client);
 }
 
 function initPrismaClient(): PrismaClient {
+  const currentDatabaseUrl = process.env.DATABASE_URL;
   const cached = globalForPrisma.prisma;
 
-  if (cached && !isStalePrismaClient(cached)) {
+  const databaseUrlChanged =
+    !!cached &&
+    !!currentDatabaseUrl &&
+    !!globalForPrisma.prismaDatabaseUrl &&
+    globalForPrisma.prismaDatabaseUrl !== currentDatabaseUrl;
+
+  if (cached && !isStalePrismaClient(cached) && !databaseUrlChanged) {
     return cached;
   }
 
@@ -42,6 +101,7 @@ function initPrismaClient(): PrismaClient {
   }
 
   const client = createPrismaClient();
+  globalForPrisma.prismaDatabaseUrl = currentDatabaseUrl;
 
   if (isStalePrismaClient(client)) {
     throw new Error(

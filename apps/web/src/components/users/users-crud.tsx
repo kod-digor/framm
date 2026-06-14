@@ -6,12 +6,18 @@ import { ArrowRightLeft, Pencil } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { removeWorkspaceUserAction } from "@/app/actions/workspace-users";
-import { getMigrationStatusAction } from "@/app/actions/mailbox-migration";
+import {
+  getMigrationStatusAction,
+  listActiveMigrationsAction,
+} from "@/app/actions/mailbox-migration";
 import { CrudListCard } from "@/components/layout/crud-list-card";
 import { CrudPageHeader } from "@/components/layout/crud-page-header";
 import { CreateWorkspaceUserForm } from "@/components/users/create-workspace-user-form";
 import { DeleteWorkspaceUserForm } from "@/components/users/delete-workspace-user-form";
 import { EditUserDrawer } from "@/components/users/edit-workspace-user-form";
+import { MigrationActiveBanner } from "@/components/users/migration-active-banner";
+import { MigrationStatusChip } from "@/components/users/migration-status-chip";
+import { MigrationStatusPanel } from "@/components/users/migration-status-panel";
 import { MigrationWizard } from "@/components/users/migration-wizard";
 import { CrudAddButton } from "@/components/ui/crud-add-button";
 import {
@@ -54,11 +60,13 @@ export function UsersCrud({
   domains,
   domainOptions,
   orgMembers,
+  initialActiveMigrations = {},
 }: {
   users: UserRow[];
   domains: DomainSimple[];
   domainOptions: DomainOption[];
   orgMembers: OrgMemberOption[];
+  initialActiveMigrations?: Record<string, MigrationStatusPayload>;
 }) {
   const t = useTranslations("users");
   const searchParams = useSearchParams();
@@ -78,7 +86,13 @@ export function UsersCrud({
   const [migrationInitialStep, setMigrationInitialStep] = useState<"scope" | "status" | null>(
     oauthStep === "scope" ? "scope" : null
   );
-  const [migrationStatus, setMigrationStatus] = useState<MigrationStatusPayload | null>(null);
+  const [activeMigrations, setActiveMigrations] = useState<
+    Record<string, MigrationStatusPayload>
+  >(initialActiveMigrations);
+  const [statusDrawerMailboxId, setStatusDrawerMailboxId] = useState<string | null>(null);
+  const [migrationStatus, setMigrationStatus] = useState<MigrationStatusPayload | null>(
+    oauthMailboxId ? initialActiveMigrations[oauthMailboxId] ?? null : null
+  );
   const [deleteState, deleteAction] = useActionState(
     removeWorkspaceUserAction,
     INITIAL_ACTION_RESULT
@@ -87,7 +101,28 @@ export function UsersCrud({
   const refreshMigrationStatus = useCallback(async (mailboxId: string) => {
     const status = await getMigrationStatusAction(mailboxId);
     setMigrationStatus(status);
+    setActiveMigrations((prev) => {
+      const next = { ...prev };
+      if (status) {
+        next[mailboxId] = status;
+      } else {
+        delete next[mailboxId];
+      }
+      return next;
+    });
+    return status;
   }, []);
+
+  const refreshAllActiveMigrations = useCallback(async () => {
+    const next = await listActiveMigrationsAction();
+    setActiveMigrations(next);
+    if (statusDrawerMailboxId && next[statusDrawerMailboxId]) {
+      setMigrationStatus(next[statusDrawerMailboxId]);
+    }
+    if (migrationMailboxId && next[migrationMailboxId]) {
+      setMigrationStatus(next[migrationMailboxId]);
+    }
+  }, [migrationMailboxId, statusDrawerMailboxId]);
 
   if (oauthError) {
     console.warn("[migration] OAuth error:", oauthError);
@@ -97,20 +132,62 @@ export function UsersCrud({
     if (!oauthMailboxId) return;
     let cancelled = false;
     void getMigrationStatusAction(oauthMailboxId).then((status) => {
-      if (!cancelled) setMigrationStatus(status);
+      if (!cancelled) {
+        setMigrationStatus(status);
+        if (status) {
+          setActiveMigrations((prev) => ({ ...prev, [oauthMailboxId]: status }));
+        }
+      }
     });
     return () => {
       cancelled = true;
     };
   }, [oauthMailboxId]);
 
+  const hasRunningMigrations = Object.values(activeMigrations).some(
+    (migration) => migration.status === "QUEUED" || migration.status === "RUNNING"
+  );
+
+  useEffect(() => {
+    if (!hasRunningMigrations) return;
+
+    const timer = setInterval(() => {
+      void refreshAllActiveMigrations();
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [hasRunningMigrations, refreshAllActiveMigrations]);
+
   const selectedUser = users.find((user) => user.memberId === openUserId) ?? null;
   const migrationUser = users.find((u) => u.mailboxId === migrationMailboxId) ?? null;
+  const statusDrawerUser = users.find((u) => u.mailboxId === statusDrawerMailboxId) ?? null;
+  const statusDrawerMigration = statusDrawerMailboxId
+    ? activeMigrations[statusDrawerMailboxId] ?? null
+    : null;
+
+  const runningMigrationCount = Object.values(activeMigrations).filter(
+    (migration) => migration.status === "QUEUED" || migration.status === "RUNNING"
+  ).length;
 
   const openMigration = (mailboxId: string) => {
+    const existing = activeMigrations[mailboxId];
+    if (
+      existing &&
+      (existing.status === "QUEUED" ||
+        existing.status === "RUNNING" ||
+        existing.status === "PENDING_OAUTH")
+    ) {
+      openStatusDrawer(mailboxId);
+      return;
+    }
     setMigrationMailboxId(mailboxId);
     setMigrationInitialId(null);
     setMigrationInitialStep(null);
+    void refreshMigrationStatus(mailboxId);
+  };
+
+  const openStatusDrawer = (mailboxId: string) => {
+    setStatusDrawerMailboxId(mailboxId);
     void refreshMigrationStatus(mailboxId);
   };
 
@@ -130,12 +207,25 @@ export function UsersCrud({
     {
       key: "primaryAddress",
       header: t("colPrimaryAddress"),
-      cell: (row: UserRow) =>
-        row.primaryAddress ? (
-          <span className="font-mono-data text-encre">{row.primaryAddress}</span>
-        ) : (
-          <span className="text-ardoise/50">{t("noMailbox")}</span>
-        ),
+      cell: (row: UserRow) => {
+        const migration = row.mailboxId ? activeMigrations[row.mailboxId] : null;
+
+        return (
+          <div className="space-y-1.5">
+            {row.primaryAddress ? (
+              <span className="font-mono-data text-encre">{row.primaryAddress}</span>
+            ) : (
+              <span className="text-ardoise/50">{t("noMailbox")}</span>
+            )}
+            {migration ? (
+              <MigrationStatusChip
+                status={migration}
+                onClick={() => openStatusDrawer(row.mailboxId!)}
+              />
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       key: "secondaryAddresses",
@@ -213,6 +303,8 @@ export function UsersCrud({
         </p>
       ) : null}
 
+      <MigrationActiveBanner count={runningMigrationCount} />
+
       <FormFeedback state={deleteState} namespace="users" paramKey="detail" />
 
       <FormDrawer open={createOpen} onOpenChange={setCreateOpen} title={t("add")}>
@@ -251,6 +343,7 @@ export function UsersCrud({
               setMigrationInitialId(null);
               setMigrationInitialStep(null);
               setMigrationStatus(null);
+              void refreshAllActiveMigrations();
             }
           }}
           mailboxId={migrationUser.mailboxId}
@@ -258,9 +351,32 @@ export function UsersCrud({
           userEmail={migrationUser.userEmail}
           initialMigrationId={migrationInitialId}
           initialStep={migrationInitialStep}
-          activeStatus={migrationStatus}
+          activeStatus={migrationStatus ?? activeMigrations[migrationUser.mailboxId] ?? null}
           onStatusChange={() => refreshMigrationStatus(migrationUser.mailboxId!)}
         />
+      ) : null}
+
+      {statusDrawerUser?.mailboxId && statusDrawerMigration ? (
+        <FormDrawer
+          open={statusDrawerMailboxId !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setStatusDrawerMailboxId(null);
+              void refreshAllActiveMigrations();
+            }
+          }}
+          title={t("migration.statusTitle")}
+          description={t("migration.wizardHint", { email: statusDrawerUser.userEmail })}
+        >
+          <MigrationStatusPanel
+            mailboxId={statusDrawerUser.mailboxId}
+            migrationId={statusDrawerMigration.id}
+            initialStatus={statusDrawerMigration}
+            onCancelled={() => {
+              void refreshAllActiveMigrations();
+            }}
+          />
+        </FormDrawer>
       ) : null}
 
       <CrudListCard>

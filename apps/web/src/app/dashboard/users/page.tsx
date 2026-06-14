@@ -4,12 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { UsersCrud } from "@/components/users/users-crud";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { isDnsVerifiedDomainStatus, MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/domain-status";
+import {
+  getActiveMigrationsForOrg,
+  serializeMigrationStatus,
+} from "@/lib/migration/orchestrator";
 
 export default async function UsersPage() {
   const session = await requireOrgAdmin();
   const orgId = getOrgId(session)!;
 
-  const [members, domains] = await Promise.all([
+  const [members, domains, activeMigrations] = await Promise.all([
     prisma.organizationMember.findMany({
       where: { organizationId: orgId },
       include: {
@@ -42,7 +46,15 @@ export default async function UsersPage() {
       where: { organizationId: orgId, status: { in: MAIL_USABLE_DOMAIN_STATUSES } },
       orderBy: { fqdn: "asc" },
     }),
+    getActiveMigrationsForOrg(orgId),
   ]);
+
+  const activeMigrationsByMailbox = Object.fromEntries(
+    activeMigrations.map((migration) => [
+      migration.mailboxId,
+      serializeMigrationStatus(migration),
+    ])
+  );
 
   const domainOptions = domains.map((d) => ({
     id: d.id,
@@ -94,6 +106,7 @@ export default async function UsersPage() {
           domains={domains.map((d) => ({ id: d.id, fqdn: d.fqdn }))}
           domainOptions={domainOptions}
           orgMembers={orgMembers}
+          initialActiveMigrations={activeMigrationsByMailbox}
         />
       </Suspense>
     </div>

@@ -10,6 +10,9 @@ export const MICROSOFT_IMAP = {
 
 export const MICROSOFT_OAUTH_SCOPES = [
   "https://outlook.office365.com/IMAP.AccessAsUser.All",
+  "Mail.Read",
+  "Contacts.Read",
+  "Calendars.Read",
   "offline_access",
   "email",
   "openid",
@@ -20,6 +23,17 @@ function getMicrosoftConfig() {
   const clientSecret = process.env.MICROSOFT_MIGRATION_CLIENT_SECRET;
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret };
+}
+
+export function getMicrosoftOAuthMissingEnvVars(): string[] {
+  const missing: string[] = [];
+  if (!process.env.MICROSOFT_MIGRATION_CLIENT_ID?.trim()) {
+    missing.push("MICROSOFT_MIGRATION_CLIENT_ID");
+  }
+  if (!process.env.MICROSOFT_MIGRATION_CLIENT_SECRET?.trim()) {
+    missing.push("MICROSOFT_MIGRATION_CLIENT_SECRET");
+  }
+  return missing;
 }
 
 export function isMicrosoftOAuthConfigured(): boolean {
@@ -36,6 +50,7 @@ export function buildMicrosoftAuthUrl(redirectUri: string, state: string): strin
     response_type: "code",
     scope: MICROSOFT_OAUTH_SCOPES.join(" "),
     response_mode: "query",
+    prompt: "consent",
     state,
   });
 

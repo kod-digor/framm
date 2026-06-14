@@ -25,6 +25,22 @@ export type ImapsyncRunResult = {
 const PROGRESS_RE = /(\d+)\s*\/\s*(\d+)\s+msgs/;
 const FOLDER_RE = /Folder\s+(.+)/i;
 
+const DEFAULT_IMAPSYNC_MAX_PARALLEL = 4;
+
+function resolveImapsyncMaxParallel(): number {
+  const raw = Number(process.env.IMAPSYNC_MAX_PARALLEL ?? DEFAULT_IMAPSYNC_MAX_PARALLEL);
+  if (!Number.isFinite(raw)) return DEFAULT_IMAPSYNC_MAX_PARALLEL;
+  return Math.min(8, Math.max(1, Math.round(raw)));
+}
+
+function resolveImapsyncMaxBytesPerSecond(): number | null {
+  const raw = process.env.IMAPSYNC_MAX_BYTES_PER_SECOND?.trim();
+  if (!raw) return null;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return Math.round(value);
+}
+
 function parseProgressLine(line: string, current: MigrationProgress): MigrationProgress {
   const next = { ...current, lastLogLine: line.trim() };
 
@@ -113,28 +129,37 @@ function buildSourceArgs(source: ImapSourceCredentials): string[] {
 export function buildImapsyncArgs(options: ImapsyncRunOptions): string[] {
   const sourceArgs = buildSourceArgs(options.source);
 
-  return [
-  ...sourceArgs,
-  "--host2",
-  options.targetHost,
-  "--port2",
-  String(options.targetPort),
-  "--user2",
-  options.targetUser,
-  "--password2",
-  options.targetPassword,
-  "--ssl2",
-  "--sslargs2",
-  "SSL_verify_mode=1",
-  "--nofoldersizes",
-  "--syncinternaldates",
-  "--automap",
-  "--useheader",
-  "Message-Id",
-  "--usecache",
-  "--errorsmax",
-  "100",
+  const args = [
+    ...sourceArgs,
+    "--host2",
+    options.targetHost,
+    "--port2",
+    String(options.targetPort),
+    "--user2",
+    options.targetUser,
+    "--password2",
+    options.targetPassword,
+    "--ssl2",
+    "--sslargs2",
+    "SSL_verify_mode=1",
+    "--nofoldersizes",
+    "--syncinternaldates",
+    "--automap",
+    "--useheader",
+    "Message-Id",
+    "--usecache",
+    "--errorsmax",
+    "100",
+    "--maxparallel",
+    String(resolveImapsyncMaxParallel()),
   ];
+
+  const maxBytesPerSecond = resolveImapsyncMaxBytesPerSecond();
+  if (maxBytesPerSecond) {
+    args.push("--maxbytespersecond", String(maxBytesPerSecond));
+  }
+
+  return args;
 }
 
 export async function runImapsync(options: ImapsyncRunOptions): Promise<ImapsyncRunResult> {

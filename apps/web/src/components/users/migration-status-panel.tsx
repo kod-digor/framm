@@ -139,6 +139,27 @@ export function MigrationStatusPanel({
             {t("migration.currentFolder", { folder: status.progress.currentFolder })}
           </p>
         ) : null}
+        {status.phase ? (
+          <p className="text-xs text-ardoise/60">
+            {t(`migration.phase_${status.phase}`)}
+          </p>
+        ) : null}
+        {status.progress?.contactsTotal ? (
+          <p className="text-xs text-ardoise/60">
+            {t("migration.progressContacts", {
+              synced: status.progress.contactsSynced ?? 0,
+              total: status.progress.contactsTotal,
+            })}
+          </p>
+        ) : null}
+        {status.progress?.calendarTotal ? (
+          <p className="text-xs text-ardoise/60">
+            {t("migration.progressCalendar", {
+              synced: status.progress.calendarSynced ?? 0,
+              total: status.progress.calendarTotal,
+            })}
+          </p>
+        ) : null}
         {status.errorMessage ? (
           <p className="text-sm text-red-700">
             {isMigrationErrorCode(status.errorMessage)

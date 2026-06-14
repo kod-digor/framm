@@ -1,4 +1,5 @@
 import type { MigrationPhase, MigrationProvider, MigrationStatus } from "@prisma/client";
+import type { MigrationSourceStats } from "@/lib/migration/discovery/types";
 
 export type MigrationProgress = {
   percent: number;
@@ -6,6 +7,10 @@ export type MigrationProgress = {
   foldersSynced?: number;
   currentFolder?: string;
   lastLogLine?: string;
+  contactsSynced?: number;
+  contactsTotal?: number;
+  calendarSynced?: number;
+  calendarTotal?: number;
 };
 
 export type MigrationScope = {
@@ -49,6 +54,7 @@ export type MigrationStatusPayload = {
   scopeContacts: boolean;
   scopeCalendar: boolean;
   progress: MigrationProgress | null;
+  sourceStats: MigrationSourceStats | null;
   errorMessage: string | null;
   startedAt: string | null;
   completedAt: string | null;
@@ -73,6 +79,11 @@ export const MIGRATION_ERROR_CODES = [
   "source_credentials_missing",
   "oauth_refresh_failed",
   "mail_scope_disabled",
+  "no_scope_selected",
+  "contacts_import_failed",
+  "calendar_import_failed",
+  "contacts_not_supported",
+  "calendar_not_supported",
 ] as const;
 
 export type MigrationErrorCode = (typeof MIGRATION_ERROR_CODES)[number];
@@ -91,4 +102,9 @@ export const MIGRATION_ERROR_I18N_KEYS: Record<
   source_credentials_missing: "migration.error_source_credentials_missing",
   oauth_refresh_failed: "migration.error_oauth_refresh_failed",
   mail_scope_disabled: "migration.error_mail_scope_disabled",
+  no_scope_selected: "migration.error_no_scope_selected",
+  contacts_import_failed: "migration.error_contacts_import_failed",
+  calendar_import_failed: "migration.error_calendar_import_failed",
+  contacts_not_supported: "migration.error_contacts_not_supported",
+  calendar_not_supported: "migration.error_calendar_not_supported",
 };

@@ -1,4 +1,5 @@
-import NextAuth from "next-auth";
+import NextAuth, { type Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { isDbUnavailableError } from "@/lib/auth-errors";
@@ -27,7 +28,19 @@ declare module "next-auth" {
   }
 }
 
+function applyTokenToSession(session: Session, token: JWT) {
+  if (!session.user) return;
+  session.user.id = token.id as string;
+  if (typeof token.email === "string") session.user.email = token.email;
+  session.user.role = token.role as UserRole;
+  session.user.organizationId = (token.organizationId as string | null) ?? null;
+  session.user.organizationStatus = (token.organizationStatus as string | null) ?? undefined;
+  session.user.membershipRole = (token.membershipRole as UserRole | null) ?? undefined;
+  session.user.mustChangePassword = (token.mustChangePassword as boolean) ?? false;
+}
+
 export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
+  secret: process.env.AUTH_SECRET,
   providers: [
     Credentials({
       credentials: {
@@ -50,6 +63,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
 
           return {
             id: user.id,
+            name: user.email,
             email: user.email,
             role: user.role,
             organizationId: membership?.organizationId ?? null,
@@ -80,11 +94,16 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
       if (trigger === "update" && session?.user) {
         const orgId = session.user.organizationId as string | null;
         if (orgId && token.id) {
-          const member = await getMembership(token.id as string, orgId);
-          if (member) {
-            token.organizationId = member.organizationId;
-            token.organizationStatus = member.organization.status;
-            token.membershipRole = member.role;
+          try {
+            const member = await getMembership(token.id as string, orgId);
+            if (member) {
+              token.organizationId = member.organizationId;
+              token.organizationStatus = member.organization.status;
+              token.membershipRole = member.role;
+            }
+          } catch (err) {
+            if (isDbUnavailableError(err)) return token;
+            throw err;
           }
         }
       }
@@ -99,7 +118,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
             token.mustChangePassword = dbUser.mustChangePassword;
           }
         } catch (err) {
-          if (isDbUnavailableError(err)) throw err;
+          if (isDbUnavailableError(err)) return token;
         }
       }
 
@@ -108,34 +127,42 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
     async session({ session, token }) {
       if (!session.user) return session;
 
-      const user = await prisma.user.findUnique({ where: { id: token.id as string } });
-      if (!user) {
-        session.user.organizationId = null;
-        session.user.organizationStatus = null;
-        session.user.membershipRole = null;
-        return session;
-      }
+      applyTokenToSession(session, token);
 
-      session.user.id = user.id;
-      session.user.email = user.email;
-      session.user.role = user.role;
-      session.user.mustChangePassword = user.mustChangePassword;
-
-      const activeOrgId = (token.organizationId as string | null) ?? null;
-      if (activeOrgId) {
-        const member = await getMembership(user.id, activeOrgId);
-        if (member) {
-          session.user.organizationId = member.organizationId;
-          session.user.organizationStatus = member.organization.status;
-          session.user.membershipRole = member.role;
+      try {
+        const user = await prisma.user.findUnique({ where: { id: token.id as string } });
+        if (!user) {
+          session.user.organizationId = null;
+          session.user.organizationStatus = null;
+          session.user.membershipRole = null;
           return session;
         }
+
+        session.user.id = user.id;
+        session.user.email = user.email;
+        session.user.role = user.role;
+        session.user.mustChangePassword = user.mustChangePassword;
+
+        const activeOrgId = (token.organizationId as string | null) ?? null;
+        if (activeOrgId) {
+          const member = await getMembership(user.id, activeOrgId);
+          if (member) {
+            session.user.organizationId = member.organizationId;
+            session.user.organizationStatus = member.organization.status;
+            session.user.membershipRole = member.role;
+            return session;
+          }
+        }
+
+        const fallback = await getDefaultMembership(user.id);
+        session.user.organizationId = fallback?.organizationId ?? null;
+        session.user.organizationStatus = fallback?.organization.status ?? null;
+        session.user.membershipRole = fallback?.role ?? null;
+      } catch (err) {
+        if (isDbUnavailableError(err)) return session;
+        throw err;
       }
 
-      const fallback = await getDefaultMembership(user.id);
-      session.user.organizationId = fallback?.organizationId ?? null;
-      session.user.organizationStatus = fallback?.organization.status ?? null;
-      session.user.membershipRole = fallback?.role ?? null;
       return session;
     },
     authorized({ auth, request }) {
