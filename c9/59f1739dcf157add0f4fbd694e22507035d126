@@ -1,0 +1,27 @@
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_3bcd88652bbe32::t_d6873c9f1cd50b 169-171
+  s_3bcd88652bbe32::t_845f8ce8d540ae 72-92,94-112
+apps/web/Dockerfile.worker
+  s_3bcd88652bbe32::t_dc80ca3a638fda 1-2
+  s_3bcd88652bbe32::t_f192a0603c76c8 36
+terraform/environments/prod/templates/env.production.tpl
+  s_3bcd88652bbe32::t_9b7d17589ca285 43
+deploy/scripts/lib/migration-run.sh
+  s_3bcd88652bbe32::t_6fc9d5ad877932 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c959f1739dcf157add0f4fbd694e22507035d126",
+  "prompts": {},
+  "sessions": {
+    "s_3bcd88652bbe32": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "cb0b8959-ed04-4130-a6fb-329f031910fb",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
