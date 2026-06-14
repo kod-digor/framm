@@ -5,7 +5,17 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useT } from "@/i18n/t";
-import { runSingleHealthCheckAction, type HealthCheckView } from "@/app/actions/admin-health";
+import type { HealthCheckView } from "@/lib/admin/health-present";
+
+type HealthCheckPayload = { result: HealthCheckView; ranAt: string };
+
+async function runHealthCheckViaApi(checkId: string): Promise<HealthCheckPayload | null> {
+  const res = await fetch(`/api/admin/health/run?id=${encodeURIComponent(checkId)}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return res.json() as Promise<HealthCheckPayload>;
+}
 
 type HealthPanelProps = {
   checkIds: string[];
@@ -75,7 +85,7 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
 
     await Promise.allSettled(
       checkIds.map(async (checkId) => {
-        const payload = await runSingleHealthCheckAction(checkId);
+        const payload = await runHealthCheckViaApi(checkId);
         if (payload) {
           mergeResult(payload.result);
         }
@@ -94,7 +104,7 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
 
   const handleRunSingle = async (checkId: string) => {
     setRunningId(checkId);
-    const payload = await runSingleHealthCheckAction(checkId);
+    const payload = await runHealthCheckViaApi(checkId);
     if (payload) {
       mergeResult(payload.result);
       setRanAt(payload.ranAt);

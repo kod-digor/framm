@@ -5,24 +5,10 @@ import {
   findHealthCheckDefinition,
   runAllHealthChecks,
   runHealthCheck,
-  type HealthCheckResult,
 } from "@/lib/admin/health-checks";
-import { getT } from "@/i18n/t";
+import { enrichHealthResults, type HealthCheckView } from "@/lib/admin/health-present";
 
-export type HealthCheckView = HealthCheckResult & {
-  label: string;
-  description: string;
-};
-
-async function enrichResults(results: HealthCheckResult[]): Promise<HealthCheckView[]> {
-  const t = await getT("adminHealth");
-  const tr = t as (key: string) => string;
-  return results.map((result) => ({
-    ...result,
-    label: tr(`checks.${result.id}.label`),
-    description: tr(`checks.${result.id}.description`),
-  }));
-}
+export type { HealthCheckView };
 
 async function bureauContext() {
   const session = await requireAuth(["BUREAU"]);
@@ -39,7 +25,7 @@ export async function runAllHealthChecksAction(): Promise<{
   const ctx = await bureauContext();
   const results = await runAllHealthChecks(ctx);
   return {
-    results: await enrichResults(results),
+    results: await enrichHealthResults(results),
     ranAt: new Date().toISOString(),
   };
 }
@@ -52,6 +38,6 @@ export async function runSingleHealthCheckAction(
 
   const ctx = await bureauContext();
   const result = await runHealthCheck(definition, ctx);
-  const [view] = await enrichResults([result]);
+  const [view] = await enrichHealthResults([result]);
   return { result: view, ranAt: new Date().toISOString() };
 }
