@@ -21,10 +21,11 @@ env:
 jobs:
   detect-changes:
     name: Detect changed paths
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       mail: ${{ steps.filter.outputs.mail }}
+      terraform: ${{ steps.filter.outputs.terraform }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -33,6 +34,8 @@ jobs:
           filters: |
             mail:
               - 'deploy/**'
+              - 'terraform/**'
+            terraform:
               - 'terraform/**'
 
   test-web:
@@ -56,6 +59,10 @@ jobs:
 
   terraform-validate:
     name: Terraform validate
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && needs.detect-changes.outputs.terraform == 'true')
+    needs: [detect-changes]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,8 +76,11 @@ jobs:
 
   infra-health-checks:
     name: Infra health checks
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: [test-web, terraform-sync]
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      needs.detect-changes.outputs.mail == 'true'
+    needs: [test-web, terraform-sync, detect-changes]
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -94,8 +104,11 @@ jobs:
 
   terraform-sync:
     name: Terraform sync (TEM relay)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: test-web
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      needs.detect-changes.outputs.mail == 'true'
+    needs: [test-web, detect-changes]
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -147,8 +160,14 @@ jobs:
 
   build-push-web:
     name: Build & push web image
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: [test-web, terraform-sync, infra-health-checks]
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      always() &&
+      needs.test-web.result == 'success' &&
+      (needs.terraform-sync.result == 'success' || needs.terraform-sync.result == 'skipped') &&
+      (needs.infra-health-checks.result == 'success' || needs.infra-health-checks.result == 'skipped')
+    needs: [test-web, terraform-sync, infra-health-checks, detect-changes]
     runs-on: ubuntu-latest
     outputs:
       enabled: ${{ steps.creds.outputs.enabled }}
@@ -192,8 +211,14 @@ jobs:
 
   build-push-worker:
     name: Build & push worker image
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: [test-web, terraform-sync, infra-health-checks]
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      always() &&
+      needs.test-web.result == 'success' &&
+      (needs.terraform-sync.result == 'success' || needs.terraform-sync.result == 'skipped') &&
+      (needs.infra-health-checks.result == 'success' || needs.infra-health-checks.result == 'skipped')
+    needs: [test-web, terraform-sync, infra-health-checks, detect-changes]
     runs-on: ubuntu-latest
     outputs:
       enabled: ${{ steps.creds.outputs.enabled }}

@@ -350,8 +350,6 @@ export async function failMigration(migrationId: string, error: string) {
       status: "FAILED",
       errorMessage: error,
       completedAt: new Date(),
-      sourceCredentialsEnc: null,
-      oauthRefreshTokenEnc: null,
     },
   });
   await logMigrationEvent(migrationId, error);
