@@ -24,7 +24,9 @@ export function isDbUnavailableError(err: unknown): boolean {
       msg.includes("econnrefused") ||
       msg.includes("connect timeout") ||
       msg.includes("can't reach database") ||
-      msg.includes("connection terminated")
+      msg.includes("connection terminated") ||
+      msg.includes("too many clients") ||
+      msg.includes("too many database connections")
     ) {
       return true;
     }

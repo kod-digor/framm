@@ -38,8 +38,21 @@ type RuntimeDataModel = {
   enums: Record<string, { values: Array<{ name: string }> }>;
 };
 
+function resolveDatabaseUrl(): string | undefined {
+  const url = process.env.DATABASE_URL;
+  if (!url) return url;
+
+  if (/[?&]connection_limit=/.test(url)) return url;
+
+  const limit = process.env.DATABASE_CONNECTION_LIMIT ?? "5";
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}connection_limit=${limit}&pool_timeout=20`;
+}
+
 function createPrismaClient() {
+  const datasourceUrl = resolveDatabaseUrl();
   return new PrismaClient({
+    ...(datasourceUrl ? { datasources: { db: { url: datasourceUrl } } } : {}),
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 }
@@ -109,9 +122,7 @@ function initPrismaClient(): PrismaClient {
     );
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
 
   return client;
 }

@@ -36,7 +36,7 @@ locals {
   app_ingress_ip = var.k8s_lb_ip
 
   # URL de connexion pour l'app sur Kapsule (RDB via réseau privé)
-  k8s_database_url = "postgresql://framm:${urlencode(random_password.rdb_password.result)}@${scaleway_rdb_instance.main.private_network[0].ip}:${scaleway_rdb_instance.main.private_network[0].port}/framm?sslmode=require"
+  k8s_database_url = "postgresql://framm:${urlencode(random_password.rdb_password.result)}@${scaleway_rdb_instance.main.private_network[0].ip}:${scaleway_rdb_instance.main.private_network[0].port}/framm?sslmode=require&connection_limit=5&pool_timeout=20"
 
   rdb_host = scaleway_rdb_instance.main.private_network[0].ip
   rdb_port = scaleway_rdb_instance.main.private_network[0].port

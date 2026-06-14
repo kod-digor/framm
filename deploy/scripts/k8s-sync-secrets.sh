@@ -26,12 +26,28 @@ set -a
 source "$ENV_FILE"
 set +a
 
+ensure_database_connection_limit() {
+  local url="${1}"
+  local limit="${DATABASE_CONNECTION_LIMIT:-5}"
+  if [[ "$url" == *connection_limit=* ]]; then
+    printf '%s' "$url"
+    return
+  fi
+  if [[ "$url" == *"?"* ]]; then
+    printf '%s&connection_limit=%s&pool_timeout=20' "$url" "$limit"
+  else
+    printf '%s?connection_limit=%s&pool_timeout=20' "$url" "$limit"
+  fi
+}
+
+DATABASE_URL_FOR_K8S="$(ensure_database_connection_limit "${K8S_DATABASE_URL}")"
+
 echo "=== Sync secrets K8s (framm-env) ==="
 kubectl create namespace framm --dry-run=client -o yaml | kubectl apply -f -
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n framm create secret generic framm-env \
-  --from-literal=DATABASE_URL="${K8S_DATABASE_URL}" \
+  --from-literal=DATABASE_URL="${DATABASE_URL_FOR_K8S}" \
   --from-literal=AUTH_SECRET="${AUTH_SECRET}" \
   --from-literal=AUTH_URL="${AUTH_URL}" \
   --from-literal=AUTH_TRUST_HOST="true" \
