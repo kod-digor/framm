@@ -194,8 +194,9 @@ function buildSourceArgs(source: ImapSourceCredentials): string[] {
   const provider = resolveOAuthProvider(source);
 
   // imapsync 2.323 : presets provider (--gmail1 / --office1), pas --oauthclientid1 ni --maxparallel.
+  // --gmail1 active --skipcrossduplicates par défaut, incompatible avec --usecache (reprise).
   if (provider === "google") {
-    args.unshift("--gmail1");
+    args.unshift("--gmail1", "--noskipcrossduplicates");
   } else if (provider === "microsoft") {
     args.unshift("--office1");
   } else {
