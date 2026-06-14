@@ -152,6 +152,8 @@ function MigrationWizardBody({
   const [sourceStats, setSourceStats] = useState<MigrationSourceStats | null>(
     activeStatus?.sourceStats ?? null
   );
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
+  const [discoveryAttemptedFor, setDiscoveryAttemptedFor] = useState<string | null>(null);
 
   const effectiveProvider = provider ?? activeStatus?.provider ?? null;
   const contactsSupported = effectiveProvider
@@ -176,6 +178,7 @@ function MigrationWizardBody({
   const needsDiscovery =
     step === "scope" &&
     !!migrationId &&
+    discoveryAttemptedFor !== migrationId &&
     (!sourceStats?.discoveredAt ||
       statsNeedReauth(sourceStats) ||
       (!sourceStats.mail.available &&
@@ -186,9 +189,16 @@ function MigrationWizardBody({
     if (!needsDiscovery || !migrationId || discoveryInFlight.current) return;
 
     discoveryInFlight.current = true;
+    setDiscoveryError(null);
     let cancelled = false;
-    void discoverMigrationSourceAction(migrationId).then((stats) => {
-      if (!cancelled && stats) setSourceStats(stats);
+    void discoverMigrationSourceAction(migrationId).then((result) => {
+      if (cancelled) return;
+      setDiscoveryAttemptedFor(migrationId);
+      if (result.ok) {
+        setSourceStats(result.stats);
+      } else {
+        setDiscoveryError(result.error);
+      }
       discoveryInFlight.current = false;
     });
 
@@ -344,6 +354,10 @@ function MigrationWizardBody({
               <div className="flex items-center gap-2 rounded-md border border-canal bg-neutral-50 px-4 py-3 text-sm text-ardoise/70">
                 <Loader2 className="size-4 animate-spin" aria-hidden />
                 {t("migration.statsDiscovering")}
+              </div>
+            ) : discoveryError ? (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+                {t("migration.statsDiscoverError")}
               </div>
             ) : sourceStats ? (
               <SourceStatsPanel

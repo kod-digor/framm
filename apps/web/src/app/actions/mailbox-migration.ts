@@ -21,6 +21,7 @@ import {
 import { discoverMigrationSource } from "@/lib/migration/discovery";
 import { AUTH_UNAVAILABLE_REASONS } from "@/lib/migration/discovery/api-error";
 import type { MigrationSourceStats } from "@/lib/migration/discovery/types";
+import { isDbUnavailableError } from "@/lib/auth-errors";
 import {
   normalizeImapCredentials,
   validateImapHost,
@@ -241,38 +242,59 @@ export async function getDraftMigrationAction(
   return serializeMigrationStatus(migration);
 }
 
+export type DiscoverMigrationSourceResult =
+  | { ok: true; stats: MigrationSourceStats }
+  | { ok: false; error: string };
+
 export async function discoverMigrationSourceAction(
   migrationId: string
-): Promise<MigrationSourceStats | null> {
-  const session = await requireOrgAdmin();
-  const orgId = await resolveOrgId(session);
-  if (!orgId) return null;
+): Promise<DiscoverMigrationSourceResult> {
+  try {
+    const session = await requireOrgAdmin();
+    const orgId = await resolveOrgId(session);
+    if (!orgId) return { ok: false, error: "notfound" };
 
-  const migration = await prisma.mailboxMigration.findFirst({
-    where: { id: migrationId, organizationId: orgId },
-  });
-  if (!migration) return null;
+    const migration = await prisma.mailboxMigration.findFirst({
+      where: { id: migrationId, organizationId: orgId },
+    });
+    if (!migration) return { ok: false, error: "notfound" };
 
-  const cached = migration.sourceStatsJson as MigrationSourceStats | null;
-  if (cached?.discoveredAt) {
-    const age = Date.now() - new Date(cached.discoveredAt).getTime();
-    const hasAuthFailure = [cached.mail, cached.contacts, cached.calendar].some(
-      (section) =>
-        !section.available &&
-        section.unavailableReason &&
-        AUTH_UNAVAILABLE_REASONS.has(section.unavailableReason)
-    );
-    if (age < 30 * 60 * 1000 && !hasAuthFailure) return cached;
+    const cached = migration.sourceStatsJson as MigrationSourceStats | null;
+    if (cached?.discoveredAt) {
+      const age = Date.now() - new Date(cached.discoveredAt).getTime();
+      const hasAuthFailure = [cached.mail, cached.contacts, cached.calendar].some(
+        (section) =>
+          !section.available &&
+          section.unavailableReason &&
+          AUTH_UNAVAILABLE_REASONS.has(section.unavailableReason)
+      );
+      if (age < 30 * 60 * 1000 && !hasAuthFailure) {
+        return { ok: true, stats: cached };
+      }
+    }
+
+    const stats = await discoverMigrationSource({
+      provider: migration.provider,
+      sourceCredentialsEnc: migration.sourceCredentialsEnc,
+      oauthRefreshTokenEnc: migration.oauthRefreshTokenEnc,
+    });
+
+    try {
+      await storeSourceStats(migrationId, stats);
+      revalidatePath("/dashboard/users");
+    } catch (storeErr) {
+      if (isDbUnavailableError(storeErr)) {
+        return { ok: false, error: "database_unavailable" };
+      }
+      console.error("[migration] storeSourceStats failed:", storeErr);
+    }
+
+    return { ok: true, stats };
+  } catch (err) {
+    if (isDbUnavailableError(err)) {
+      return { ok: false, error: "database_unavailable" };
+    }
+    console.error("[migration] discoverMigrationSourceAction failed:", err);
+    return { ok: false, error: "discovery_failed" };
   }
-
-  const stats = await discoverMigrationSource({
-    provider: migration.provider,
-    sourceCredentialsEnc: migration.sourceCredentialsEnc,
-    oauthRefreshTokenEnc: migration.oauthRefreshTokenEnc,
-  });
-
-  await storeSourceStats(migrationId, stats);
-  revalidatePath("/dashboard/users");
-
-  return stats;
 }

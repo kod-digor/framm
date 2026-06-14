@@ -13,6 +13,8 @@ export async function resolveOAuthAccessToken(
   source: ImapSourceCredentials,
   oauthRefreshTokenEnc: string | null
 ): Promise<OAuthAccessResult> {
+  let refreshFailed = false;
+
   if (source.oauthProvider && oauthRefreshTokenEnc) {
     const refreshToken = unsealSecret(oauthRefreshTokenEnc);
     if (refreshToken) {
@@ -23,12 +25,16 @@ export async function resolveOAuthAccessToken(
       if (refreshed?.accessToken) {
         return { accessToken: refreshed.accessToken };
       }
-      return { accessToken: null, error: "oauth_refresh_failed" };
+      refreshFailed = true;
     }
   }
 
   if (source.oauthAccessToken) {
     return { accessToken: source.oauthAccessToken };
+  }
+
+  if (refreshFailed) {
+    return { accessToken: null, error: "oauth_refresh_failed" };
   }
 
   if (source.oauthProvider) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isDbUnavailableError } from "@/lib/auth-errors";
 import { verifyOAuthState } from "@/lib/migration/oauth-state";
 import { exchangeMicrosoftCode } from "@/lib/migration/providers/microsoft";
 import { storeOAuthTokens } from "@/lib/migration/orchestrator";
@@ -35,25 +36,33 @@ export async function GET(req: NextRequest) {
     return usersRedirect(req, { migrationError: "invalid_state" });
   }
 
-  const migration = await prisma.mailboxMigration.findUnique({
-    where: { id: migrationId },
-  });
+  try {
+    const migration = await prisma.mailboxMigration.findUnique({
+      where: { id: migrationId },
+    });
 
-  if (!migration || migration.provider !== "MICROSOFT") {
-    return usersRedirect(req, { migrationError: "not_found" });
+    if (!migration || migration.provider !== "MICROSOFT") {
+      return usersRedirect(req, { migrationError: "not_found" });
+    }
+
+    const tokens = await exchangeMicrosoftCode(code, redirectUri(req));
+    if (!tokens) {
+      return usersRedirect(req, { migrationError: "token_exchange_failed", migrationId });
+    }
+
+    const email = tokens.email ?? migration.sourceAddress ?? migration.targetAddress;
+    await storeOAuthTokens(migrationId, { ...tokens, email }, email, "microsoft");
+
+    return usersRedirect(req, {
+      migrationId,
+      migrationMailboxId: migration.mailboxId,
+      migrationStep: "scope",
+    });
+  } catch (err) {
+    if (isDbUnavailableError(err)) {
+      return usersRedirect(req, { migrationError: "database_unavailable", migrationId });
+    }
+    console.error("[migration] microsoft oauth callback failed:", err);
+    return usersRedirect(req, { migrationError: "callback_failed", migrationId });
   }
-
-  const tokens = await exchangeMicrosoftCode(code, redirectUri(req));
-  if (!tokens) {
-    return usersRedirect(req, { migrationError: "token_exchange_failed", migrationId });
-  }
-
-  const email = tokens.email ?? migration.sourceAddress ?? migration.targetAddress;
-  await storeOAuthTokens(migrationId, { ...tokens, email }, email, "microsoft");
-
-  return usersRedirect(req, {
-    migrationId,
-    migrationMailboxId: migration.mailboxId,
-    migrationStep: "scope",
-  });
 }

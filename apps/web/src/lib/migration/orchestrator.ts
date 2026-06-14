@@ -224,10 +224,15 @@ export async function storeOAuthTokens(
     oauthProvider,
   };
 
+  const existing = await prisma.mailboxMigration.findUnique({
+    where: { id: migrationId },
+    select: { oauthRefreshTokenEnc: true },
+  });
+
   const sourceEnc = await sealSecret(JSON.stringify(sourceCreds));
   const refreshEnc = tokens.refreshToken
     ? await sealSecret(tokens.refreshToken)
-    : null;
+    : existing?.oauthRefreshTokenEnc ?? null;
 
   await prisma.mailboxMigration.update({
     where: { id: migrationId },

@@ -285,6 +285,7 @@
       "scopeContacts": "Contacts",
       "scopeCalendar": "Calendrier",
       "statsDiscovering": "Analyse du compte source…",
+      "statsDiscoverError": "Impossible d'analyser le compte source pour le moment. Réessayez dans quelques instants.",
       "statsMail": "{count} e-mails et {folders} dossiers",
       "stats": {
         "attachments": "{count} pièces jointes prévues"
