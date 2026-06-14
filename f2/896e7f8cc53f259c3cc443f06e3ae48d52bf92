@@ -1,0 +1,28 @@
+deploy/scripts/k8s-sync-secrets.sh
+  s_b74bbcfe12978e::t_bba431ad6d8886 29-44,50
+apps/web/src/lib/prisma.ts
+  s_b74bbcfe12978e::t_3a356ff0f04815 41-51,53,55,125
+apps/web/src/lib/auth-errors.ts
+  s_b74bbcfe12978e::t_df5ef76b2f7cf3 27-29
+apps/web/src/app/api/migration/oauth/google/route.ts
+  s_b74bbcfe12978e::t_1b83e51fe63152 2,31
+  s_b74bbcfe12978e::t_246f5812931bdd 27-30,32-35
+terraform/environments/prod/locals.tf
+  s_b74bbcfe12978e::t_df5ef76b2f7cf3 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "f2896e7f8cc53f259c3cc443f06e3ae48d52bf92",
+  "prompts": {},
+  "sessions": {
+    "s_b74bbcfe12978e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ca051e25-99f0-4148-892d-2bea42582ae1",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
