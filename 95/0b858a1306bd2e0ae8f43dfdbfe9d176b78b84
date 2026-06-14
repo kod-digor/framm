@@ -1,0 +1,54 @@
+apps/web/src/components/users/migration-status-panel.tsx
+  s_3a48f766516127::t_57c71c1453d6dc 106
+  s_3a48f766516127::t_f0653633d9c1f9 87
+  s_3a48f766516127::t_2a934d0990c9ca 118-120,122-137
+apps/web/src/components/users/migration-status-chip.tsx
+  s_3a48f766516127::t_fd326beaad6ae7 28
+  s_3a48f766516127::t_b9012019622b08 6,18-20
+apps/web/src/lib/migration/orchestrator.ts
+  s_3a48f766516127::t_43222c1186f586 159-165
+  s_3a48f766516127::t_c9c5428bf907a7 83-93,95-98,102,109-116,120,127-149
+  s_3a48f766516127::t_55910fd15bc86a 12-16
+  s_3a48f766516127::t_c3c6152a2b586a 248-253,260-263
+apps/web/src/app/actions/mailbox-migration.ts
+  s_3a48f766516127::t_dc101faf97f413 196
+  s_3a48f766516127::t_62a98a99f01a76 11-15
+  s_3a48f766516127::t_0769441b594393 214,220-239
+apps/web/src/components/users/migration-wizard.tsx
+  s_3a48f766516127::t_94bebf82dc19d2 247-249
+  s_3a48f766516127::t_9dd5156672c7e6 3
+  s_3a48f766516127::t_a60144c8e4c5d0 37
+  s_3a48f766516127::t_8cb9d47dd342c7 142
+  s_3a48f766516127::t_96f675153fcc18 186,188,192,197
+apps/web/src/components/users/users-crud.tsx
+  s_3a48f766516127::t_8dbb7792f92df1 3,6
+  s_3a48f766516127::t_60211c597c6ad8 89-98,103,105
+  s_3a48f766516127::t_f6a46369258b0e 260
+  s_3a48f766516127::t_99d718343c1215 141-142,144-146,148-155,158-168,172
+  s_3a48f766516127::t_4191764aa62513 386,396-399
+  s_3a48f766516127::t_3c49632da8a605 10
+  s_3a48f766516127::t_72eea137083ed8 74
+  s_3a48f766516127::t_40665fe0a7bc0b 36
+  s_3a48f766516127::t_4142ce2f99efe7 379
+  s_3a48f766516127::t_36d35a6969d71e 200-201,205-206,210-226
+apps/web/src/app/dashboard/users/page.tsx
+  s_3a48f766516127::t_c56d6c58e2fa9c 8,17
+apps/web/src/lib/migration/types.ts
+  s_3a48f766516127::t_2bfec476854883 69-78,81-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "950b858a1306bd2e0ae8f43dfdbfe9d176b78b84",
+  "prompts": {},
+  "sessions": {
+    "s_3a48f766516127": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3e2642da-e03a-4b8b-a8f4-a62d7dea4f25",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
