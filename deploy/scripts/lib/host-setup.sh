@@ -16,6 +16,14 @@ framm_host_install_aws_cli_v2() {
   rm -rf "${aws_tmp}"
 }
 
+framm_host_install_imapsync() {
+  if command -v imapsync >/dev/null 2>&1; then
+    return 0
+  fi
+  DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq imapsync
+}
+
 framm_host_ensure_tools() {
   mkdir -p /var/lib/node_exporter/textfile_collector
   if ! command -v aws >/dev/null 2>&1; then
@@ -109,6 +117,7 @@ framm_host_setup() {
   framm_host_ensure_tools
   framm_host_install_backup_cron "$1"
   if [[ "$1" == "mail" ]]; then
+    framm_host_install_imapsync
     framm_host_ensure_stalwart_data_perms
   fi
 }

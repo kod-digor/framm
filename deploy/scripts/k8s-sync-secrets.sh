@@ -12,6 +12,15 @@ export KUBECONFIG="${GEN_DIR}/kubeconfig"
 [[ -f "$KUBECONFIG" ]] || { echo "kubeconfig manquant — lancez bin/framm bootstrap (terraform) d'abord"; exit 1; }
 command -v kubectl >/dev/null || { echo "kubectl requis"; exit 1; }
 
+# OAuth migration et tuning imapsync : .env racine (secrets GitHub en CI).
+ROOT_ENV="${ROOT}/.env"
+if [[ -f "$ROOT_ENV" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$ROOT_ENV"
+  set +a
+fi
+
 set -a
 # shellcheck source=/dev/null
 source "$ENV_FILE"
@@ -45,6 +54,16 @@ kubectl -n framm create secret generic framm-env \
   --from-literal=OUTBOUND_SMTP_RELAY_PORT="${OUTBOUND_SMTP_RELAY_PORT:-2587}" \
   --from-literal=OUTBOUND_SMTP_RELAY_USER="${OUTBOUND_SMTP_RELAY_USER:-}" \
   --from-literal=OUTBOUND_SMTP_RELAY_SECRET="${OUTBOUND_SMTP_RELAY_SECRET:-}" \
+  --from-literal=GOOGLE_MIGRATION_CLIENT_ID="${GOOGLE_MIGRATION_CLIENT_ID:-}" \
+  --from-literal=GOOGLE_MIGRATION_CLIENT_SECRET="${GOOGLE_MIGRATION_CLIENT_SECRET:-}" \
+  --from-literal=MICROSOFT_MIGRATION_CLIENT_ID="${MICROSOFT_MIGRATION_CLIENT_ID:-}" \
+  --from-literal=MICROSOFT_MIGRATION_CLIENT_SECRET="${MICROSOFT_MIGRATION_CLIENT_SECRET:-}" \
+  --from-literal=IMAPSYNC_MAX_PARALLEL="${IMAPSYNC_MAX_PARALLEL:-6}" \
+  --from-literal=IMAPSYNC_MAX_BYTES_PER_SECOND="${IMAPSYNC_MAX_BYTES_PER_SECOND:-}" \
+  --from-literal=IMAPSYNC_PATH="${IMAPSYNC_PATH:-/usr/bin/imapsync}" \
+  --from-literal=MIGRATION_WORKER_CONCURRENCY="${MIGRATION_WORKER_CONCURRENCY:-1}" \
+  --from-literal=MIGRATION_STALWART_IMAP_HOST="${MIGRATION_STALWART_IMAP_HOST:-}" \
+  --from-literal=MIGRATION_STALWART_IMAP_PORT="${MIGRATION_STALWART_IMAP_PORT:-993}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n monitoring create secret generic framm-grafana \

@@ -33,6 +33,13 @@ EOF
   if [[ -n "${MAIL_PUBLIC_IP:-}" ]]; then
     echo "MAIL_PUBLIC_IP=${MAIL_PUBLIC_IP}" >> "$ENV_FILE"
   fi
+  for key in \
+    GOOGLE_MIGRATION_CLIENT_ID GOOGLE_MIGRATION_CLIENT_SECRET \
+    MICROSOFT_MIGRATION_CLIENT_ID MICROSOFT_MIGRATION_CLIENT_SECRET; do
+    if [[ -n "${!key:-}" ]]; then
+      printf '%s=%s\n' "$key" "${!key}" >> "$ENV_FILE"
+    fi
+  done
 fi
 
 echo "=== Terraform apply (prod) ==="

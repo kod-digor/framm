@@ -13,6 +13,7 @@ packages:
   - rsync
   - curl
   - unzip
+  - imapsync
 
 ssh_authorized_keys:
   - ${ssh_public_key}

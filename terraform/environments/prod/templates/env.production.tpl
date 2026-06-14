@@ -39,3 +39,9 @@ S3_ACCESS_KEY=${s3_access_key}
 S3_SECRET_KEY=${s3_secret_key}
 APP_PUBLIC_IP=${app_public_ip}
 MAIL_PUBLIC_IP=${mail_public_ip}
+
+# Migration IMAP (imapsync) — OAuth Google/Microsoft : .env racine → k8s-sync-secrets.sh
+IMAPSYNC_MAX_PARALLEL=6
+MIGRATION_WORKER_CONCURRENCY=1
+MIGRATION_STALWART_IMAP_HOST=mail.${primary_domain}
+MIGRATION_STALWART_IMAP_PORT=993

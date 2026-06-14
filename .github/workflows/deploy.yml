@@ -86,6 +86,10 @@ jobs:
           BUREAU_ADMIN_EMAIL: ${{ secrets.BUREAU_ADMIN_EMAIL }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           MAIL_PUBLIC_IP: ${{ secrets.MAIL_PUBLIC_IP }}
+          GOOGLE_MIGRATION_CLIENT_ID: ${{ secrets.GOOGLE_MIGRATION_CLIENT_ID }}
+          GOOGLE_MIGRATION_CLIENT_SECRET: ${{ secrets.GOOGLE_MIGRATION_CLIENT_SECRET }}
+          MICROSOFT_MIGRATION_CLIENT_ID: ${{ secrets.MICROSOFT_MIGRATION_CLIENT_ID }}
+          MICROSOFT_MIGRATION_CLIENT_SECRET: ${{ secrets.MICROSOFT_MIGRATION_CLIENT_SECRET }}
           DNS_ENABLED: "true"
           TEM_ENABLED: "true"
         run: ./deploy/scripts/ci-terraform-sync.sh

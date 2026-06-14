@@ -5,7 +5,9 @@ metadata:
   labels:
     app: framm-worker
 spec:
-  replicas: 2
+  # 4 replicas : jusqu'à 4 migrations mail en parallèle (1 par pod, MIGRATION_WORKER_CONCURRENCY=1).
+  # Le débit reste limité par Gmail IMAP (~2–5 msg/s par compte) — voir env.example.
+  replicas: 4
   selector:
     matchLabels:
       app: framm-worker

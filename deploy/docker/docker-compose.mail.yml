@@ -20,9 +20,9 @@ services:
       # la couche éphémère du conteneur et sont perdus à chaque recréation.
       - /opt/framm/mail-data:/var/lib/stalwart
 
-  # Migration IMAP : imapsync sur la VM host (pas dans ce compose).
-  # Le worker Framm (migration-worker.ts) lance imapsync via deploy/scripts/lib/migration-run.sh.
-  # Installer : apt install imapsync (ou binaire depuis imapsync.lamiral.info).
+  # Migration IMAP : imapsync s'exécute dans le pod worker K8s (Dockerfile.worker).
+  # imapsync est aussi installé sur la VM mail (cloud-init / host-setup) pour
+  # deploy/scripts/lib/migration-run.sh (vérification manuelle).
 
   # docker-proxy → connexion directe à Stalwart:8080 renvoie une réponse vide
   # depuis l'hôte. Socat partage le namespace réseau de stalwart, écoute sur
