@@ -1,0 +1,51 @@
+apps/web/src/lib/migration/types.ts
+  s_7bc54f581ee299::t_234fc3b8635626 101-123
+  s_7bc54f581ee299::t_2168fa9bed1339 72-84
+apps/web/src/lib/migration/orchestrator.ts
+  s_7bc54f581ee299::t_353fd7fc473900 230-282
+apps/web/src/components/users/migration-status-chip.tsx
+  s_7bc54f581ee299::t_c61466124f7d28 3,10-25,38,46,48-57,59-67
+apps/web/src/components/users/migration-sidebar-widget.tsx
+  s_7bc54f581ee299::t_62d04b10dd3cd8 5,7,11,17-20,61,63-71,87,99-155,161
+apps/web/src/components/users/migration-status-panel.tsx
+  s_7bc54f581ee299::t_59943bca8e1453 116,122
+  s_7bc54f581ee299::t_89659edfeb92d9 240-246,249-303
+  s_7bc54f581ee299::t_6727fc177ef247 422-428,430-435
+apps/web/src/components/users/users-crud.tsx
+  s_7bc54f581ee299::t_8ae203b3fede11 130
+  s_7bc54f581ee299::t_f245a07acbd291 12
+  s_7bc54f581ee299::t_127dadd267bb21 252
+  s_7bc54f581ee299::t_e058ffa78294aa 335
+  s_7bc54f581ee299::t_1570fe55dd2e50 169
+  s_7bc54f581ee299::t_09a8c9a35e44d5 38
+  s_7bc54f581ee299::t_80eefbdbdae2e7 492-496,506-507
+  s_7bc54f581ee299::t_f60e1a6eb29fe5 141
+apps/web/src/app/dashboard/users/page.tsx
+  s_7bc54f581ee299::t_35d8736014ac07 9
+  s_7bc54f581ee299::t_94e517fbe78c64 10
+  s_7bc54f581ee299::t_7b3a4a69b25fd6 53,60-62
+apps/web/messages/fr.json
+  s_7bc54f581ee299::t_2194163995cecf 393-394
+  s_7bc54f581ee299::t_e5958cd079f7b0 346-347
+  s_7bc54f581ee299::t_9288bf9e5e82e3 360-365
+apps/web/src/app/actions/mailbox-migration.ts
+  s_7bc54f581ee299::t_9d71b116b080a1 256-291
+  s_7bc54f581ee299::t_dfd35c599c6624 316-321,323-325
+  s_7bc54f581ee299::t_7a45f87234c3e3 16,18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "01ae96ec4fe3c3a442f2d5bfd9fe8e9d0fa860b4",
+  "prompts": {},
+  "sessions": {
+    "s_7bc54f581ee299": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "32d62e64-6ae5-49b4-9d33-88eb79df0bc5",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
