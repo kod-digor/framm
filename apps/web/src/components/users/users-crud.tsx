@@ -84,6 +84,7 @@ export function UsersCrud({
   const oauthMigrationId = searchParams.get("migrationId");
   const oauthStep = searchParams.get("migrationStep");
   const oauthError = searchParams.get("migrationError");
+  const migrationStatusMailbox = searchParams.get("migrationStatusMailbox");
 
   const [createOpen, setCreateOpen] = useState(false);
   const [openUserId, setOpenUserId] = useState<string | null>(null);
@@ -146,6 +147,36 @@ export function UsersCrud({
   }
 
   const oauthHandled = useRef(false);
+  const statusMailboxHandled = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!migrationStatusMailbox || statusMailboxHandled.current === migrationStatusMailbox) {
+      return;
+    }
+    statusMailboxHandled.current = migrationStatusMailbox;
+
+    const user = users.find((u) => u.mailboxId === migrationStatusMailbox);
+    if (!user?.mailboxId) return;
+
+    void (async () => {
+      const liveStatus = await getMigrationStatusAction(migrationStatusMailbox);
+      if (liveStatus && isLaunchedMigrationStatus(liveStatus.status)) {
+        setActiveMigrations((prev) => ({
+          ...prev,
+          [migrationStatusMailbox]: liveStatus,
+        }));
+        setStatusDrawerMailboxId(migrationStatusMailbox);
+        setMigrationStatus(liveStatus);
+      }
+    })();
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("migrationStatusMailbox");
+    const next = params.toString();
+    router.replace(next ? `/dashboard/users?${next}` : "/dashboard/users", {
+      scroll: false,
+    });
+  }, [migrationStatusMailbox, users, router, searchParams]);
 
   useEffect(() => {
     if (!oauthMailboxId || oauthHandled.current) return;

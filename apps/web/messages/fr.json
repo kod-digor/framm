@@ -373,7 +373,19 @@
       "phase_FINALIZING": "Finalisation…",
       "progressContacts": "Contacts : {synced} / {total}",
       "progressCalendar": "Événements : {synced} / {total}",
-      "progressMessages": "E-mails : {synced} / {total}"
+      "progressMessages": "E-mails : {synced} / {total}",
+      "sidebarTitle": "Migration en cours",
+      "sidebarProgressMessages": "{synced} / {total} e-mails",
+      "sidebarAria": "Migration en cours, {percent} % — ouvrir le détail",
+      "sidebarMultiple": "+{count} autres",
+      "folderLabel": "Dossier : {folder}",
+      "folderLabelShort": "Dossier",
+      "etaRemaining": "Temps restant estimé : {duration}",
+      "event_source_discovered": "Compte source analysé",
+      "event_migration_queued": "Migration planifiée",
+      "event_migration_started": "Migration démarrée",
+      "event_migration_completed": "Migration terminée",
+      "event_migration_cancelled": "Migration annulée"
     }
   },
   "sharedMailboxes": {

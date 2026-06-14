@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { MigrationSidebarWidget } from "@/components/users/migration-sidebar-widget";
 import {
   Activity,
   ChevronRight,
@@ -155,6 +156,7 @@ export function Sidebar({
           <CollapsibleGroup key={group.id} group={group} pathname={pathname} />
         ))}
       </nav>
+      <MigrationSidebarWidget />
     </aside>
   );
 }
