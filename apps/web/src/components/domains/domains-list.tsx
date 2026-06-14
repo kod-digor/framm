@@ -41,32 +41,16 @@ type TableLabels = {
   hostRootHint: string;
 };
 
-type DnsStatusLabels = {
-  title: string;
-  expected: string;
-  found: string;
-  nxdomain: string;
-  none: string;
-  mxFoundTitle: (count: number) => string;
-  mxRecordLabel: (index: number) => string;
-  txtFoundTitle: (count: number) => string;
-  txtRecordLabel: (index: number) => string;
-  txtSpfKind: string;
-  txtOtherKind: string;
-  txtSpfHint: string;
-  matchesExpected: string;
-};
-
 export function DomainsList({
   domains,
   labels,
   tableLabels,
-  dnsStatusLabels,
+  mailHost,
 }: {
   domains: DomainCardData[];
   labels: DomainsListLabels;
   tableLabels: TableLabels;
-  dnsStatusLabels: DnsStatusLabels;
+  mailHost: string;
 }) {
   const [deleteState, deleteAction] = useActionState(deleteDomainAction, INITIAL_ACTION_RESULT);
 
@@ -105,7 +89,7 @@ export function DomainsList({
                   labels={tableLabels}
                 />
                 {domain.dnsCheck && (
-                  <DnsStatusPanel check={domain.dnsCheck} labels={dnsStatusLabels} />
+                  <DnsStatusPanel check={domain.dnsCheck} mailHost={mailHost} />
                 )}
               </div>
             )}

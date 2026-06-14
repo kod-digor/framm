@@ -1,3 +1,6 @@
+"use client";
+
+import { useT } from "@/i18n/t";
 import type { verifyDomainDns } from "@/lib/dns/verify";
 
 type DnsCheck = Awaited<ReturnType<typeof verifyDomainDns>>;
@@ -85,26 +88,30 @@ function RecordEntry({
 
 export function DnsStatusPanel({
   check,
-  labels,
+  mailHost,
 }: {
   check: DnsCheck;
-  labels: {
-    title: string;
-    expected: string;
-    found: string;
-    nxdomain: string;
-    none: string;
-    mxFoundTitle: (count: number) => string;
-    mxRecordLabel: (index: number) => string;
-    txtFoundTitle: (count: number) => string;
-    txtRecordLabel: (index: number) => string;
-    txtSpfKind: string;
-    txtOtherKind: string;
-    txtSpfHint: string;
-    matchesExpected: string;
-  };
+  mailHost: string;
 }) {
+  const t = useT("domains");
+
   if (check.results.length === 0) return null;
+
+  const labels = {
+    title: t("dnsCurrentTitle"),
+    expected: t("dnsExpected"),
+    found: t("dnsFound"),
+    nxdomain: t("dnsNxdomain"),
+    none: t("dnsNone"),
+    mxFoundTitle: (count: number) => t("dnsMxFoundTitle", { count }),
+    mxRecordLabel: (index: number) => t("dnsMxRecordLabel", { index }),
+    txtFoundTitle: (count: number) => t("dnsTxtFoundTitle", { count }),
+    txtRecordLabel: (index: number) => t("dnsTxtRecordLabel", { index }),
+    txtSpfKind: t("dnsTxtSpfKind"),
+    txtOtherKind: t("dnsTxtOtherKind"),
+    txtSpfHint: t("dnsTxtSpfHint", { mailHost }),
+    matchesExpected: t("dnsMatchesExpected"),
+  };
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm">

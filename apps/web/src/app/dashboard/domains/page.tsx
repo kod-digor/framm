@@ -58,22 +58,6 @@ export default async function DomainsPage() {
     hostRootHint: t("hostRootHint"),
   };
 
-  const dnsStatusLabels = {
-    title: t("dnsCurrentTitle"),
-    expected: t("dnsExpected"),
-    found: t("dnsFound"),
-    nxdomain: t("dnsNxdomain"),
-    none: t("dnsNone"),
-    mxFoundTitle: (count: number) => t("dnsMxFoundTitle", { count }),
-    mxRecordLabel: (index: number) => t("dnsMxRecordLabel", { index }),
-    txtFoundTitle: (count: number) => t("dnsTxtFoundTitle", { count }),
-    txtRecordLabel: (index: number) => t("dnsTxtRecordLabel", { index }),
-    txtSpfKind: t("dnsTxtSpfKind"),
-    txtOtherKind: t("dnsTxtOtherKind"),
-    txtSpfHint: t("dnsTxtSpfHint", { mailHost: platformHost }),
-    matchesExpected: t("dnsMatchesExpected"),
-  };
-
   const listLabels = {
     statusVerified: t("statusVerified"),
     statusPending: t("statusPending"),
@@ -102,7 +86,7 @@ export default async function DomainsPage() {
           domains={domainCards}
           labels={listLabels}
           tableLabels={tableLabels}
-          dnsStatusLabels={dnsStatusLabels}
+          mailHost={platformHost}
         />
       )}
     </div>
