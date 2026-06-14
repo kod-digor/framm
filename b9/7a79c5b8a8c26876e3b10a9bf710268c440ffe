@@ -1,0 +1,21 @@
+terraform/environments/prod/templates/env.production.tpl
+  s_5e122861228086::t_b02c33145fbf33 7
+terraform/environments/prod/main.tf
+  s_5e122861228086::t_fe995e2188927e 113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b97a79c5b8a8c26876e3b10a9bf710268c440ffe",
+  "prompts": {},
+  "sessions": {
+    "s_5e122861228086": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "374fce14-4a53-41e2-bb0e-31a92188e368",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
