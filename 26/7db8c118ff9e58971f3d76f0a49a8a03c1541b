@@ -1,0 +1,48 @@
+apps/web/messages/fr.json
+  s_f77314dd4dc05f::t_b55eefe4aca982 324-328
+apps/web/src/components/users/users-crud.tsx
+  s_f77314dd4dc05f::t_bafa082dddc766 99,105-109,111-112
+  s_f77314dd4dc05f::t_75d61f859af819 199-201
+  s_f77314dd4dc05f::t_2569950b4eeb5e 460-461,472-473
+  s_f77314dd4dc05f::t_02d1bef3d5ece2 256,258-259,264-280,291-293
+  s_f77314dd4dc05f::t_479be8429f21bc 13
+apps/web/src/lib/migration/types.ts
+  s_f77314dd4dc05f::t_01342f11c97c5f 92-93,95-108,115-120
+apps/web/src/app/actions/mailbox-migration.ts
+  s_f77314dd4dc05f::t_50013c7111a15e 38
+  s_f77314dd4dc05f::t_cc192a29c8c7fe 307-374
+  s_f77314dd4dc05f::t_97ec346d2dcab4 17-18,20,30-31,37
+apps/web/src/components/users/migration-wizard.tsx
+  s_f77314dd4dc05f::t_9fbb11ca84a5cc 128-129
+  s_f77314dd4dc05f::t_149727d5865dd3 67-74
+  s_f77314dd4dc05f::t_cb51e3615e3e86 405-422,424-432
+  s_f77314dd4dc05f::t_6e15c552876cd0 202-229
+  s_f77314dd4dc05f::t_e86b4a67dd29e7 279-280
+  s_f77314dd4dc05f::t_546df1be9a6967 439-450,452-457
+  s_f77314dd4dc05f::t_55a8196afff548 451
+  s_f77314dd4dc05f::t_f9bb28e0f46c90 173-175
+  s_f77314dd4dc05f::t_e390a672313266 19
+  s_f77314dd4dc05f::t_b6b5a6372624e0 37
+  s_f77314dd4dc05f::t_a3a39b52f7389c 291-295
+  s_f77314dd4dc05f::t_3d10e5c7b871d4 423
+  s_f77314dd4dc05f::t_d01719de3c74fa 510-520
+  s_f77314dd4dc05f::t_778b71828cf198 146-147,168-169
+apps/web/src/lib/migration/orchestrator.ts
+  s_f77314dd4dc05f::t_30af3c210f50f2 174-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "267db8c118ff9e58971f3d76f0a49a8a03c1541b",
+  "prompts": {},
+  "sessions": {
+    "s_f77314dd4dc05f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "8dd6c818-dc88-4c57-ab17-7d7dddbc41fb",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
