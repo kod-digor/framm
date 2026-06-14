@@ -1,0 +1,19 @@
+apps/web/src/components/domains/dns-status-panel.tsx
+  s_b9d8565c22b598::t_8ea226be48c240 5,9,11-21,24,29-30,36-37,55,57,61,66-135,173-177,185-186,192,196,200-205,217-218,224,228,242-247,255-265
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "43598753dfd3fbe99d8b4ec31534fa312bd10c21",
+  "prompts": {},
+  "sessions": {
+    "s_b9d8565c22b598": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "fdc47d97-8a7e-4442-a52f-576d8b45f140",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
