@@ -1,0 +1,40 @@
+apps/web/src/lib/stalwart/webmail-proxy.ts
+  s_3ff792395b866b::t_3d69e9cece40f5 200-203
+  s_3ff792395b866b::t_2d89ff7fc3b8dd 153,155,157,159-162
+  s_3ff792395b866b::t_3cf9d65454f5ac 421-423,433,438-453,455,457
+  s_3ff792395b866b::t_9826ffc3a9502b 413
+  s_3ff792395b866b::t_ebbeb23460a90f 31-40
+  s_3ff792395b866b::t_e70616db93c0cb 91,96,98-99
+  s_3ff792395b866b::t_8c76a4f6a42850 328-338,340,343
+  s_3ff792395b866b::t_9c001b6ab0cc14 7
+  s_3ff792395b866b::t_74e81e3f1dbbab 61,65,79-87
+  s_3ff792395b866b::t_41615f37445a55 175-180,191
+apps/web/src/lib/mail/mailbox-access.ts
+  s_3ff792395b866b::t_9564448862a0d0 23,26-28,30-36
+  s_3ff792395b866b::t_3be23bffb1976f 63-64,67-68,72-86
+  s_3ff792395b866b::t_f85a038a8d6506 6
+  s_3ff792395b866b::t_b1d555467c4fd7 5
+  s_3ff792395b866b::t_7c04a19bfef1f7 29
+apps/web/src/app/api/mail/[mailboxId]/jmap/route.ts
+  s_3ff792395b866b::t_ab1b6bdcd76126 27,31
+  s_3ff792395b866b::t_cfb0b133117a7b 29-30,32-33
+apps/web/src/app/dashboard/mail/[mailboxId]/page.tsx
+  s_3ff792395b866b::t_082ef65ce861a3 19,22-27
+  s_3ff792395b866b::t_3c440a6eb0f079 8-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "f8a10d108b8df4cb85ec680deb3679f824b692e5",
+  "prompts": {},
+  "sessions": {
+    "s_3ff792395b866b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "43adae3b-17ec-45a4-8649-3cff32fa26b5",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
