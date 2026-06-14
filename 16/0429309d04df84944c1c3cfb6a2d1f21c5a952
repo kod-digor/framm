@@ -1,0 +1,323 @@
+apps/web/src/lib/migration/discovery/imap-client.ts
+  s_4296489e25db82::t_b4f4e2115b7e8d 1-70,72-80,83-99,101-102,104-149
+  s_4296489e25db82::t_1d4ee927819f31 81-82,100,103
+  s_4296489e25db82::t_a1b5fa92dbdf97 71
+apps/web/src/lib/prisma.ts
+  s_d346a268609bd7::t_5b589bbabf3d0a 2,4-9
+  s_d346a268609bd7::t_39d8db0089a6ed 85,88-94,104
+  s_f8d7e7b8ee0fb9::t_997fb1b216534b 18-19
+  s_2d37759445a0fe::t_422e1e9ac39529 1,22-32,35-40,53-73,77-81
+apps/web/next.config.ts
+  s_f827b63b22fd8c::t_a41ab22a1ce096 1
+apps/web/src/worker/migration-worker.ts
+  s_35c25316280519::t_28397353238286 229,233,236
+  s_4296489e25db82::t_49ee48723f9ec4 7-8,18-19,40-62,93-94,123-174,176-199,201-225
+  s_35c25316280519::t_11d576811d2577 22-28
+.env.example
+  s_3bdde2cfc82aa7::t_fbbef2613b38e7 49-51
+apps/web/load-dev-env.ts
+  s_d346a268609bd7::t_dfb378f265f42a 1-14
+deploy/scripts/lib/migration-run.sh
+  s_35c25316280519::t_ea48b76d77a364 12-13,22,30,32
+apps/web/src/components/users/migration-status-panel.tsx
+  s_4296489e25db82::t_479cecfaab2624 142-162
+apps/web/src/app/actions/auth.ts
+  s_d346a268609bd7::t_e698d00b96d59b 223
+apps/web/src/lib/migration/stalwart-import.ts
+  s_4296489e25db82::t_e6626caa389044 1-325
+apps/web/prisma/migrations/20260614130516_add_migration_contacts_calendar/migration.sql
+  s_4296489e25db82::t_ea00a3df899cc4 1-13
+apps/web/src/lib/migration/discovery/provider-support.ts
+  s_446f3d62ba1446::t_19b00954c6a818 1-9
+apps/web/src/lib/migration/discovery/google.ts
+  s_446f3d62ba1446::t_c917e5f77e8173 65
+  s_446f3d62ba1446::t_fdc771af8c46f3 126-128
+  s_d0ae53e11c64fd::t_ab08a473010909 165,175-176,178,200-204,209,211,219,223-224
+  s_67d8bb4a85c705::t_0b0e1f2d070ada 78-100,105-106
+  s_1ce1f72d1fe9a7::t_144aa54cccda87 1,5-56,159-163,168-174,177,179-199,205-208,210,212-217,284-285,287,289-317
+  s_446f3d62ba1446::t_9f5e7c967d6781 74
+  s_d0ae53e11c64fd::t_880315d0d80e0e 2
+  s_4296489e25db82::t_8e12c6f96f420d 3-4,57-64,66-73,75-77,101-104,107-125,129-158,164,166-167,218,220-222,225-283,286,288,318-320
+apps/web/src/components/users/migration-status-chip.tsx
+  s_35c25316280519::t_433fa08aaf5fd8 1-42
+apps/web/src/lib/migration/providers/google.ts
+  s_4296489e25db82::t_5e70a5b4567143 14-15
+  s_446f3d62ba1446::t_72d9698a10c3d9 13
+  s_131e593a854572::t_5f2c722cb53e2c 27-37
+apps/web/src/lib/migration/calendar-runner.ts
+  s_446f3d62ba1446::t_851a51d458ff88 5
+  s_446f3d62ba1446::t_f77494cb5a3ec8 24-25
+  s_4296489e25db82::t_3ec978e829fdc5 1-4,6-23,26-116
+apps/web/src/app/actions/mailbox-migration.ts
+  s_35c25316280519::t_adbce7e9ed288c 13
+  s_35c25316280519::t_5454859f4d57bc 187-201
+  s_446f3d62ba1446::t_8fa34ec9a1c387 20
+  s_4296489e25db82::t_a3cca4c0228d74 131-134
+  s_4296489e25db82::t_5b21d7707930b0 217-232,240-252
+  s_4296489e25db82::t_20de4a4f096164 17,19,21
+  s_446f3d62ba1446::t_d418e3a91262e7 233-239
+apps/web/src/lib/migration/providers/microsoft.ts
+  s_4296489e25db82::t_c9fe02c4c00361 14-15
+  s_446f3d62ba1446::t_9ee5e32efc3df9 53
+  s_446f3d62ba1446::t_e3454899927fb4 13
+  s_131e593a854572::t_0e6931855522ef 28-38
+apps/web/src/app/dashboard/users/page.tsx
+  s_35c25316280519::t_245cf7c69ddeed 16
+  s_35c25316280519::t_02d24402c8dc0f 109
+  s_35c25316280519::t_3faf8e23ac7507 7-10
+  s_35c25316280519::t_830ec8f9c02da4 49,52-57
+apps/web/prisma/schema.prisma
+  s_4296489e25db82::t_4975b4689ae97e 387-388
+  s_4296489e25db82::t_614baf0664696b 80-81
+apps/web/src/lib/migration/discovery/dav-client.ts
+  s_d0ae53e11c64fd::t_57ee8d282fabe6 1-2
+  s_4296489e25db82::t_af21bbec36b323 3-6,8-45,47-54,56-168,176-218,220-221,223-224,226-227
+  s_d0ae53e11c64fd::t_b3359c8fd06456 7
+  s_d0ae53e11c64fd::t_9a4a8fa6dc2a9d 219,222,225
+  s_d0ae53e11c64fd::t_39a1531f3273e1 46,55
+  s_d0ae53e11c64fd::t_ac923599917bb4 169-175
+apps/web/messages/fr.json
+  s_4296489e25db82::t_6e0cdbd5c45220 283,287-288,294-295,297-298,323
+  s_67d8bb4a85c705::t_8d7d4f96797635 289-293
+  s_446f3d62ba1446::t_76c602fde95897 299-310,312-322
+  s_1ce1f72d1fe9a7::t_606e0d291b6c25 311
+  s_4296489e25db82::t_1bc0f43655492b 266
+  s_d0ae53e11c64fd::t_bcc18ac23c17df 296
+  s_35c25316280519::t_c7e3d4838f1b18 339-340
+  s_4296489e25db82::t_baf1ca7b422772 361-374
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_35c25316280519::t_83cf2581890a73 132-154,156-162
+  s_35c25316280519::t_ee6657cc0705e6 28-43
+apps/web/src/lib/auth.ts
+  s_d346a268609bd7::t_6c5b0789f496c3 66
+  s_3bdde2cfc82aa7::t_36a432c00e0d8a 97-106
+  s_3bdde2cfc82aa7::t_ef96a3e89570ac 2,32-40
+  s_3bdde2cfc82aa7::t_d0de4eb0da52c8 121,130,132-137,140-163
+  s_3bdde2cfc82aa7::t_774dd71ef10c23 1
+  s_3bdde2cfc82aa7::t_b76a086e5dee16 31
+  s_3bdde2cfc82aa7::t_089586e1846f65 43
+apps/web/src/lib/migration/contacts-runner.ts
+  s_4296489e25db82::t_fa5be426ce7774 1-5,7-8,10-27,30-41,43-121
+  s_446f3d62ba1446::t_87caa39416a07c 28-29
+  s_4296489e25db82::t_060716700c3dad 6
+  s_4296489e25db82::t_0e68314cf30622 42
+  s_446f3d62ba1446::t_5c0bf99d355e83 9
+apps/web/src/lib/migration/discovery/microsoft.ts
+  s_67d8bb4a85c705::t_efdaaaef2393e6 45-72
+  s_d0ae53e11c64fd::t_3a7eb635042dd5 107-112,117,120,133-134,136-138,143,147-148
+  s_446f3d62ba1446::t_3889e49d92c8c4 94-97
+  s_4296489e25db82::t_2c38995814c4ad 3-32,36-44,73-93,98-106,113-116,118-119,121-126,130-132,135,139-142,144-146,149-226
+  s_d0ae53e11c64fd::t_a05cf19bdaff6e 2
+  s_446f3d62ba1446::t_4b4ac9589b9200 33-35
+  s_446f3d62ba1446::t_57140452b3348e 127-129
+  s_446f3d62ba1446::t_6f5f7600094611 1
+apps/web/src/lib/migration/orchestrator.ts
+  s_35c25316280519::t_8f139136dc1187 75-78,86-94,96-97
+  s_4296489e25db82::t_d0f98164ff9098 13-16
+  s_446f3d62ba1446::t_dcb99d2dd2aedb 181
+  s_4296489e25db82::t_76e6200b1eb4ed 187-200
+  s_4296489e25db82::t_cbe3865eb6db26 234,239,243
+  s_4296489e25db82::t_532c8cac18ddf2 62
+  s_4296489e25db82::t_1244e61358e502 38
+apps/web/prisma/seed.ts
+  s_d346a268609bd7::t_6877c3172f9070 3,6-7,11
+  s_d346a268609bd7::t_b1b7c67f74332e 14-16
+apps/web/src/lib/migration/discovery/calendar-stats.ts
+  s_d0ae53e11c64fd::t_f7eab9c84b3b35 1-47
+apps/web/src/app/api/migration/oauth/microsoft/route.ts
+  s_131e593a854572::t_6c6692c6d61b5d 4-10
+  s_f827b63b22fd8c::t_b3c8915fee7ae4 11
+  s_131e593a854572::t_1b4fceafb5c99b 36-44,50-58
+deploy/scripts/sync-dev-env.sh
+  s_3bdde2cfc82aa7::t_45b8ee3724c43d 53-72
+apps/web/src/components/users/migration-active-banner.tsx
+  s_35c25316280519::t_bf4e0fbcb1a497 1-20
+apps/web/src/lib/migration/discovery/api-error.ts
+  s_446f3d62ba1446::t_e554fba0a0b524 12-15,36-57
+  s_1ce1f72d1fe9a7::t_39b32538fbd419 1-11,16-35
+k8s/apps/web/deployment-worker.yaml
+  s_35c25316280519::t_3e49e19525206c 8
+apps/web/src/lib/migration/discovery/types.ts
+  s_67d8bb4a85c705::t_d7569754da172f 5-7
+  s_4296489e25db82::t_bfb6dd4a633961 1-4,8-19,21,24-25,29-44
+  s_d0ae53e11c64fd::t_3558233300fa9c 20,22-23,26-28
+apps/web/src/lib/migration/oauth-access.ts
+  s_446f3d62ba1446::t_c84282639278ab 1-39
+apps/web/src/components/users/users-crud.tsx
+  s_35c25316280519::t_a751f9f91976c3 163-170,173-182,189-190
+  s_35c25316280519::t_9f650e45884aeb 63,69
+  s_35c25316280519::t_93ca27915a0576 9-12,18-20
+  s_35c25316280519::t_d6e796ac297766 210-228
+  s_35c25316280519::t_eae32e54af09a2 346,354,359-379
+  s_35c25316280519::t_dbb909db462fcb 135-140,147-159
+  s_35c25316280519::t_aacbef52696473 104-113,116-125
+  s_35c25316280519::t_9433593f535593 306-307
+  s_35c25316280519::t_aebce5c2864136 89-95
+apps/web/load-root-env.ts
+  s_f827b63b22fd8c::t_654fbfe5ab40db 1-20,24-37
+  s_35c25316280519::t_8ae2ed1914b92f 21-23
+apps/web/src/components/users/migration-wizard.tsx
+  s_446f3d62ba1446::t_438a49fad54f53 375
+  s_d0ae53e11c64fd::t_c955603720bac7 29
+  s_446f3d62ba1446::t_3d94321a970982 174,182
+  s_446f3d62ba1446::t_14eeae208198a3 175-181
+  s_446f3d62ba1446::t_85fbe5b1ca8788 30-33
+  s_446f3d62ba1446::t_e79aa049522756 346-359
+  s_446f3d62ba1446::t_7372f284c016ec 459-467,469-495,498,502,505-507,533-535,538-540,542-550,553-558,571-574,576-580
+  s_4296489e25db82::t_7f98a98287e86d 173,184,194
+  s_446f3d62ba1446::t_d52c64a2170057 154-172
+  s_1ce1f72d1fe9a7::t_b5063fdb73f1cf 468
+  s_446f3d62ba1446::t_cb6ae6fe2febd8 141-143
+  s_4296489e25db82::t_c798b77fd79d32 3,9,16,28,67-75,147-153,183,185-193,339,341-345,360-361,366-367,373-374,381-382,392-396,406-410,416,496-497,499-501,503-504,508-510,532,536-537,541,551-552,575,581-586,593,600,611,614-616
+  s_d0ae53e11c64fd::t_246f8368618699 76-93
+  s_67d8bb4a85c705::t_3b620a769a3bee 418
+  s_4296489e25db82::t_a40c7eb712f543 340
+  s_446f3d62ba1446::t_e622d1194a57b4 383
+  s_67d8bb4a85c705::t_79fbe848941e99 511-531
+  s_d0ae53e11c64fd::t_f985823d68c077 559-570
+  s_446f3d62ba1446::t_355ba18556341e 411-415
+apps/web/env.example
+  s_3bdde2cfc82aa7::t_87cea5d02a1b48 7-8
+  s_d346a268609bd7::t_602639a936b757 43
+  s_35c25316280519::t_f1e2d2e3d9ef4b 69-71
+  s_a8a6b7815e1222::t_19ac1c1bca65a3 39,44-46,56-58,64-66
+  s_212b5bae23c719::t_987f39b633dcbc 47-54,59-62
+  s_3bdde2cfc82aa7::t_a16d0819527dfd 42
+  s_f827b63b22fd8c::t_286f54947c4fd5 40-41,55,63,67-68
+apps/web/src/app/api/migration/oauth/google/route.ts
+  s_131e593a854572::t_d9a5f0a3bcc12f 36-44,50-58
+  s_f827b63b22fd8c::t_844bea6748e3e4 11
+  s_131e593a854572::t_e73ecec57735fd 4-10
+apps/web/src/lib/migration/types.ts
+  s_4296489e25db82::t_a2f42133b7b3f9 82-86
+  s_4296489e25db82::t_bded0aaf8dfcc3 10-13
+  s_4296489e25db82::t_310efd56dec9a8 105-109
+  s_4296489e25db82::t_989097b76cf25e 2
+  s_4296489e25db82::t_4af40b5cf92057 57
+apps/web/src/lib/migration/discovery/index.ts
+  s_446f3d62ba1446::t_6b57ec2828c269 3,21-29,55-70,72-74
+  s_446f3d62ba1446::t_1eb4fe1328c63e 71
+  s_446f3d62ba1446::t_d21118f228d331 1
+  s_d0ae53e11c64fd::t_054d1784f53b24 118-119
+  s_4296489e25db82::t_3f21b906facc4f 2,4-20,30-54,75-117,120-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "160429309d04df84944c1c3cfb6a2d1f21c5a952",
+  "prompts": {},
+  "sessions": {
+    "s_131e593a854572": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f4c6eb79-5817-48de-9688-1f549b0afa21",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_1ce1f72d1fe9a7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "cf780f87-fb78-451b-8719-36600d570054",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_212b5bae23c719": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "eb2dcdae-0352-4cc7-ac45-c1a494ee776f",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_2d37759445a0fe": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e2e6894f-c51d-465c-83d7-43edc50e1bd2",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_35c25316280519": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3f68373a-a5b3-473d-bee0-e3e3db45166f",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_3bdde2cfc82aa7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "954a33ce-d979-434d-a5eb-d7f2856a74d2",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_4296489e25db82": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1bfd0f77-93c0-4d34-a833-0c05be982068",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_446f3d62ba1446": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b64dd4f4-f4e9-4ec8-bc82-900f48f349c3",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_67d8bb4a85c705": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "99f3c6d7-b145-4ae8-82d5-0571052c0a57",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_a8a6b7815e1222": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "0733e45f-360e-4869-8319-942d3be80bd7",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_d0ae53e11c64fd": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "86b206a2-80c2-4569-b564-c8f7ef9499ec",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_d346a268609bd7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1b2694b9-fa22-464c-9111-6d33ae411378",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_f827b63b22fd8c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "500a2975-76bf-4dd6-82cd-2918233614e7",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_f8d7e7b8ee0fb9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "04c6feb2-220b-44e2-990b-0c49c7461b2d",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
