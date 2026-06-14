@@ -1,0 +1,47 @@
+.env.example
+  s_d79d96e9acb5be::t_f2a5431166aacd 34
+apps/web/src/components/users/migration-status-panel.tsx
+  s_09dcafe2d831a6::t_bf9a5f24c14bfc 30,38
+  s_09dcafe2d831a6::t_744829ea38b729 232-237
+  s_09dcafe2d831a6::t_40d5d7a9d7fd7b 321-325
+apps/web/src/lib/auth-utils.ts
+  s_d79d96e9acb5be::t_55ff161ce340f2 7,21-31
+apps/web/src/lib/migration/display.ts
+  s_09dcafe2d831a6::t_60d034884b8336 28-62,69
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_09dcafe2d831a6::t_5494f3617e8c7a 291-298,308,322
+  s_09dcafe2d831a6::t_58ec398349c81a 260
+  s_09dcafe2d831a6::t_cb696da17c74ba 63-78,85-88
+  s_09dcafe2d831a6::t_e3028b4a054a4a 8-9
+  s_09dcafe2d831a6::t_48e2e330039068 354-358
+apps/web/src/lib/migration/orchestrator.ts
+  s_09dcafe2d831a6::t_72696a00421e0d 15
+  s_09dcafe2d831a6::t_955fd8a070595a 23-25,28
+  s_09dcafe2d831a6::t_ce77e1b6ca5a70 429,438
+  s_09dcafe2d831a6::t_34ee8010c9f47c 434,439-440
+  s_09dcafe2d831a6::t_25781ec21f0227 77-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "7779280c640d84fcd5b512e97ce5867dbcea4047",
+  "prompts": {},
+  "sessions": {
+    "s_09dcafe2d831a6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "87864dfd-7d19-439f-a027-77d418eedd28",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_d79d96e9acb5be": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c407afe6-2214-412e-9337-fa93590b3640",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
