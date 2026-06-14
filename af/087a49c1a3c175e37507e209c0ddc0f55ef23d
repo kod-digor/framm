@@ -1,0 +1,27 @@
+apps/web/Dockerfile.worker
+  s_a574a85ef3bebc::t_5e1b3ff7c9e178 9
+apps/web/src/components/users/migration-status-panel.tsx
+  s_a574a85ef3bebc::t_5e1b3ff7c9e178 57,60,76,82,96
+apps/web/src/app/actions/mailbox-migration.ts
+  s_a574a85ef3bebc::t_5e1b3ff7c9e178 206-207,216-226
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_a574a85ef3bebc::t_5e1b3ff7c9e178 67-68,71-72,79
+deploy/scripts/k8s-sync-secrets.sh
+  s_a574a85ef3bebc::t_5e1b3ff7c9e178 81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "af087a49c1a3c175e37507e209c0ddc0f55ef23d",
+  "prompts": {},
+  "sessions": {
+    "s_a574a85ef3bebc": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "536d372b-f1cb-4fdc-8161-5ecf3afbf515",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
