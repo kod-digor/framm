@@ -5,10 +5,7 @@ import { useActionState } from "react";
 import { deleteMailboxAction } from "@/app/actions/mailboxes";
 import { AliasEmailBadge } from "@/components/aliases/alias-email-badge";
 import { DeleteMailboxForm } from "@/components/mailboxes/delete-mailbox-form";
-import {
-  EditMailboxDisplayName,
-  EditMailboxForm,
-} from "@/components/mailboxes/edit-mailbox-form";
+import { EditMailboxForm } from "@/components/mailboxes/edit-mailbox-form";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
@@ -20,7 +17,7 @@ export type MailboxRow = {
   displayName: string | null;
   domain: string;
   usedBytes: number;
-  quotaBytes: number;
+  quotaBytes: number | null;
 };
 
 export type MailboxListLabels = {
@@ -30,6 +27,7 @@ export type MailboxListLabels = {
   colQuota: string;
   colActions: string;
   config: string;
+  quotaUnlimited: string;
 };
 
 function MailboxMetric({ label, value }: { label: string; value: React.ReactNode }) {
@@ -41,7 +39,30 @@ function MailboxMetric({ label, value }: { label: string; value: React.ReactNode
   );
 }
 
-function QuotaBar({ used, quota, label }: { used: number; quota: number; label: string }) {
+function QuotaBar({
+  used,
+  quota,
+  label,
+  unlimitedLabel,
+}: {
+  used: number;
+  quota: number | null;
+  label: string;
+  unlimitedLabel: string;
+}) {
+  if (quota == null) {
+    return (
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-zinc-500">
+          <span>{label}</span>
+          <span>
+            {formatBytes(used)} / {unlimitedLabel}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   const percent = quota > 0 ? Math.min(100, Math.round((used / quota) * 100)) : 0;
 
   return (
@@ -99,7 +120,12 @@ function MailboxMobileCard({
         <MailboxMetric
           label={labels.colQuota}
           value={
-            <QuotaBar used={mailbox.usedBytes} quota={mailbox.quotaBytes} label={labels.colQuota} />
+            <QuotaBar
+              used={mailbox.usedBytes}
+              quota={mailbox.quotaBytes}
+              label={labels.colQuota}
+              unlimitedLabel={labels.quotaUnlimited}
+            />
           }
         />
       </dl>
@@ -113,6 +139,7 @@ function MailboxMobileCard({
             mailboxId={mailbox.id}
             address={mailbox.address}
             displayName={mailbox.displayName}
+            quotaBytes={mailbox.quotaBytes}
           />
           <DeleteMailboxForm
             action={deleteAction}
@@ -167,11 +194,7 @@ export function MailboxList({
                   <AliasEmailBadge email={mailbox.address} />
                 </td>
                 <td className="max-w-sm py-3 pr-4">
-                  <EditMailboxDisplayName
-                    mailboxId={mailbox.id}
-                    address={mailbox.address}
-                    displayName={mailbox.displayName}
-                  />
+                  <span className="text-sm text-zinc-700">{mailbox.displayName || "—"}</span>
                 </td>
                 <td className="py-3 pr-4 font-mono text-zinc-700">{mailbox.domain}</td>
                 <td className="min-w-[140px] py-3 pr-4">
@@ -179,6 +202,7 @@ export function MailboxList({
                     used={mailbox.usedBytes}
                     quota={mailbox.quotaBytes}
                     label={labels.colQuota}
+                    unlimitedLabel={labels.quotaUnlimited}
                   />
                 </td>
                 <td className="py-3">
@@ -187,6 +211,7 @@ export function MailboxList({
                       mailboxId={mailbox.id}
                       address={mailbox.address}
                       displayName={mailbox.displayName}
+                      quotaBytes={mailbox.quotaBytes}
                     />
                     <DeleteMailboxForm
                       action={deleteAction}

@@ -180,6 +180,8 @@ export async function updateMailboxAction(
   const displayNameRaw = (formData.get("displayName") as string)?.trim();
   const displayName = displayNameRaw || null;
   const password = (formData.get("password") as string) ?? "";
+  const quotaUnlimited = formData.get("quotaUnlimited") === "on";
+  const quotaGbRaw = (formData.get("quotaGb") as string)?.trim().replace(",", ".");
 
   if (!mailboxId) return null;
 
@@ -187,15 +189,33 @@ export async function updateMailboxAction(
     return { ok: false, message: "passwordError" };
   }
 
+  let newQuotaBytes: number | null = null;
+  if (!quotaUnlimited) {
+    if (!quotaGbRaw) {
+      return { ok: false, message: "quotaRequired" };
+    }
+    const quotaGb = Number.parseFloat(quotaGbRaw);
+    if (!Number.isFinite(quotaGb) || quotaGb <= 0) {
+      return { ok: false, message: "quotaInvalid" };
+    }
+    newQuotaBytes = Math.round(quotaGb * 1_073_741_824);
+  }
+
   const mailbox = await prisma.mailbox.findFirst({
     where: { id: mailboxId, organizationId: orgId },
   });
   if (!mailbox) return { ok: false, message: "notfound" };
 
+  const currentQuotaBytes =
+    mailbox.quotaBytes !== null && mailbox.quotaBytes !== undefined
+      ? Number(mailbox.quotaBytes)
+      : null;
+
   const nameChanged = (mailbox.displayName ?? "") !== (displayName ?? "");
   const passwordChanged = password.length > 0;
+  const quotaChanged = currentQuotaBytes !== newQuotaBytes;
 
-  if (!nameChanged && !passwordChanged) {
+  if (!nameChanged && !passwordChanged && !quotaChanged) {
     revalidatePath("/dashboard/mailboxes");
     return null;
   }
@@ -205,9 +225,10 @@ export async function updateMailboxAction(
     return { ok: false, message: "stalwartError" };
   }
 
-  if (resolved.id && nameChanged) {
+  if (resolved.id && (nameChanged || quotaChanged)) {
     const stalwartRes = await updateAccount(resolved.id, {
-      description: displayName,
+      ...(nameChanged ? { description: displayName } : {}),
+      ...(quotaChanged ? { quotaBytes: newQuotaBytes } : {}),
     });
     if (isStalwartFailure(stalwartRes)) {
       const issue = extractStalwartSetIssue(stalwartRes);
@@ -235,10 +256,15 @@ export async function updateMailboxAction(
     }
   }
 
-  const data: { displayName: string | null; credentialsEnc?: string; stalwartAccountId?: string } =
-    { displayName };
+  const data: {
+    displayName: string | null;
+    credentialsEnc?: string;
+    stalwartAccountId?: string;
+    quotaBytes?: bigint | null;
+  } = { displayName };
   if (passwordChanged) data.credentialsEnc = sealSecret(password);
   if (resolved.id && !mailbox.stalwartAccountId) data.stalwartAccountId = resolved.id;
+  if (quotaChanged) data.quotaBytes = newQuotaBytes !== null ? BigInt(newQuotaBytes) : null;
 
   await prisma.mailbox.update({ where: { id: mailboxId }, data });
 

@@ -31,7 +31,7 @@ export default async function MailboxesPage() {
     displayName: mailbox.displayName,
     domain: mailbox.domain.fqdn,
     usedBytes: Number(mailbox.usedBytes),
-    quotaBytes: Number(mailbox.quotaBytes),
+    quotaBytes: mailbox.quotaBytes != null ? Number(mailbox.quotaBytes) : null,
   }));
 
   const listLabels = {
@@ -41,6 +41,7 @@ export default async function MailboxesPage() {
     colQuota: t("colQuota"),
     colActions: t("colActions"),
     config: t("config"),
+    quotaUnlimited: t("quotaUnlimited"),
   };
 
   return (

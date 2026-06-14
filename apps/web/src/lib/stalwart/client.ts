@@ -325,11 +325,18 @@ export async function createAccount(
 
 export async function updateAccount(
   stalwartAccountId: string,
-  patch: { description?: string | null; password?: string }
+  patch: {
+    description?: string | null;
+    password?: string;
+    quotaBytes?: number | null;
+  }
 ) {
   const update: Record<string, unknown> = {};
   if (patch.description !== undefined) update.description = patch.description;
   if (patch.password !== undefined) Object.assign(update, accountPasswordPatch(patch.password));
+  if (patch.quotaBytes !== undefined) {
+    update["quotas/maxDiskQuota"] = patch.quotaBytes;
+  }
 
   return jmapCall([
     [
