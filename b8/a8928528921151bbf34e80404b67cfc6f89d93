@@ -1,0 +1,51 @@
+apps/web/src/lib/domain-status.ts
+  s_3392078c5a1675::t_7d8ac1bb4af350 1-12
+apps/web/src/app/dashboard/mailboxes/page.tsx
+  s_3392078c5a1675::t_123e4e764e6000 7
+  s_3392078c5a1675::t_69f27558a5cef5 23
+  s_3392078c5a1675::t_5fe17a10165040 59-63
+apps/web/src/app/actions/aliases.ts
+  s_3392078c5a1675::t_0b1cdefbfc6093 34
+  s_3392078c5a1675::t_f54810ed7141f0 17
+apps/web/src/components/aliases/create-alias-form.tsx
+  s_3392078c5a1675::t_3e5f6209ffc547 8,31,38-40,43-44,61,88
+apps/web/src/app/dashboard/domains/page.tsx
+  s_3392078c5a1675::t_ce2dfca6319909 66
+apps/web/messages/fr.json
+  s_3392078c5a1675::t_dac5379df11618 120,122-123
+  s_3392078c5a1675::t_3e5176649e4edf 171-173
+  s_3392078c5a1675::t_08940a0f24c1f3 218-220
+apps/web/src/components/ui/dns-unverified-banner.tsx
+  s_3392078c5a1675::t_7b96ac36418402 1-10
+apps/web/src/components/ui/email-domain-input.tsx
+  s_3392078c5a1675::t_059e656f95efbe 83
+  s_3392078c5a1675::t_0bb97a926945a3 10
+apps/web/src/components/domains/domains-list.tsx
+  s_3392078c5a1675::t_57c5cb40803c44 30
+  s_3392078c5a1675::t_33db30725a2c45 80-82
+apps/web/src/app/dashboard/aliases/page.tsx
+  s_3392078c5a1675::t_99c9d3e863f981 7
+  s_3392078c5a1675::t_296e19fa838cc4 27
+  s_3392078c5a1675::t_980d8184a85544 61-65
+apps/web/src/app/actions/mailboxes.ts
+  s_3392078c5a1675::t_ecf5bea59ff12d 24
+  s_3392078c5a1675::t_79adae8258537c 46
+apps/web/src/components/mailboxes/create-mailbox-form.tsx
+  s_3392078c5a1675::t_0af852ae623e3a 8,31,39-41,44-45,62,103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b8a8928528921151bbf34e80404b67cfc6f89d93",
+  "prompts": {},
+  "sessions": {
+    "s_3392078c5a1675": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "0258d239-b8b0-438d-a372-d57c638db869",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
