@@ -2,6 +2,12 @@ import { promises as dns } from "dns";
 
 export type DnsRecord = { type: string; name: string; value: string };
 
+export type MxRecordFinding = {
+  priority: number;
+  host: string;
+  matchesExpected: boolean;
+};
+
 export type TxtRecordFinding = {
   value: string;
   kind: "spf" | "other";
@@ -13,6 +19,7 @@ export type DnsCheckRow = {
   ok: boolean;
   found: string;
   issue: DnsLookupIssue;
+  mxRecords?: MxRecordFinding[];
   txtRecords?: TxtRecordFinding[];
 };
 
@@ -94,13 +101,19 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
         issue = formatLookupError((err as NodeJS.ErrnoException).code);
         if (issue === "NXDOMAIN") domainExists = false;
       }
-      const ok = mx.some((e) => normalizeHost(e.exchange) === expectedMx);
+      const mxRecords = mx.map((m) => ({
+        priority: m.priority ?? 10,
+        host: m.exchange,
+        matchesExpected: normalizeHost(m.exchange) === expectedMx,
+      }));
+      const ok = mxRecords.some((entry) => entry.matchesExpected);
       results.push({
         record,
         ok,
         issue,
+        mxRecords,
         found: formatFoundValue(
-          mx.map((m) => `${m.priority ?? 10} ${m.exchange}`),
+          mxRecords.map((m) => `${m.priority} ${m.host}`),
           issue
         ),
       });

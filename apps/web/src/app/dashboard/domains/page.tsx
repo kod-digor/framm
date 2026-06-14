@@ -64,11 +64,14 @@ export default async function DomainsPage() {
     found: t("dnsFound"),
     nxdomain: t("dnsNxdomain"),
     none: t("dnsNone"),
+    mxFoundTitle: (count: number) => t("dnsMxFoundTitle", { count }),
+    mxRecordLabel: (index: number) => t("dnsMxRecordLabel", { index }),
     txtFoundTitle: (count: number) => t("dnsTxtFoundTitle", { count }),
+    txtRecordLabel: (index: number) => t("dnsTxtRecordLabel", { index }),
     txtSpfKind: t("dnsTxtSpfKind"),
     txtOtherKind: t("dnsTxtOtherKind"),
     txtSpfHint: t("dnsTxtSpfHint", { mailHost: platformHost }),
-    txtMatchesExpected: t("dnsTxtMatchesExpected"),
+    matchesExpected: t("dnsMatchesExpected"),
   };
 
   const listLabels = {

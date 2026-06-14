@@ -33,6 +33,56 @@ function FoundValue({
   );
 }
 
+function RecordEntry({
+  indexLabel,
+  badge,
+  badgeClassName,
+  matchesExpected,
+  matchesLabel,
+  value,
+}: {
+  indexLabel: string;
+  badge?: string;
+  badgeClassName?: string;
+  matchesExpected: boolean;
+  matchesLabel: string;
+  value: string;
+}) {
+  return (
+    <li className="rounded-md border border-zinc-200 bg-white p-2">
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+          {indexLabel}
+        </span>
+        {badge && (
+          <span
+            className={
+              badgeClassName ??
+              "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600"
+            }
+          >
+            {badge}
+          </span>
+        )}
+        {matchesExpected && (
+          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+            {matchesLabel}
+          </span>
+        )}
+      </div>
+      <code
+        className={
+          matchesExpected
+            ? "block break-all rounded bg-green-50 px-2 py-1 font-mono text-xs text-green-900"
+            : "block break-all rounded bg-zinc-50 px-2 py-1 font-mono text-xs text-zinc-800"
+        }
+      >
+        {value}
+      </code>
+    </li>
+  );
+}
+
 export function DnsStatusPanel({
   check,
   labels,
@@ -44,11 +94,14 @@ export function DnsStatusPanel({
     found: string;
     nxdomain: string;
     none: string;
+    mxFoundTitle: (count: number) => string;
+    mxRecordLabel: (index: number) => string;
     txtFoundTitle: (count: number) => string;
+    txtRecordLabel: (index: number) => string;
     txtSpfKind: string;
     txtOtherKind: string;
     txtSpfHint: string;
-    txtMatchesExpected: string;
+    matchesExpected: string;
   };
 }) {
   if (check.results.length === 0) return null;
@@ -71,7 +124,36 @@ export function DnsStatusPanel({
                 </code>
               </p>
 
-              {row.record.type === "TXT" && row.txtRecords ? (
+              {row.record.type === "MX" && row.mxRecords ? (
+                <div className="space-y-2">
+                  <p className="text-zinc-500">
+                    {labels.mxFoundTitle(row.mxRecords.length)}
+                  </p>
+                  {row.mxRecords.length === 0 ? (
+                    <p>
+                      <span className="text-zinc-500">{labels.found} :</span>{" "}
+                      <FoundValue
+                        value={row.found}
+                        ok={row.ok}
+                        labels={labels}
+                        issue={row.issue}
+                      />
+                    </p>
+                  ) : (
+                    <ul className="flex flex-col gap-2">
+                      {row.mxRecords.map((entry, index) => (
+                        <RecordEntry
+                          key={`${entry.priority}-${entry.host}-${index}`}
+                          indexLabel={labels.mxRecordLabel(index + 1)}
+                          matchesExpected={entry.matchesExpected}
+                          matchesLabel={labels.matchesExpected}
+                          value={`${entry.priority} ${entry.host}`}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : row.record.type === "TXT" && row.txtRecords ? (
                 <div className="space-y-2">
                   <p className="text-zinc-500">
                     {labels.txtFoundTitle(row.txtRecords.length)}
@@ -87,43 +169,25 @@ export function DnsStatusPanel({
                       />
                     </p>
                   ) : (
-                    <ul className="space-y-2">
+                    <ul className="flex flex-col gap-2">
                       {row.txtRecords.map((entry, index) => (
-                        <li
+                        <RecordEntry
                           key={`${entry.kind}-${index}`}
-                          className="rounded-md border border-zinc-200 bg-white p-2"
-                        >
-                          <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                              TXT {index + 1}
-                            </span>
-                            <span
-                              className={
-                                entry.kind === "spf"
-                                  ? "rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
-                                  : "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600"
-                              }
-                            >
-                              {entry.kind === "spf"
-                                ? labels.txtSpfKind
-                                : labels.txtOtherKind}
-                            </span>
-                            {entry.matchesExpected && (
-                              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                                {labels.txtMatchesExpected}
-                              </span>
-                            )}
-                          </div>
-                          <code
-                            className={
-                              entry.matchesExpected
-                                ? "block break-all rounded bg-green-50 px-2 py-1 font-mono text-xs text-green-900"
-                                : "block break-all rounded bg-zinc-50 px-2 py-1 font-mono text-xs text-zinc-800"
-                            }
-                          >
-                            {entry.value}
-                          </code>
-                        </li>
+                          indexLabel={labels.txtRecordLabel(index + 1)}
+                          badge={
+                            entry.kind === "spf"
+                              ? labels.txtSpfKind
+                              : labels.txtOtherKind
+                          }
+                          badgeClassName={
+                            entry.kind === "spf"
+                              ? "rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
+                              : "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600"
+                          }
+                          matchesExpected={entry.matchesExpected}
+                          matchesLabel={labels.matchesExpected}
+                          value={entry.value}
+                        />
                       ))}
                     </ul>
                   )}
