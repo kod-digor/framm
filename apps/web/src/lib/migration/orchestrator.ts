@@ -346,6 +346,22 @@ export async function queueMigration(
   await logMigrationEvent(migrationId, "migration_queued", "CONNECTING");
 }
 
+export async function retryMigration(migrationId: string) {
+  await prisma.mailboxMigration.update({
+    where: { id: migrationId },
+    data: {
+      status: "QUEUED",
+      phase: "CONNECTING",
+      progressJson: { percent: 0 },
+      errorMessage: null,
+      startedAt: null,
+      completedAt: null,
+    },
+  });
+
+  await logMigrationEvent(migrationId, "migration_queued", "CONNECTING");
+}
+
 export async function cancelMigration(migrationId: string) {
   await prisma.mailboxMigration.update({
     where: { id: migrationId },

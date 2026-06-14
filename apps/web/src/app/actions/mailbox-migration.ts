@@ -8,6 +8,7 @@ import type { ActionResult } from "@/lib/action-result";
 import { prisma } from "@/lib/prisma";
 import {
   cancelMigration,
+  retryMigration,
   createMigrationDraft,
   getDraftMigrationForMailbox,
   getLaunchedMigrationForMailbox,
@@ -160,6 +161,47 @@ export async function confirmMigrationAction(
   revalidatePath("/dashboard/users");
 
   return { ok: true, message: "migrationQueued", detail: migrationId };
+}
+
+export async function retryMigrationAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) redirect("/login?error=session");
+
+  const migrationId = (formData.get("migrationId") as string)?.trim();
+  if (!migrationId) return { ok: false, message: "invalid" };
+
+  const migration = await prisma.mailboxMigration.findFirst({
+    where: { id: migrationId, organizationId: orgId },
+  });
+  if (!migration) return { ok: false, message: "notfound" };
+
+  if (migration.status !== "FAILED") {
+    return { ok: false, message: "cannotRetry" };
+  }
+
+  if (!migration.scopeMail && !migration.scopeContacts && !migration.scopeCalendar) {
+    return { ok: false, message: "noScopeSelected" };
+  }
+
+  if (!migration.sourceCredentialsEnc) {
+    return { ok: false, message: "credentialsMissing" };
+  }
+
+  if (
+    (migration.provider === "GOOGLE" || migration.provider === "MICROSOFT") &&
+    !migration.oauthRefreshTokenEnc
+  ) {
+    return { ok: false, message: "oauthRequired" };
+  }
+
+  await retryMigration(migrationId);
+  revalidatePath("/dashboard/users");
+
+  return { ok: true, message: "migrationRetried", detail: migrationId };
 }
 
 export async function cancelMigrationAction(

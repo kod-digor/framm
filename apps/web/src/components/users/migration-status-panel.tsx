@@ -8,6 +8,7 @@ import {
   Loader2,
   Mail,
   Plug,
+  RefreshCw,
   Search,
   Users,
   XCircle,
@@ -17,6 +18,7 @@ import { useTranslations } from "next-intl";
 import {
   cancelMigrationAction,
   getMigrationStatusAction,
+  retryMigrationAction,
 } from "@/app/actions/mailbox-migration";
 import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
@@ -46,6 +48,27 @@ const PHASE_ICONS: Record<MigrationPhase, LucideIcon> = {
   SYNCING_CALENDAR: Calendar,
   FINALIZING: CheckCircle2,
 };
+
+function RetryButton() {
+  const { pending } = useFormStatus();
+  const t = useTranslations("users");
+
+  return (
+    <Button type="submit" size="sm" disabled={pending} aria-busy={pending}>
+      {pending ? (
+        <>
+          <Loader2 className="mr-1 size-4 animate-spin" aria-hidden />
+          {t("migration.retrying")}
+        </>
+      ) : (
+        <>
+          <RefreshCw className="mr-1 size-4" aria-hidden />
+          {t("migration.retrySync")}
+        </>
+      )}
+    </Button>
+  );
+}
 
 function CancelButton() {
   const { pending } = useFormStatus();
@@ -107,6 +130,17 @@ export function MigrationStatusPanel({
       if (result?.ok) {
         await refresh();
         onCancelled?.();
+      }
+      return result;
+    },
+    INITIAL_ACTION_RESULT
+  );
+
+  const [, retryAction] = useActionState(
+    async (_prev: ActionResult, formData: FormData) => {
+      const result = await retryMigrationAction(_prev, formData);
+      if (result?.ok) {
+        await refresh();
       }
       return result;
     },
@@ -302,6 +336,13 @@ export function MigrationStatusPanel({
         <form action={cancelAction}>
           <input type="hidden" name="migrationId" value={migrationId} />
           <CancelButton />
+        </form>
+      ) : null}
+
+      {isFailed ? (
+        <form action={retryAction}>
+          <input type="hidden" name="migrationId" value={migrationId} />
+          <RetryButton />
         </form>
       ) : null}
 

@@ -346,6 +346,8 @@
       "noActiveMigration": "Aucune migration active.",
       "cancelMigration": "Annuler la migration",
       "cancelling": "Annulation…",
+      "retrySync": "Relancer la synchronisation",
+      "retrying": "Relancement…",
       "completedMessage": "Migration terminée vers {address}.",
       "cancelledMessage": "La migration a été annulée.",
       "status_PENDING_OAUTH": "En attente de connexion",

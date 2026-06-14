@@ -53,6 +53,7 @@ export function filterMigrationEvents(
   const reversed = [...events].reverse();
   let seenSourceDiscovered = false;
   const filtered = reversed.filter((event) => {
+    if (/Log file is LOG_imapsync/i.test(event.message)) return false;
     if (event.message === "source_discovered") {
       if (seenSourceDiscovered) return false;
       seenSourceDiscovered = true;

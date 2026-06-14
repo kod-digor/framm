@@ -123,6 +123,7 @@ export function redactImapsyncLogLine(line: string): string {
 export function shouldLogImapsyncLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
+  if (/Log file is LOG_imapsync/i.test(trimmed)) return false;
   if (HOST1_FOLDER_RE.test(trimmed)) return true;
   if (MSG_COPIED_RE.test(trimmed)) return true;
   if (LEGACY_PROGRESS_RE.test(trimmed)) return true;
