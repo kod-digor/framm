@@ -1,0 +1,19 @@
+deploy/scripts/k8s-sync-secrets.sh
+  s_106b84089b1e79::t_482ac1471a0b6b 42-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "66f5990ee00d052070855fe1cf4503a45be617e3",
+  "prompts": {},
+  "sessions": {
+    "s_106b84089b1e79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b5d6eb52-6678-4ef5-8d87-39b4dd704c89",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
