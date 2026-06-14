@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 export type EmailDomainOption = {
   value: string;
   label: string;
+  suffix?: string;
 };
 
 export function EmailDomainInput({
@@ -79,6 +80,7 @@ export function EmailDomainInput({
           {domains.map((domain) => (
             <option key={domain.value} value={domain.value}>
               @{domain.label}
+              {domain.suffix ? ` (${domain.suffix})` : ""}
             </option>
           ))}
         </select>

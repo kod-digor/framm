@@ -21,6 +21,7 @@ import {
   updateAccount,
   updateAccountPassword,
 } from "@/lib/stalwart/client";
+import { MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/domain-status";
 import { sealSecret } from "@/lib/crypto/seal";
 
 export async function createMailboxAction(
@@ -42,7 +43,7 @@ export async function createMailboxAction(
   }
 
   const domain = await prisma.domain.findFirst({
-    where: { id: domainId, organizationId: orgId, status: { in: ["VERIFIED", "ACTIVE"] } },
+    where: { id: domainId, organizationId: orgId, status: { in: MAIL_USABLE_DOMAIN_STATUSES } },
   });
   if (!domain) return null;
 

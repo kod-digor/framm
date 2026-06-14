@@ -27,6 +27,7 @@ type DomainsListLabels = {
   statusPending: string;
   verified: string;
   pending: string;
+  usableWhilePending: string;
   records: string;
   recordsIntro: string;
 };
@@ -76,6 +77,9 @@ export function DomainsList({
             <p className="text-sm text-zinc-600">
               {domain.isVerified ? labels.verified : labels.pending}
             </p>
+            {!domain.isVerified && !domain.isPlatform && (
+              <p className="text-sm text-amber-800">{labels.usableWhilePending}</p>
+            )}
 
             {!domain.isVerified && !domain.isPlatform && domain.records.length > 0 && (
               <div className="space-y-3">

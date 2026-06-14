@@ -14,6 +14,7 @@ import {
   resolveStalwartDomainId,
   updateAlias,
 } from "@/lib/stalwart/client";
+import { MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/domain-status";
 
 export async function createAliasAction(
   _prev: ActionResult,
@@ -30,7 +31,7 @@ export async function createAliasAction(
   if (!localPart || !destination) return null;
 
   const domain = await prisma.domain.findFirst({
-    where: { id: domainId, organizationId: orgId, status: { in: ["VERIFIED", "ACTIVE"] } },
+    where: { id: domainId, organizationId: orgId, status: { in: MAIL_USABLE_DOMAIN_STATUSES } },
   });
   if (!domain) return null;
 

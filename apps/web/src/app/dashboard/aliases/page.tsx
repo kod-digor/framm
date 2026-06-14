@@ -4,6 +4,7 @@ import { AliasList } from "@/components/aliases/alias-list";
 import { CreateAliasForm } from "@/components/aliases/create-alias-form";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isDnsVerifiedDomainStatus, MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/domain-status";
 import { getT } from "@/i18n/t";
 import { ArrowRightLeft } from "lucide-react";
 
@@ -23,7 +24,7 @@ export default async function AliasesPage() {
       orderBy: { createdAt: "desc" },
     }),
     prisma.domain.findMany({
-      where: { organizationId: orgId, status: { in: ["VERIFIED", "ACTIVE"] } },
+      where: { organizationId: orgId, status: { in: MAIL_USABLE_DOMAIN_STATUSES } },
       orderBy: { fqdn: "asc" },
     }),
   ]);
@@ -57,7 +58,11 @@ export default async function AliasesPage() {
           </CardHeader>
           <CardContent>
             <CreateAliasForm
-              domains={domains.map((d) => ({ id: d.id, fqdn: d.fqdn }))}
+              domains={domains.map((d) => ({
+                id: d.id,
+                fqdn: d.fqdn,
+                isDnsVerified: isDnsVerifiedDomainStatus(d.status),
+              }))}
             />
           </CardContent>
         </Card>

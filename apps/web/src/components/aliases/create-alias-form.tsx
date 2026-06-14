@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createAliasAction } from "@/app/actions/aliases";
+import { DnsUnverifiedBanner } from "@/components/ui/dns-unverified-banner";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { EmailDomainInput } from "@/components/ui/email-domain-input";
@@ -27,15 +28,20 @@ function SubmitButton() {
 function CreateAliasFields({
   domains,
 }: {
-  domains: { id: string; fqdn: string }[];
+  domains: { id: string; fqdn: string; isDnsVerified: boolean }[];
 }) {
   const t = useTranslations("aliases");
   const [localPart, setLocalPart] = useState("");
   const [domainId, setDomainId] = useState(domains[0]?.id ?? "");
   const [destination, setDestination] = useState("");
 
+  const selectedDomain = domains.find((domain) => domain.id === domainId);
+  const showDnsWarning = selectedDomain && !selectedDomain.isDnsVerified;
+
   return (
     <>
+      {showDnsWarning && <DnsUnverifiedBanner message={t("dnsUnverifiedWarning")} />}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="localPart">{t("sourceLocal")}</Label>
@@ -52,6 +58,7 @@ function CreateAliasFields({
             domains={domains.map((domain) => ({
               value: domain.id,
               label: domain.fqdn,
+              suffix: domain.isDnsVerified ? undefined : t("domainDnsUnverified"),
             }))}
             domainAriaLabel={t("sourceLocal")}
           />
@@ -78,7 +85,7 @@ function CreateAliasFields({
 export function CreateAliasForm({
   domains,
 }: {
-  domains: { id: string; fqdn: string }[];
+  domains: { id: string; fqdn: string; isDnsVerified: boolean }[];
 }) {
   const [state, formAction] = useActionState(createAliasAction, INITIAL_ACTION_RESULT);
   const fieldsKey =

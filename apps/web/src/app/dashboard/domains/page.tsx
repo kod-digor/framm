@@ -63,6 +63,7 @@ export default async function DomainsPage() {
     statusPending: t("statusPending"),
     verified: t("verified"),
     pending: t("pending"),
+    usableWhilePending: t("usableWhilePending"),
     records: t("records"),
     recordsIntro: t("recordsIntro", { mailHost: platformHost }),
   };

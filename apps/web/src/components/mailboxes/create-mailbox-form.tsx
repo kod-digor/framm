@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createMailboxAction } from "@/app/actions/mailboxes";
+import { DnsUnverifiedBanner } from "@/components/ui/dns-unverified-banner";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { EmailDomainInput } from "@/components/ui/email-domain-input";
@@ -27,7 +28,7 @@ function SubmitButton() {
 function CreateMailboxFields({
   domains,
 }: {
-  domains: { id: string; fqdn: string }[];
+  domains: { id: string; fqdn: string; isDnsVerified: boolean }[];
 }) {
   const t = useTranslations("mailboxes");
   const [localPart, setLocalPart] = useState("");
@@ -35,8 +36,13 @@ function CreateMailboxFields({
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
 
+  const selectedDomain = domains.find((domain) => domain.id === domainId);
+  const showDnsWarning = selectedDomain && !selectedDomain.isDnsVerified;
+
   return (
     <>
+      {showDnsWarning && <DnsUnverifiedBanner message={t("dnsUnverifiedWarning")} />}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="localPart">{t("localPart")}</Label>
@@ -53,6 +59,7 @@ function CreateMailboxFields({
             domains={domains.map((domain) => ({
               value: domain.id,
               label: domain.fqdn,
+              suffix: domain.isDnsVerified ? undefined : t("domainDnsUnverified"),
             }))}
             domainAriaLabel={t("domain")}
           />
@@ -93,7 +100,7 @@ function CreateMailboxFields({
 export function CreateMailboxForm({
   domains,
 }: {
-  domains: { id: string; fqdn: string }[];
+  domains: { id: string; fqdn: string; isDnsVerified: boolean }[];
 }) {
   const [state, formAction] = useActionState(createMailboxAction, INITIAL_ACTION_RESULT);
   const fieldsKey =
