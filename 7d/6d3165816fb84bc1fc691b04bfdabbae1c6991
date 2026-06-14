@@ -1,0 +1,36 @@
+apps/web/src/app/actions/mailbox-migration.ts
+  s_e6446da185f90a::t_c5aae2fedcbaae 245-248,251-274,276-290,292-298
+  s_e6446da185f90a::t_4f07400110dccd 24
+apps/web/src/app/api/migration/oauth/microsoft/callback/route.ts
+  s_e6446da185f90a::t_b141fb7999067f 2,39-42,44-46,48-51,53-54,56-66
+apps/web/src/lib/migration/orchestrator.ts
+  s_e6446da185f90a::t_82861a962fa501 227-231,235
+apps/web/messages/fr.json
+  s_e6446da185f90a::t_1923463b4f8867 288
+apps/web/src/lib/migration/oauth-access.ts
+  s_e6446da185f90a::t_347033537d41b6 16-17,28,36-37
+apps/web/src/app/api/migration/oauth/google/callback/route.ts
+  s_e6446da185f90a::t_ed789027c8cfb5 2,39-42,44-46,48-51,53-54,56-66
+apps/web/src/components/users/migration-wizard.tsx
+  s_e6446da185f90a::t_d6d3f2662e750e 155
+  s_e6446da185f90a::t_54a9ec89671157 181,196
+  s_e6446da185f90a::t_2cef5f3209a235 192,194-195,197-201
+  s_e6446da185f90a::t_83e7b67716563b 358-361
+  s_e6446da185f90a::t_795c59023fbe94 156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "7d6d3165816fb84bc1fc691b04bfdabbae1c6991",
+  "prompts": {},
+  "sessions": {
+    "s_e6446da185f90a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c3fafe7e-6bb6-42fe-a87b-31f07437c70e",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
