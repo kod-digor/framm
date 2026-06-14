@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { unsealSecret } from "@/lib/crypto/seal";
 import {
   decodeSourceCredentials,
-  redactImapsyncLogLine,
   runImapsync,
   shouldLogImapsyncLine,
 } from "@/lib/migration/imapsync-runner";
@@ -162,11 +161,7 @@ async function processMigration(migrationId: string) {
         void updateMigrationProgress(migrationId, scaled, "SYNCING_MAIL");
         const trimmed = line.trim();
         if (trimmed && shouldLogImapsyncLine(trimmed)) {
-          void logMigrationEvent(
-            migrationId,
-            redactImapsyncLogLine(trimmed).slice(0, 500),
-            "SYNCING_MAIL"
-          );
+          void logMigrationEvent(migrationId, trimmed, "SYNCING_MAIL");
         }
       },
     });

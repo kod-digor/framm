@@ -99,46 +99,55 @@ export function parseImapsyncProgressLine(
   return { ...state, progress: next };
 }
 
-/** Lignes imapsync utiles au journal migration (évite bruit root/PID/bannières). */
+const SECRET_CLI_FLAG_RE =
+  /--(?:oauthaccesstoken|password|refreshtoken|oauthrefreshtoken)[12](?:=\S+|\s+\S+)/gi;
+/** Jetons OAuth Google (access) — ne jamais persister ni afficher. */
+const GOOGLE_ACCESS_TOKEN_RE = /\bya29\.[A-Za-z0-9._-]+/g;
+/** Jetons OAuth Google (refresh) — préfixe courant 1// */
+const GOOGLE_REFRESH_TOKEN_RE = /\b1\/\/[A-Za-z0-9_-]+/g;
+
+/** Masque secrets imapsync dans une ligne (logs, journal, erreurs). */
 export function redactImapsyncLogLine(line: string): string {
   return line
-    .replace(/--oauthaccesstoken1\s+\S+/gi, "--oauthaccesstoken1 <redacted>")
-    .replace(/--oauthaccesstoken2\s+\S+/gi, "--oauthaccesstoken2 <redacted>")
-    .replace(/--password1\s+\S+/gi, "--password1 <redacted>")
-    .replace(/--password2\s+\S+/gi, "--password2 <redacted>");
+    .replace(SECRET_CLI_FLAG_RE, (match) => {
+      const eq = match.indexOf("=");
+      if (eq !== -1) return `${match.slice(0, eq + 1)}<redacted>`;
+      const space = match.lastIndexOf(" ");
+      return space === -1 ? "<redacted>" : `${match.slice(0, space + 1)}<redacted>`;
+    })
+    .replace(GOOGLE_ACCESS_TOKEN_RE, "ya29.<redacted>")
+    .replace(GOOGLE_REFRESH_TOKEN_RE, "1//<redacted>");
 }
 
+/** Journal migration : progression dossiers/messages, erreurs et fin uniquement. */
 export function shouldLogImapsyncLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
-  if (/^Real user id is /i.test(trimmed)) return false;
-  if (/^Effective user id is /i.test(trimmed)) return false;
-  if (/^Here is imapsync /i.test(trimmed)) return false;
-  if (/^PID is /i.test(trimmed)) return false;
-  if (/^my PPID is /i.test(trimmed)) return false;
-  if (/^Log file is /i.test(trimmed)) return false;
-  if (/^Load is /i.test(trimmed)) return false;
-  if (/^\$RCSfile:/i.test(trimmed)) return false;
-  if (/^Command line used,/i.test(trimmed)) return false;
-  if (/^\/usr\/local\/bin\/imapsync\s+/i.test(trimmed)) return false;
-  if (/^kill -/i.test(trimmed)) return false;
-  if (/^Current directory is /i.test(trimmed)) return false;
-  if (/^Temp directory is /i.test(trimmed)) return false;
-  if (/^Creating temp directory /i.test(trimmed)) return false;
-  if (/^Removing old /i.test(trimmed)) return false;
-  if (/^Removed old /i.test(trimmed)) return false;
-  if (/^PID file is /i.test(trimmed)) return false;
-  if (/^Writing my PID /i.test(trimmed)) return false;
-  if (/^Writing also my logfile /i.test(trimmed)) return false;
-  if (/^Logging to a logfile /i.test(trimmed)) return false;
-  if (/^Transfer started at /i.test(trimmed)) return false;
   if (HOST1_FOLDER_RE.test(trimmed)) return true;
   if (MSG_COPIED_RE.test(trimmed)) return true;
-  if (/Host1: banner/i.test(trimmed)) return true;
+  if (LEGACY_PROGRESS_RE.test(trimmed)) return true;
   if (/\bERROR\b/i.test(trimmed)) return true;
   if (/\bFATAL\b/i.test(trimmed)) return true;
   if (/\bExiting with /i.test(trimmed)) return true;
+  if (/^End of sync/i.test(trimmed)) return true;
+  if (/^Messages transferred/i.test(trimmed)) return true;
   return false;
+}
+
+function resolveOAuthProvider(
+  source: ImapSourceCredentials
+): "google" | "microsoft" | null {
+  if (source.oauthProvider) return source.oauthProvider;
+  const host = source.host?.toLowerCase() ?? "";
+  if (host === "imap.gmail.com" || host.endsWith(".gmail.com")) return "google";
+  if (
+    host === "outlook.office365.com" ||
+    host === "imap-mail.outlook.com" ||
+    host.includes("outlook.com")
+  ) {
+    return "microsoft";
+  }
+  return null;
 }
 
 function resolveImapBinary(): string | null {
@@ -182,11 +191,12 @@ export function redactImapsyncArgsForLog(args: string[]): string {
 
 function buildSourceArgs(source: ImapSourceCredentials): string[] {
   const args: string[] = ["--user1", source.user];
+  const provider = resolveOAuthProvider(source);
 
   // imapsync 2.323 : presets provider (--gmail1 / --office1), pas --oauthclientid1 ni --maxparallel.
-  if (source.oauthProvider === "google") {
+  if (provider === "google") {
     args.unshift("--gmail1");
-  } else if (source.oauthProvider === "microsoft") {
+  } else if (provider === "microsoft") {
     args.unshift("--office1");
   } else {
     args.unshift(
@@ -273,9 +283,10 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       const lines = chunk.toString("utf8").split(/\r?\n/);
       for (const line of lines) {
         if (!line.trim()) continue;
-        options.onLog?.(line);
+        const safeLine = redactImapsyncLogLine(line);
+        options.onLog?.(safeLine);
         parseState = parseImapsyncProgressLine(line, parseState, options.totalMessages);
-        options.onProgress?.(parseState.progress, line);
+        options.onProgress?.(parseState.progress, safeLine);
       }
     };
 
@@ -283,7 +294,7 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       const lines = chunk.toString("utf8").split(/\r?\n/);
       for (const line of lines) {
         if (!line.trim()) continue;
-        options.onLog?.(line);
+        options.onLog?.(redactImapsyncLogLine(line));
       }
     };
 

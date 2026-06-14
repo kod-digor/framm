@@ -18,7 +18,10 @@ import {
   parseSourceStatsJson,
   type MigrationSourceStats,
 } from "@/lib/migration/discovery/types";
-import { parseImapsyncProgressLine } from "@/lib/migration/imapsync-runner";
+import {
+  parseImapsyncProgressLine,
+  redactImapsyncLogLine,
+} from "@/lib/migration/imapsync-runner";
 
 function parseProgressJson(value: unknown): MigrationProgress | null {
   if (!value || typeof value !== "object") return null;
@@ -71,7 +74,7 @@ export function serializeMigrationStatus(
     events: migration.events.map((e) => ({
       id: e.id,
       phase: e.phase,
-      message: e.message,
+      message: redactImapsyncLogLine(e.message),
       createdAt: e.createdAt.toISOString(),
     })),
   };
@@ -233,10 +236,11 @@ export async function logMigrationEvent(
   phase?: MigrationPhase,
   metadata?: Record<string, unknown>
 ) {
+  const safeMessage = redactImapsyncLogLine(message).slice(0, 500);
   await prisma.migrationEvent.create({
     data: {
       migrationId,
-      message,
+      message: safeMessage,
       phase,
       metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
     },
