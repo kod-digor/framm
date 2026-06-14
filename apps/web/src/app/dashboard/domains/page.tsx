@@ -64,6 +64,11 @@ export default async function DomainsPage() {
     found: t("dnsFound"),
     nxdomain: t("dnsNxdomain"),
     none: t("dnsNone"),
+    txtFoundTitle: (count: number) => t("dnsTxtFoundTitle", { count }),
+    txtSpfKind: t("dnsTxtSpfKind"),
+    txtOtherKind: t("dnsTxtOtherKind"),
+    txtSpfHint: t("dnsTxtSpfHint", { mailHost: platformHost }),
+    txtMatchesExpected: t("dnsTxtMatchesExpected"),
   };
 
   const listLabels = {

@@ -47,6 +47,11 @@ type DnsStatusLabels = {
   found: string;
   nxdomain: string;
   none: string;
+  txtFoundTitle: (count: number) => string;
+  txtSpfKind: string;
+  txtOtherKind: string;
+  txtSpfHint: string;
+  txtMatchesExpected: string;
 };
 
 export function DomainsList({

@@ -2,6 +2,20 @@ import { promises as dns } from "dns";
 
 export type DnsRecord = { type: string; name: string; value: string };
 
+export type TxtRecordFinding = {
+  value: string;
+  kind: "spf" | "other";
+  matchesExpected: boolean;
+};
+
+export type DnsCheckRow = {
+  record: DnsRecord;
+  ok: boolean;
+  found: string;
+  issue: DnsLookupIssue;
+  txtRecords?: TxtRecordFinding[];
+};
+
 export function getPlatformMailHost() {
   return (
     process.env.PRIMARY_PLATFORM_DOMAIN ??
@@ -10,11 +24,28 @@ export function getPlatformMailHost() {
   );
 }
 
+export function getExpectedSpfValue(platformHost?: string) {
+  const host = platformHost ?? getPlatformMailHost();
+  return `v=spf1 include:spf.${host} -all`;
+}
+
+function getSpfIncludeToken(platformHost: string) {
+  return `include:spf.${platformHost}`.toLowerCase();
+}
+
+function isSpfTxt(value: string) {
+  return value.trim().toLowerCase().startsWith("v=spf1");
+}
+
+function spfMatchesExpected(value: string, platformHost: string) {
+  return value.toLowerCase().includes(getSpfIncludeToken(platformHost));
+}
+
 export function expectedRecords(fqdn: string, mailHost?: string): DnsRecord[] {
   const platformHost = mailHost ?? getPlatformMailHost();
   return [
     { type: "MX", name: fqdn, value: `10 mail.${platformHost}.` },
-    { type: "TXT", name: fqdn, value: "v=spf1 mx -all" },
+    { type: "TXT", name: fqdn, value: getExpectedSpfValue(platformHost) },
   ];
 }
 
@@ -49,12 +80,7 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
 
   const expected = expectedRecords(fqdn, platformHost);
   const expectedMx = normalizeHost(`mail.${platformHost}`);
-  const results: {
-    record: DnsRecord;
-    ok: boolean;
-    found: string;
-    issue: DnsLookupIssue;
-  }[] = [];
+  const results: DnsCheckRow[] = [];
 
   let domainExists = true;
 
@@ -88,13 +114,20 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
         issue = formatLookupError((err as NodeJS.ErrnoException).code);
         if (issue === "NXDOMAIN") domainExists = false;
       }
-      const flat = txt.map((t) => t.join("")).join(" ");
-      const ok = flat.includes("spf1");
+      const entries = txt.map((chunks) => chunks.join(""));
+      const txtRecords = entries.map((value) => ({
+        value,
+        kind: isSpfTxt(value) ? ("spf" as const) : ("other" as const),
+        matchesExpected:
+          isSpfTxt(value) && spfMatchesExpected(value, platformHost),
+      }));
+      const ok = txtRecords.some((entry) => entry.matchesExpected);
       results.push({
         record,
         ok,
         issue,
-        found: formatFoundValue(flat ? [flat] : [], issue),
+        txtRecords,
+        found: formatFoundValue(entries, issue),
       });
     }
   }
