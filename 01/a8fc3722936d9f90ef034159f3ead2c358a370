@@ -1,0 +1,36 @@
+apps/web/src/components/users/users-crud.tsx
+  s_5367a80d4e85c6::t_8e4fb370d1fb21 63-66
+  s_5367a80d4e85c6::t_46305e7a6bc8fe 163-166
+  s_5367a80d4e85c6::t_8eba93740cc21a 36-39
+  s_5367a80d4e85c6::t_292455a84a8736 211-221,223-227,229-239,243-247
+  s_5367a80d4e85c6::t_235dd5e9805bca 240,242
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_5367a80d4e85c6::t_10080274b7caf1 101
+  s_5367a80d4e85c6::t_05bc89f0d052e5 5-6
+.github/workflows/deploy.yml
+  s_5367a80d4e85c6::t_25993c0efb47b7 19,22-37,57-69,129-133,148-149,153-154,193-224,239-251
+k8s/argocd/web.yaml
+  s_5367a80d4e85c6::t_b6f30f76b38c23 19-24,27-28
+apps/web/src/lib/migration/types.ts
+  s_5367a80d4e85c6::t_f3a642c0afe082 92-100
+apps/web/src/components/users/migration-wizard.tsx
+  s_5367a80d4e85c6::t_f9824dab51f30d 140-150
+apps/web/src/lib/migration/orchestrator.ts
+  s_5367a80d4e85c6::t_db3d05c165645e 311
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "01a8fc3722936d9f90ef034159f3ead2c358a370",
+  "prompts": {},
+  "sessions": {
+    "s_5367a80d4e85c6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "555a7da2-d99e-40f6-a7d9-7ee0bb13ce5f",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
