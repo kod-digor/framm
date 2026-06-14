@@ -37,9 +37,16 @@ export function getPlatformMailHost() {
   );
 }
 
+/** SPF recommandé pour les domaines d'associations (include vers le sous-domaine plateforme). */
 export function getExpectedSpfValue(platformHost?: string) {
   const host = platformHost ?? getPlatformMailHost();
   return `v=spf1 include:spf.${host} -all`;
+}
+
+/** Tokens SPF acceptés sur le domaine plateforme apex (prod : mail + TEM Scaleway). */
+export function getPlatformApexSpfIncludeTokens(platformHost?: string) {
+  const host = (platformHost ?? getPlatformMailHost()).toLowerCase();
+  return [`include:spf.${host}`, "include:_spf.tem.scaleway.com"];
 }
 
 export function mailAutoconfigTarget(platformHost: string) {

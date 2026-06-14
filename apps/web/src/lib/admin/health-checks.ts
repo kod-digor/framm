@@ -872,6 +872,10 @@ async function checkPlatformDnsRecords() {
   return { status: "warn" as const, detail: `${domain} — SPF différent de la référence — ${detail}` };
 }
 
+function outlookAutodiscoverProbeBody(domain: string) {
+  return `<?xml version="1.0" encoding="utf-8"?><Autodiscover xmlns="http://schemas.microsoft.com/exchange/autodiscover/outlook/requestschema/2006"><Request><EMailAddress>health@${domain}</EMailAddress><AcceptableResponseSchema>http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a</AcceptableResponseSchema></Request></Autodiscover>`;
+}
+
 async function checkPlatformDnsAutoconfig() {
   const domain = getPlatformEmailDomains()[0] ?? getPlatformMailHost();
   const dnsResult = await verifyPlatformDns(domain);
@@ -895,14 +899,29 @@ async function checkPlatformDnsAutoconfig() {
     );
   }
 
-  const httpTargets = [
+  const httpTargets: Array<{
+    label: string;
+    url: string;
+    required: boolean;
+    method?: "GET" | "POST";
+    body?: string;
+  }> = [
     {
       label: "autoconfig",
-      url: `https://autoconfig.${domain}/mail/config-v1.1.xml`,
+      required: true,
+      url: `https://autoconfig.${domain}/mail/config-v1.1.xml?emailaddress=health@${domain}`,
     },
     {
       label: "autodiscover",
+      required: true,
+      method: "POST",
+      body: outlookAutodiscoverProbeBody(domain),
       url: `https://autodiscover.${domain}/autodiscover/autodiscover.xml`,
+    },
+    {
+      label: "autoconfig-fallback",
+      required: false,
+      url: `https://autoconfig.${domain}/.well-known/autoconfig/mail/config-v1.1.xml?emailaddress=health@${domain}`,
     },
   ];
 
@@ -910,31 +929,42 @@ async function checkPlatformDnsAutoconfig() {
   const httpFailures: string[] = [];
 
   for (const target of httpTargets) {
-    const cnameOk =
-      target.label === "autoconfig" ? autoconfigRow?.ok : autodiscoverRow?.ok;
+    const needsAutoconfigCname = target.label.startsWith("autoconfig");
+    const needsAutodiscoverCname = target.label.startsWith("autodiscover");
 
-    if (!cnameOk) {
-      httpParts.push(`HTTP ${target.label} ignoré (DNS absent)`);
-      httpFailures.push(target.label);
+    if (needsAutoconfigCname && !autoconfigRow?.ok) {
+      if (target.required) {
+        httpParts.push(`HTTP ${target.label} ignoré (DNS autoconfig absent)`);
+        httpFailures.push(target.label);
+      }
+      continue;
+    }
+    if (needsAutodiscoverCname && !autodiscoverRow?.ok) {
+      if (target.required) {
+        httpParts.push(`HTTP ${target.label} ignoré (DNS autodiscover absent)`);
+        httpFailures.push(target.label);
+      }
       continue;
     }
 
     try {
       const res = await fetch(target.url, {
-        method: "GET",
+        method: target.method ?? "GET",
+        body: target.method === "POST" ? target.body : undefined,
+        headers: target.method === "POST" ? { "Content-Type": "text/xml" } : undefined,
         redirect: "follow",
         signal: AbortSignal.timeout(8_000),
       });
       if (res.status >= 200 && res.status < 400) {
-        httpParts.push(`HTTP ${target.label} ${res.status}`);
+        httpParts.push(`HTTP ${target.label} ${target.method ?? "GET"} ${res.status}`);
       } else {
-        httpParts.push(`HTTP ${target.label} ${res.status}`);
-        httpFailures.push(target.label);
+        httpParts.push(`HTTP ${target.label} ${target.method ?? "GET"} ${res.status}`);
+        if (target.required) httpFailures.push(target.label);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       httpParts.push(`HTTP ${target.label} ${message}`);
-      httpFailures.push(target.label);
+      if (target.required) httpFailures.push(target.label);
     }
   }
 

@@ -1,13 +1,23 @@
-import { promises as dns } from "dns";
+import { Resolver } from "node:dns/promises";
 import {
   type DnsCheckRow,
   type DnsLookupIssue,
   type DnsVerifyResult,
   expectedRecords,
+  getPlatformApexSpfIncludeTokens,
   getPlatformMailHost,
   isPlatformDomain,
   mailAutoconfigTarget,
 } from "@/lib/dns/dns-records";
+
+/** Résolveur fiable pour les checks prod (CoreDNS / resolver OS peut renvoyer ENODATA sur SRV). */
+const PLATFORM_DNS_SERVERS = ["8.8.8.8", "1.1.1.1"];
+
+function createPlatformDnsResolver() {
+  const resolver = new Resolver();
+  resolver.setServers(PLATFORM_DNS_SERVERS);
+  return resolver;
+}
 
 export type {
   DnsCheckRow,
@@ -22,6 +32,7 @@ export {
   expectedRecords,
   formatDnsHostLabel,
   getExpectedSpfValue,
+  getPlatformApexSpfIncludeTokens,
   getPlatformMailHost,
   isPlatformDomain,
   mailAutoconfigTarget,
@@ -29,16 +40,16 @@ export {
   parseSrvRecordValue,
 } from "@/lib/dns/dns-records";
 
-function getSpfIncludeToken(platformHost: string) {
-  return `include:spf.${platformHost}`.toLowerCase();
-}
-
 function isSpfTxt(value: string) {
   return value.trim().toLowerCase().startsWith("v=spf1");
 }
 
-function spfMatchesExpected(value: string, platformHost: string) {
-  return value.toLowerCase().includes(getSpfIncludeToken(platformHost));
+function spfMatchesExpected(value: string, platformHost: string, platformApex = false) {
+  const lower = value.toLowerCase();
+  if (platformApex) {
+    return getPlatformApexSpfIncludeTokens(platformHost).some((token) => lower.includes(token));
+  }
+  return lower.includes(`include:spf.${platformHost.toLowerCase()}`);
 }
 
 function normalizeHost(host: string) {
@@ -74,8 +85,9 @@ export type PlatformARecordCheck = {
 };
 
 async function resolveARecords(host: string): Promise<{ addresses: string[]; issue: DnsLookupIssue }> {
+  const resolver = createPlatformDnsResolver();
   try {
-    const addresses = await dns.resolve4(host);
+    const addresses = await resolver.resolve4(host);
     return { addresses, issue: null };
   } catch (err) {
     const issue = formatLookupError((err as NodeJS.ErrnoException).code);
@@ -90,6 +102,8 @@ async function verifyDnsRecordsForDomain(
   const expected = expectedRecords(fqdn, platformHost);
   const expectedMx = normalizeHost(`mail.${platformHost}`);
   const expectedCname = normalizeCnameTarget(mailAutoconfigTarget(platformHost));
+  const platformApex = fqdn.toLowerCase() === platformHost.toLowerCase();
+  const resolver = createPlatformDnsResolver();
   const results: DnsCheckRow[] = [];
 
   let domainExists = true;
@@ -99,7 +113,7 @@ async function verifyDnsRecordsForDomain(
       let mx: { exchange: string; priority: number }[] = [];
       let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
-        mx = await dns.resolveMx(fqdn);
+        mx = await resolver.resolveMx(fqdn);
       } catch (err) {
         issue = formatLookupError((err as NodeJS.ErrnoException).code);
         if (issue === "NXDOMAIN") domainExists = false;
@@ -125,7 +139,7 @@ async function verifyDnsRecordsForDomain(
       let txt: string[][] = [];
       let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
-        txt = await dns.resolveTxt(fqdn);
+        txt = await resolver.resolveTxt(fqdn);
       } catch (err) {
         issue = formatLookupError((err as NodeJS.ErrnoException).code);
         if (issue === "NXDOMAIN") domainExists = false;
@@ -135,7 +149,7 @@ async function verifyDnsRecordsForDomain(
         value,
         kind: isSpfTxt(value) ? ("spf" as const) : ("other" as const),
         matchesExpected:
-          isSpfTxt(value) && spfMatchesExpected(value, platformHost),
+          isSpfTxt(value) && spfMatchesExpected(value, platformHost, platformApex),
       }));
       const ok = txtRecords.some((entry) => entry.matchesExpected);
       results.push({
@@ -150,7 +164,7 @@ async function verifyDnsRecordsForDomain(
       let cnames: string[] = [];
       let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
-        cnames = await dns.resolveCname(record.name);
+        cnames = await resolver.resolveCname(record.name);
       } catch (err) {
         issue = formatLookupError((err as NodeJS.ErrnoException).code);
         if (issue === "NXDOMAIN") domainExists = false;
@@ -167,7 +181,7 @@ async function verifyDnsRecordsForDomain(
       let srv: { priority: number; weight: number; port: number; name: string }[] = [];
       let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
-        srv = await dns.resolveSrv(record.name);
+        srv = await resolver.resolveSrv(record.name);
       } catch (err) {
         issue = formatLookupError((err as NodeJS.ErrnoException).code);
         if (issue === "NXDOMAIN") domainExists = false;

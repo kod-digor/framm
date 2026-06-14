@@ -21,6 +21,15 @@ resource "scaleway_domain_record" "tem_spf" {
   data     = "v=spf1 ip4:${module.mail_vm.public_ip} ${scaleway_tem_domain.alerts[0].spf_config} ~all"
 }
 
+# Sous-domaine spf.* : cible des include:spf.{domaine} pour les associations.
+resource "scaleway_domain_record" "spf_subdomain" {
+  count    = var.dns_enabled && var.tem_enabled ? 1 : 0
+  dns_zone = var.primary_platform_domain
+  name     = "spf"
+  type     = "TXT"
+  data     = "v=spf1 ip4:${module.mail_vm.public_ip} ${scaleway_tem_domain.alerts[0].spf_config} -all"
+}
+
 resource "scaleway_domain_record" "tem_dkim" {
   count    = var.dns_enabled && var.tem_enabled ? 1 : 0
   dns_zone = var.primary_platform_domain
