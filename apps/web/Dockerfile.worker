@@ -1,4 +1,5 @@
-# Worker migration : Node + imapsync (IMAP source → Stalwart).
+# Worker migration : Node + imapsync 2.323+ (IMAP source → Stalwart).
+# Options OAuth supportées : --gmail1/--office1, --oauthaccesstoken1 (pas --oauthclientid1, --maxparallel).
 # imapsync s'exécute dans le pod worker (spawn depuis migration-worker.ts).
 # Bullseye : script officiel + deps Perl (PKCS12 absent de bookworm).
 FROM node:22-bullseye-slim
@@ -32,6 +33,7 @@ RUN apt-get update \
     libwww-perl \
   && wget -O /usr/local/bin/imapsync https://imapsync.lamiral.info/imapsync \
   && chmod +x /usr/local/bin/imapsync \
+  && /usr/local/bin/imapsync --help >/dev/null \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json* ./

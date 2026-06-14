@@ -2,8 +2,6 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import type { ImapSourceCredentials, MigrationProgress } from "@/lib/migration/types";
 import { unsealSecret } from "@/lib/crypto/seal";
-import { GOOGLE_IMAP } from "@/lib/migration/providers/google";
-import { MICROSOFT_IMAP } from "@/lib/migration/providers/microsoft";
 import { ICLOUD_IMAP_PRESET } from "@/lib/migration/providers/imap-generic";
 
 export type ImapsyncRunOptions = {
@@ -71,34 +69,49 @@ function resolveImapBinary(): string | null {
   return null;
 }
 
-function buildSourceArgs(source: ImapSourceCredentials): string[] {
-  const host =
-    source.oauthProvider === "google"
-      ? GOOGLE_IMAP.host
-      : source.oauthProvider === "microsoft"
-        ? MICROSOFT_IMAP.host
-        : source.host;
-  const port =
-    source.oauthProvider === "google"
-      ? GOOGLE_IMAP.port
-      : source.oauthProvider === "microsoft"
-        ? MICROSOFT_IMAP.port
-        : source.port;
+const IMAPSYNC_SECRET_FLAGS = new Set([
+  "--password1",
+  "--password2",
+  "--oauthaccesstoken1",
+  "--oauthaccesstoken2",
+]);
 
-  const args = [
-    "--host1",
-    host,
-    "--port1",
-    String(port),
-    "--user1",
-    source.user,
-    "--ssl1",
-    "--sslargs1",
-    "SSL_verify_mode=1",
-  ];
+/** Args imapsync sans secrets — pour les logs migration. */
+export function redactImapsyncArgsForLog(args: string[]): string {
+  const parts: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const flag = args[i]!;
+    if (IMAPSYNC_SECRET_FLAGS.has(flag)) {
+      parts.push(flag, "<redacted>");
+      i++;
+      continue;
+    }
+    parts.push(flag);
+  }
+  return parts.join(" ");
+}
+
+function buildSourceArgs(source: ImapSourceCredentials): string[] {
+  const args: string[] = ["--user1", source.user];
+
+  // imapsync 2.323 : presets provider (--gmail1 / --office1), pas --oauthclientid1 ni --maxparallel.
+  if (source.oauthProvider === "google") {
+    args.unshift("--gmail1");
+  } else if (source.oauthProvider === "microsoft") {
+    args.unshift("--office1");
+  } else {
+    args.unshift(
+      "--host1",
+      source.host,
+      "--port1",
+      String(source.port),
+      "--ssl1",
+      "--sslargs1",
+      "SSL_verify_mode=1"
+    );
+  }
 
   if (source.oauthAccessToken) {
-    // imapsync 2.323 : --oauthaccesstoken1 suffit (pas de --oauthclientid1).
     args.push("--oauthaccesstoken1", source.oauthAccessToken);
   } else if (source.password) {
     args.push("--password1", source.password);
@@ -153,6 +166,9 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
 
   const args = buildImapsyncArgs(options);
   let progress: MigrationProgress = { percent: 0 };
+  const commandPreview = `${binary} ${redactImapsyncArgsForLog(args)}`;
+  options.onLog?.(commandPreview);
+  progress = { ...progress, lastLogLine: commandPreview };
 
   return new Promise((resolve) => {
     const child = spawn(binary, args, {
