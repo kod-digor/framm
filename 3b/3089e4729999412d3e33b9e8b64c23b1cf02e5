@@ -1,0 +1,225 @@
+apps/web/env.example
+  s_70bd18e661d8c2::t_b56ae006e63c1f 36-46
+apps/web/src/components/users/migration-wizard.tsx
+  s_70bd18e661d8c2::t_efb32e5672f05c 270,273
+  s_70bd18e661d8c2::t_5bb227b0c22b2f 389,392,398
+  s_70bd18e661d8c2::t_549d3469bbd7ef 151
+  s_70bd18e661d8c2::t_f5f1060bad2ed8 420
+  s_70bd18e661d8c2::t_aebe1d7e7ec1d4 91,380
+  s_70bd18e661d8c2::t_aaeb57196d0020 175
+  s_70bd18e661d8c2::t_144ca44588df18 297
+  s_70bd18e661d8c2::t_49afb1ff7b11e8 212,215-216
+  s_70bd18e661d8c2::t_5a8b5d8a14f1b3 402
+  s_70bd18e661d8c2::t_84f6ccf0ad329a 252-253
+  s_70bd18e661d8c2::t_559b49b8211e7a 260-261
+  s_70bd18e661d8c2::t_812f9aa9ad4c8b 162
+  s_70bd18e661d8c2::t_5c5c001c54145f 291
+  s_70bd18e661d8c2::t_6e19624bc2765b 3,25,64,74-90,92,95-114,116-129,131-141,145,149,152-155,159-160,222-224
+  s_70bd18e661d8c2::t_7b2ecd691ac2ea 303
+  s_70bd18e661d8c2::t_fc95cfec2033f6 413-416
+  s_70bd18e661d8c2::t_093dcfe0dabe3b 240-241,245
+  s_70bd18e661d8c2::t_05734a02aad2b0 196,198
+  s_70bd18e661d8c2::t_4de0c4a1e39819 431,434,441,445,447
+  s_70bd18e661d8c2::t_8025bd0e99de34 47-55,58
+  s_70bd18e661d8c2::t_0de3c8c9bd1c2d 312,314
+  s_70bd18e661d8c2::t_12d2287f914652 1-2,4-24,26-46,56-57,59-63,65-73,93-94,115,130,142-144,146-148,150,156-158,161,163-174,176-195,197,199-209,211,221,225-239,242-244,246-251,254-259,262-269,271-272,274-286,288-290,292-296,298-302,304-311,313,315-379,381-388,390-391,393-397,399-401,403-412,417-419,421-430,432-433,435-440,442-444,446,448-453
+  s_70bd18e661d8c2::t_c4450eea80a122 287
+  s_70bd18e661d8c2::t_3114f22a8e1237 217-220
+  s_70bd18e661d8c2::t_0c47ab4c5c662f 210,213-214
+.agents/skills/ux-designer/references/17-notifications.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-447
+deploy/docker/docker-compose.mail.yml
+  s_70bd18e661d8c2::t_f7fe5948b789a1 26
+  s_70bd18e661d8c2::t_5e8e4494da4878 23-25
+apps/web/src/app/actions/mailbox-migration.ts
+  s_70bd18e661d8c2::t_0efb354d6ec7c1 1-143,145-192
+  s_d2b669de1269d1::t_a5847d20009c87 144
+apps/web/src/worker/index.ts
+  s_70bd18e661d8c2::t_339aeb6d0a50e3 5
+  s_70bd18e661d8c2::t_ef06c525ed6648 39-40
+.agents/skills/ux-designer/references/04-visual-design.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-420
+.agents/skills/ux-designer/references/16-onboarding.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-415
+apps/web/src/app/dashboard/mail/layout.tsx
+  s_2e821d54a4a37b::t_61619a7c4a1c43 2
+.agents/skills/ux-designer/references/22-performance-ux.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-609
+apps/web/src/components/users/users-crud.tsx
+  s_70bd18e661d8c2::t_01605bd1332913 96-105
+  s_70bd18e661d8c2::t_0ff9ceba66ec11 3
+  s_70bd18e661d8c2::t_92584563731cb8 5-6,9,15
+  s_70bd18e661d8c2::t_be80032c779587 64,81,87-91,106,108-115
+  s_70bd18e661d8c2::t_a2e7dbfffc61d4 65-69,72-80
+  s_70bd18e661d8c2::t_b164367113b04c 245-265
+  s_70bd18e661d8c2::t_4eac423e49b2e9 28
+  s_70bd18e661d8c2::t_c4fcfe37dce14d 92-95
+  s_70bd18e661d8c2::t_b5ae84735bec6c 166-177
+.agents/skills/ux-designer/SKILL.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-325
+apps/web/src/lib/migration/access.ts
+  s_70bd18e661d8c2::t_6d528ab45f02af 1-55
+apps/web/src/lib/migration/types.ts
+  s_70bd18e661d8c2::t_2de7dab4b00639 1-67
+.agents/skills/ux-designer/references/07-forms-and-inputs.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-477
+.agents/skills/web-design-guidelines/SKILL.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-39
+.agents/skills/ux-designer/references/12a-presence-awareness.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-384
+apps/web/src/app/api/migration/oauth/google/callback/route.ts
+  s_70bd18e661d8c2::t_38b6afb92357c4 1-59
+apps/web/prisma/migrations/20260614122612_add_mailbox_migration/migration.sql
+  s_70bd18e661d8c2::t_9f1ca7349162b5 1-66
+.agents/skills/ux-designer/references/13a-canvas-navigation.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-377
+apps/web/src/components/aliases/delete-alias-form.tsx
+  s_768f84d5c36773::t_afa42fc0eb6175 18
+  s_768f84d5c36773::t_29c42afc6e8f65 7
+apps/web/src/worker/migration-worker.ts
+  s_70bd18e661d8c2::t_6a51b487facb46 1-138
+apps/web/prisma/migrations/migration_lock.toml
+  s_70bd18e661d8c2::t_9f1ca7349162b5 2
+apps/web/tsconfig.tsbuildinfo
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1
+skills-lock.json
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-17
+apps/web/src/lib/migration/providers/imap-generic.ts
+  s_70bd18e661d8c2::t_5b823c06daf5a6 1-36
+apps/web/src/app/dashboard/mail/[mailboxId]/filters/page.tsx
+  s_2e821d54a4a37b::t_90f3fbdc84b7b0 31
+.agents/skills/ux-designer/references/12b-conflict-resolution-sync.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-408
+apps/web/src/lib/migration/oauth-state.ts
+  s_70bd18e661d8c2::t_ea0f1ff1fa4a7c 1-42
+apps/web/src/components/aliases/aliases-crud.tsx
+  s_768f84d5c36773::t_9787cc4fe84e2d 4,6,10-11,13-18,20-28,41-90,113-114,116-121
+apps/web/src/components/aliases/edit-alias-form.tsx
+  s_768f84d5c36773::t_2739d703bf8584 101
+  s_768f84d5c36773::t_49a0630f3fb75e 14
+apps/web/src/app/api/migration/oauth/microsoft/route.ts
+  s_70bd18e661d8c2::t_c212d2a2b43cde 1-39
+.agents/skills/ux-designer/references/23-internationalization.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-333
+.agents/skills/ux-designer/references/01-core-principles.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-241
+apps/web/src/components/users/migration-status-panel.tsx
+  s_70bd18e661d8c2::t_0f6ba901a647ba 135
+  s_70bd18e661d8c2::t_63e5759a6dc990 139,141-143
+  s_70bd18e661d8c2::t_545325a1aa5722 110
+  s_70bd18e661d8c2::t_30fd32366aef00 13,50,54-55,58-67,71-78,81,83-87,96,98
+  s_70bd18e661d8c2::t_89779f74a07aff 26
+  s_70bd18e661d8c2::t_af67cfbbd87f67 101
+  s_70bd18e661d8c2::t_b9eee6914886dd 176
+  s_70bd18e661d8c2::t_bd3be0a30fa938 182
+  s_70bd18e661d8c2::t_59ec384f6ebe80 11
+  s_70bd18e661d8c2::t_9fc27641e0b3d2 130
+  s_70bd18e661d8c2::t_9710f4547880a2 31
+  s_70bd18e661d8c2::t_d440a918afe908 3-10,14-18,22-25,27-30,32-34,38-42,44-47,52-53,56,70,79-80,82,88-95,97,99-100,102-109,113-129,132-134,136-138,144,147-148,150-152,154-164,166-175,177-181,183-185
+  s_70bd18e661d8c2::t_bc4b19b5717278 149
+  s_70bd18e661d8c2::t_fda2c4109e14a7 19,49
+  s_70bd18e661d8c2::t_aa8c25c496f49c 140
+  s_70bd18e661d8c2::t_f48692c93fa252 153
+.agents/skills/ux-designer/references/09-ux-writing.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-476
+.agents/skills/ux-designer/references/18-data-visualization.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-437
+.agents/skills/ux-designer/references/20-emotional-design.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-369
+apps/web/messages/fr.json
+  s_70bd18e661d8c2::t_829a6b15f7096b 257-323
+apps/web/src/app/api/migration/oauth/microsoft/callback/route.ts
+  s_70bd18e661d8c2::t_38c927c8a0a286 1-59
+.agents/skills/ux-designer/references/19-search-ux.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-463
+deploy/scripts/lib/migration-run.sh
+  s_70bd18e661d8c2::t_b653cc96cb4926 1-30
+.agents/skills/ux-designer/README.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-88
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_70bd18e661d8c2::t_80ab4926b0ebaf 1-232
+.agents/skills/ux-designer/references/13b-canvas-objects-performance.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-545
+.agents/skills/ux-designer/references/05-information-architecture.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-417
+.agents/skills/ux-designer/references/21-data-tables.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-612
+apps/web/src/lib/migration/providers/google.ts
+  s_70bd18e661d8c2::t_827d2950652d97 1-118
+.agents/skills/ux-designer/references/15-ethical-design.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-404
+.agents/skills/ux-designer/references/06-interaction-design.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-479
+apps/web/src/app/dashboard/users/page.tsx
+  s_70bd18e661d8c2::t_8d4565dd7d179b 1
+  s_70bd18e661d8c2::t_912d060993668a 91-98
+.agents/skills/ux-designer/references/14-ai-ux-patterns.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-493
+apps/web/src/lib/migration/orchestrator.ts
+  s_70bd18e661d8c2::t_d0a70d91365514 1-262
+apps/web/src/lib/migration/providers/microsoft.ts
+  s_70bd18e661d8c2::t_109168c0c1a240 1-120
+.agents/skills/ux-designer/references/08-mobile-ux.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-522
+.agents/skills/ux-designer/references/24-voice-and-multimodal.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-294
+.agents/skills/ux-designer/references/02-laws-of-ux.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-314
+apps/web/prisma/schema.prisma
+  s_70bd18e661d8c2::t_ad4efc14be46d5 60-82
+  s_70bd18e661d8c2::t_79a841a9b3f427 111
+  s_70bd18e661d8c2::t_f67e4c2573b15e 366-408
+  s_70bd18e661d8c2::t_06d4f1c4ba5c53 206
+.agents/skills/ux-designer/references/03-accessibility.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-393
+apps/web/src/app/dashboard/mail/[mailboxId]/page.tsx
+  s_2e821d54a4a37b::t_7ebfd79fec3adf 37
+apps/web/src/app/api/migration/oauth/google/route.ts
+  s_70bd18e661d8c2::t_4a0ebfd48bd69b 1-39
+.agents/skills/ux-designer/references/11-design-systems.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-601
+.agents/skills/ux-designer/references/10-user-research.md
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-517
+.agents/skills/ux-designer/LICENSE
+  s_70bd18e661d8c2::t_e7cfdf6127f461 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3b3089e4729999412d3e33b9e8b64c23b1cf02e5",
+  "prompts": {},
+  "sessions": {
+    "s_2e821d54a4a37b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e62ae33f-bc82-4e9c-b900-a97fbf8d3fdf",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_70bd18e661d8c2": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5dcceede-4348-412a-9f37-64a69a42facd",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_768f84d5c36773": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3707dbc4-c522-4997-bf44-70b1a14d3919",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_d2b669de1269d1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d6a64a49-4d92-4a94-b8d9-c7c4fc6b2b70",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
