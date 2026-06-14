@@ -227,6 +227,59 @@ export async function getLaunchedMigrationsForOrg(organizationId: string) {
   });
 }
 
+const RECENT_TERMINAL_STATUSES: MigrationStatus[] = ["COMPLETED", "FAILED", "CANCELLED"];
+
+/** Dernière migration visible pour une boîte (active ou terminée récemment). */
+export async function getLastMigrationForMailbox(
+  mailboxId: string,
+  terminalWindowMs = 7 * 24 * 60 * 60 * 1000
+) {
+  const launched = await getLaunchedMigrationForMailbox(mailboxId);
+  if (launched) return launched;
+
+  const cutoff = new Date(Date.now() - terminalWindowMs);
+  return prisma.mailboxMigration.findFirst({
+    where: {
+      mailboxId,
+      status: { in: RECENT_TERMINAL_STATUSES },
+      completedAt: { gte: cutoff },
+    },
+    orderBy: { completedAt: "desc" },
+    include: migrationWithEventsInclude,
+  });
+}
+
+/** Migrations récentes par boîte : actives + terminées depuis ≤ windowMs (défaut 7 j). */
+export async function getRecentMigrationsForOrg(
+  organizationId: string,
+  terminalWindowMs = 7 * 24 * 60 * 60 * 1000
+) {
+  const cutoff = new Date(Date.now() - terminalWindowMs);
+
+  const migrations = await prisma.mailboxMigration.findMany({
+    where: {
+      organizationId,
+      OR: [
+        { status: { in: LAUNCHED_MIGRATION_STATUSES } },
+        {
+          status: { in: RECENT_TERMINAL_STATUSES },
+          completedAt: { gte: cutoff },
+        },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    include: migrationWithEventsInclude,
+  });
+
+  const byMailbox = new Map<string, (typeof migrations)[number]>();
+  for (const migration of migrations) {
+    if (!byMailbox.has(migration.mailboxId)) {
+      byMailbox.set(migration.mailboxId, migration);
+    }
+  }
+  return Array.from(byMailbox.values());
+}
+
 export async function getActiveMigrationsForOrg(organizationId: string) {
   return getLaunchedMigrationsForOrg(organizationId);
 }

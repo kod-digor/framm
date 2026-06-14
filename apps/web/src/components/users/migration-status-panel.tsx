@@ -113,11 +113,13 @@ export function MigrationStatusPanel({
   migrationId,
   initialStatus,
   onCancelled,
+  onClose,
 }: {
   mailboxId: string;
   migrationId: string;
   initialStatus?: MigrationStatusPayload | null;
   onCancelled?: () => void;
+  onClose?: () => void;
 }) {
   const t = useTranslations("users");
   const [polledStatus, setPolledStatus] = useState<MigrationStatusPayload | null>(null);
@@ -235,8 +237,70 @@ export function MigrationStatusPanel({
       : truncateText(formatImapsyncJournalLine(status.errorMessage), 280)
     : null;
 
+  const completedAtFormatted = status.completedAt
+    ? new Date(status.completedAt).toLocaleString("fr-FR", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null;
+
   return (
     <div className="space-y-6">
+      {isSuccess ? (
+        <div
+          className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-green-700" aria-hidden />
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-semibold text-green-900">
+              {t("migration.outcomeCompletedTitle")}
+            </p>
+            <p className="text-sm text-green-800">
+              {t("migration.completedMessage", { address: status.targetAddress })}
+            </p>
+            {completedAtFormatted ? (
+              <p className="text-xs text-green-700/80">
+                {t("migration.completedAtFull", { when: completedAtFormatted })}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {isFailed ? (
+        <div
+          className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3"
+          role="alert"
+        >
+          <XCircle className="mt-0.5 size-5 shrink-0 text-red-700" aria-hidden />
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-semibold text-red-900">
+              {t("migration.outcomeFailedTitle")}
+            </p>
+            {formattedError ? (
+              <p className="text-sm text-red-800">{formattedError}</p>
+            ) : (
+              <p className="text-sm text-red-800">{t("migration.outcomeFailedGeneric")}</p>
+            )}
+            {completedAtFormatted ? (
+              <p className="text-xs text-red-700/80">
+                {t("migration.completedAtFull", { when: completedAtFormatted })}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {isCancelled ? (
+        <p
+          className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          role="status"
+        >
+          {t("migration.cancelledMessage")}
+        </p>
+      ) : null}
+
       <div className="space-y-4 rounded-lg border border-canal bg-neutral-50/50 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm font-semibold text-encre">{statusLabel}</span>
@@ -318,12 +382,6 @@ export function MigrationStatusPanel({
         </dl>
       </div>
 
-      {isFailed && formattedError ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {formattedError}
-        </p>
-      ) : null}
-
       <div className="rounded-lg border border-canal bg-white">
         <h4 className="border-b border-canal px-4 py-3 text-sm font-semibold text-encre">
           {t("migration.eventsTitle")}
@@ -361,24 +419,20 @@ export function MigrationStatusPanel({
         </form>
       ) : null}
 
-      {isFailed ? (
-        <form action={retryAction}>
-          <input type="hidden" name="migrationId" value={migrationId} />
-          <RetryButton />
-        </form>
-      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {isFailed ? (
+          <form action={retryAction}>
+            <input type="hidden" name="migrationId" value={migrationId} />
+            <RetryButton />
+          </form>
+        ) : null}
 
-      {isSuccess ? (
-        <p className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {t("migration.completedMessage", { address: status.targetAddress })}
-        </p>
-      ) : null}
-
-      {isCancelled ? (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {t("migration.cancelledMessage")}
-        </p>
-      ) : null}
+        {!isActive && onClose ? (
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            {t("migration.closePanel")}
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -6,7 +6,8 @@ import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { isDnsVerifiedDomainStatus, MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/domain-status";
 import {
   cancelStaleDraftMigrations,
-  getActiveMigrationsForOrg,
+  getRecentMigrationsForOrg,
+  serializeMigrationStatus,
   serializeMigrationStatusWithLiveProgress,
 } from "@/lib/migration/orchestrator";
 
@@ -49,14 +50,16 @@ export default async function UsersPage() {
       where: { organizationId: orgId, status: { in: MAIL_USABLE_DOMAIN_STATUSES } },
       orderBy: { fqdn: "asc" },
     }),
-    getActiveMigrationsForOrg(orgId),
+    getRecentMigrationsForOrg(orgId),
   ]);
 
   const activeMigrationsByMailbox = Object.fromEntries(
     await Promise.all(
       activeMigrations.map(async (migration) => [
         migration.mailboxId,
-        await serializeMigrationStatusWithLiveProgress(migration),
+        migration.status === "QUEUED" || migration.status === "RUNNING"
+          ? await serializeMigrationStatusWithLiveProgress(migration)
+          : serializeMigrationStatus(migration),
       ])
     )
   );

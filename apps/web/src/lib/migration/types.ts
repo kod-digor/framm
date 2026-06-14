@@ -69,6 +69,19 @@ export type MigrationStatusPayload = {
 /** Migration réellement lancée (badge, bannière, panneau de suivi). */
 export const LAUNCHED_MIGRATION_STATUSES: MigrationStatus[] = ["QUEUED", "RUNNING"];
 
+/** Migration terminée (succès, échec ou annulation). */
+export const TERMINAL_MIGRATION_STATUSES: MigrationStatus[] = [
+  "COMPLETED",
+  "FAILED",
+  "CANCELLED",
+];
+
+/** Durée d'affichage du chip sur la ligne utilisateur (7 jours). */
+export const MIGRATION_CHIP_VISIBLE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Durée d'affichage du widget sidebar pour une migration terminée (48 h). */
+export const MIGRATION_SIDEBAR_RECENT_MS = 48 * 60 * 60 * 1000;
+
 /** Brouillon wizard (OAuth / choix du périmètre) — pas une migration en cours. */
 export const DRAFT_MIGRATION_STATUSES: MigrationStatus[] = ["PENDING_OAUTH"];
 
@@ -83,6 +96,29 @@ export const ACTIVE_MIGRATION_STATUSES = LAUNCHED_MIGRATION_STATUSES;
 
 export function isLaunchedMigrationStatus(status: MigrationStatus): boolean {
   return LAUNCHED_MIGRATION_STATUSES.includes(status);
+}
+
+export function isTerminalMigrationStatus(status: MigrationStatus): boolean {
+  return TERMINAL_MIGRATION_STATUSES.includes(status);
+}
+
+function isWithinMs(isoDate: string | null, windowMs: number): boolean {
+  if (!isoDate) return false;
+  return Date.now() - new Date(isoDate).getTime() <= windowMs;
+}
+
+/** Chip visible sur la ligne utilisateur (actif ou terminé depuis ≤ 7 jours). */
+export function isChipVisibleMigration(migration: MigrationStatusPayload): boolean {
+  if (isLaunchedMigrationStatus(migration.status)) return true;
+  if (!isTerminalMigrationStatus(migration.status)) return false;
+  return isWithinMs(migration.completedAt, MIGRATION_CHIP_VISIBLE_MS);
+}
+
+/** Widget sidebar : migration active ou terminée (succès/échec) depuis ≤ 48 h. */
+export function isSidebarVisibleMigration(migration: MigrationStatusPayload): boolean {
+  if (isLaunchedMigrationStatus(migration.status)) return true;
+  if (migration.status !== "COMPLETED" && migration.status !== "FAILED") return false;
+  return isWithinMs(migration.completedAt, MIGRATION_SIDEBAR_RECENT_MS);
 }
 
 export function isDraftMigrationStatus(status: MigrationStatus): boolean {

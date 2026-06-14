@@ -13,7 +13,9 @@ import {
   getDraftMigrationForMailbox,
   getLaunchedMigrationForMailbox,
   getLaunchedMigrationsForOrg,
+  getLastMigrationForMailbox,
   getMigrationById,
+  getRecentMigrationsForOrg,
   getReusableMigrationForMailbox,
   migrationHasStoredCredentials,
   queueMigration,
@@ -251,6 +253,42 @@ export async function listActiveMigrationsAction(): Promise<
   return map;
 }
 
+export async function listRecentMigrationsAction(): Promise<
+  Record<string, MigrationStatusPayload>
+> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) return {};
+
+  const migrations = await getRecentMigrationsForOrg(orgId);
+  const map: Record<string, MigrationStatusPayload> = {};
+  for (const migration of migrations) {
+    map[migration.mailboxId] =
+      migration.status === "QUEUED" || migration.status === "RUNNING"
+        ? await serializeMigrationStatusWithLiveProgress(migration)
+        : serializeMigrationStatus(migration);
+  }
+  return map;
+}
+
+export async function getLastMigrationForMailboxAction(
+  mailboxId: string
+): Promise<MigrationStatusPayload | null> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) return null;
+
+  const mailbox = await assertMailboxOrg(mailboxId, orgId);
+  if (!mailbox) return null;
+
+  const migration = await getLastMigrationForMailbox(mailboxId);
+  if (!migration) return null;
+
+  return migration.status === "QUEUED" || migration.status === "RUNNING"
+    ? serializeMigrationStatusWithLiveProgress(migration)
+    : serializeMigrationStatus(migration);
+}
+
 export async function getMigrationStatusAction(
   mailboxId: string,
   migrationId?: string
@@ -275,9 +313,16 @@ export async function getMigrationStatusAction(
   }
 
   const migration = await getLaunchedMigrationForMailbox(mailboxId);
-  if (!migration) return null;
+  if (migration) {
+    return serializeMigrationStatusWithLiveProgress(migration);
+  }
 
-  return serializeMigrationStatusWithLiveProgress(migration);
+  const recent = await getLastMigrationForMailbox(mailboxId);
+  if (!recent) return null;
+
+  return recent.status === "QUEUED" || recent.status === "RUNNING"
+    ? serializeMigrationStatusWithLiveProgress(recent)
+    : serializeMigrationStatus(recent);
 }
 
 export async function getDraftMigrationAction(

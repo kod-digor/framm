@@ -9,7 +9,7 @@ import { removeWorkspaceUserAction } from "@/app/actions/workspace-users";
 import {
   getDraftMigrationAction,
   getMigrationStatusAction,
-  listActiveMigrationsAction,
+  listRecentMigrationsAction,
   resolveMigrationWizardEntryAction,
 } from "@/app/actions/mailbox-migration";
 import { CrudListCard } from "@/components/layout/crud-list-card";
@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
 import {
+  isChipVisibleMigration,
   isLaunchedMigrationStatus,
   resolveDraftWizardStep,
 } from "@/lib/migration/types";
@@ -126,7 +127,7 @@ export function UsersCrud({
     setMigrationStatus(status);
     setActiveMigrations((prev) => {
       const next = { ...prev };
-      if (status) {
+      if (status && isChipVisibleMigration(status)) {
         next[mailboxId] = status;
       } else {
         delete next[mailboxId];
@@ -137,7 +138,7 @@ export function UsersCrud({
   }, []);
 
   const refreshAllActiveMigrations = useCallback(async () => {
-    const next = await listActiveMigrationsAction();
+    const next = await listRecentMigrationsAction();
     setActiveMigrations(next);
     if (statusDrawerMailboxId && next[statusDrawerMailboxId]) {
       setMigrationStatus(next[statusDrawerMailboxId]);
@@ -165,7 +166,7 @@ export function UsersCrud({
 
     void (async () => {
       const liveStatus = await getMigrationStatusAction(migrationStatusMailbox);
-      if (liveStatus && isLaunchedMigrationStatus(liveStatus.status)) {
+      if (liveStatus && isChipVisibleMigration(liveStatus)) {
         setActiveMigrations((prev) => ({
           ...prev,
           [migrationStatusMailbox]: liveStatus,
@@ -248,7 +249,7 @@ export function UsersCrud({
   const openMigration = (mailboxId: string) => {
     void (async () => {
       const cached = activeMigrations[mailboxId];
-      if (cached && isLaunchedMigrationStatus(cached.status)) {
+      if (cached && isChipVisibleMigration(cached)) {
         openStatusDrawer(mailboxId);
         return;
       }
@@ -331,7 +332,7 @@ export function UsersCrud({
             ) : (
               <span className="text-ardoise/50">{t("noMailbox")}</span>
             )}
-            {migration && isLaunchedMigrationStatus(migration.status) ? (
+            {migration && isChipVisibleMigration(migration) ? (
               <MigrationStatusChip
                 status={migration}
                 onClick={() => openStatusDrawer(row.mailboxId!)}
@@ -488,7 +489,11 @@ export function UsersCrud({
               void refreshAllActiveMigrations();
             }
           }}
-          title={t("migration.statusTitle")}
+          title={
+            isLaunchedMigrationStatus(statusDrawerMigration.status)
+              ? t("migration.statusTitle")
+              : t("migration.statusTitleRecent")
+          }
           description={t("migration.wizardHint", { email: statusDrawerUser.userEmail })}
         >
           <MigrationStatusPanel
@@ -496,6 +501,10 @@ export function UsersCrud({
             migrationId={statusDrawerMigration.id}
             initialStatus={statusDrawerMigration}
             onCancelled={() => {
+              void refreshAllActiveMigrations();
+            }}
+            onClose={() => {
+              setStatusDrawerMailboxId(null);
               void refreshAllActiveMigrations();
             }}
           />
