@@ -29,6 +29,7 @@ services:
   # docker-proxy → connexion directe à Stalwart:8080 renvoie une réponse vide
   # depuis l'hôte. Socat partage le namespace réseau de stalwart, écoute sur
   # 18080 et relaie vers 127.0.0.1:8080 (port publié 8080→18080 sur stalwart).
+  # Après un restart/recreate de stalwart seul, recréer stalwart-proxy (framm_stalwart_ensure_jmap_proxy).
   stalwart-proxy:
     image: alpine/socat@sha256:2b6b49e9000105672bf70648f8642801791374a24f549d30bed3c3115c13d24c
     restart: unless-stopped

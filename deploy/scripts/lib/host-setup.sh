@@ -21,7 +21,9 @@ framm_host_install_imapsync() {
     return 0
   fi
   DEBIAN_FRONTEND=noninteractive apt-get update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq imapsync
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq     ca-certificates wget     libauthen-ntlm-perl     libcrypt-openssl-rsa-perl     libcrypt-openssl-pkcs12-perl     libdata-uniqid-perl     libencode-imaputf7-perl     libfile-copy-recursive-perl     libfile-tail-perl     libio-socket-inet6-perl     libio-socket-ssl-perl     libio-tee-perl     libhtml-parser-perl     libjson-webtoken-perl     libmail-imapclient-perl     libparse-recdescent-perl     libproc-processtable-perl     libmodule-scandeps-perl     libreadonly-perl     libregexp-common-perl     libsys-meminfo-perl     libterm-readkey-perl     libunicode-string-perl     liburi-perl     libwww-perl
+  wget -q -O /usr/local/bin/imapsync https://imapsync.lamiral.info/imapsync
+  chmod +x /usr/local/bin/imapsync
 }
 
 framm_host_ensure_tools() {

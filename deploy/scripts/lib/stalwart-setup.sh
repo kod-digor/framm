@@ -1,6 +1,37 @@
 #!/usr/bin/env bash
 # Configuration Stalwart (bootstrap + clé API) — sourcer sur la VM Mail
 
+framm_stalwart_compose() {
+  cd /opt/framm/deploy/docker
+  export COMPOSE_PROJECT_NAME=framm-mail
+  docker compose --env-file /opt/framm/deploy/.generated/env.production -f docker-compose.mail.yml "$@"
+}
+
+# stalwart-proxy (socat 18080→8080) partage le netns de stalwart. Un « restart stalwart »
+# seul laisse socat dans l'ancien namespace : nginx voit 502 sur mail.*/jmap.
+framm_stalwart_restart_with_proxy() {
+  framm_stalwart_compose restart stalwart
+  framm_stalwart_compose up -d --force-recreate stalwart-proxy
+  sleep 3
+}
+
+framm_stalwart_host_jmap_ok() {
+  local code
+  code="$(curl -s -o /dev/null -w "%{http_code}" -m 5 -X POST \
+    -H "Content-Type: application/json" -d '{}' http://127.0.0.1:8080/jmap 2>/dev/null || echo "000")"
+  [[ "$code" == "200" || "$code" == "401" ]]
+}
+
+framm_stalwart_ensure_jmap_proxy() {
+  if framm_stalwart_host_jmap_ok; then
+    return 0
+  fi
+  echo "Proxy JMAP (socat) hors du netns Stalwart — recréation stalwart-proxy..."
+  framm_stalwart_compose up -d --force-recreate stalwart-proxy
+  sleep 2
+  framm_stalwart_host_jmap_ok
+}
+
 framm_stalwart_jmap() {
   local user="$1"
   local pass="$2"
@@ -73,10 +104,7 @@ EOF
 
   echo "Bootstrap Stalwart (${mail_host} / ${domain})..."
   framm_stalwart_jmap "$RECOVERY_USER" "$RECOVERY_PASS" "$body" >/dev/null
-  cd /opt/framm/deploy/docker
-  export COMPOSE_PROJECT_NAME=framm-mail
-  docker compose -f docker-compose.mail.yml restart stalwart
-  sleep 5
+  framm_stalwart_restart_with_proxy
 }
 
 framm_stalwart_api_key_valid() {
@@ -378,6 +406,7 @@ framm_stalwart_ensure_ready() {
 
   framm_stalwart_sync_le_certs || true
   framm_stalwart_ensure_le_tls || true
+  framm_stalwart_ensure_jmap_proxy || return 1
 }
 
 framm_stalwart_outbound_smtp_reachable() {
