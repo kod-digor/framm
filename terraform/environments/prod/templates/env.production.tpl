@@ -35,8 +35,11 @@ S3_ENDPOINT=${s3_endpoint}
 S3_REGION=${s3_region}
 S3_BUCKET_UPLOADS=${s3_bucket_uploads}
 S3_BUCKET_BACKUPS=${s3_bucket_backups}
+S3_BUCKET_MAIL_BLOBS=${s3_bucket_mail_blobs}
 S3_ACCESS_KEY=${s3_access_key}
 S3_SECRET_KEY=${s3_secret_key}
+S3_MAIL_BLOBS_ACCESS_KEY=${s3_mail_blobs_access_key}
+S3_MAIL_BLOBS_SECRET_KEY=${s3_mail_blobs_secret_key}
 APP_PUBLIC_IP=${app_public_ip}
 MAIL_PUBLIC_IP=${mail_public_ip}
 

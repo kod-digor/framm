@@ -11,10 +11,11 @@ locals {
   mail_url    = "https://mail.${var.primary_platform_domain}"
   grafana_url = "https://grafana.${var.primary_platform_domain}"
 
-  bucket_uploads  = "framm-uploads-${local.project_slug}"
-  bucket_backups  = "framm-backups-${local.project_slug}"
-  bucket_cold     = "framm-cold-${local.project_slug}"
-  bucket_tfstate  = "framm-tfstate-${local.project_slug}"
+  bucket_uploads    = "framm-uploads-${local.project_slug}"
+  bucket_backups    = "framm-backups-${local.project_slug}"
+  bucket_cold       = "framm-cold-${local.project_slug}"
+  bucket_mail_blobs = "framm-mail-blobs-${local.project_slug}"
+  bucket_tfstate    = "framm-tfstate-${local.project_slug}"
 
   # SMTP d'alerte : override manuel (.env) prioritaire, sinon TEM Scaleway
   # provisionné par alerting.tf quand le DNS est géré ici.

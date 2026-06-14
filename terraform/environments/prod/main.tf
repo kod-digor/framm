@@ -46,6 +46,18 @@ module "cold_archive" {
   }]
 }
 
+# BlobStore Stalwart (Phase 1) : bucket + clés IAM dédiées.
+# Phase 2 (fenêtre de maintenance) : activer store.blob dans config Stalwart,
+# export/import des blobs locaux → S3, puis retirer le stockage disque local.
+module "mail_blobs" {
+  source = "../../modules/object_storage"
+
+  bucket_name          = local.bucket_mail_blobs
+  scaleway_project_id  = var.scw_project_id
+  scaleway_region      = var.scw_region
+  iam_application_name = "framm-mail-blobs"
+}
+
 # VM mail : Scaleway injecte des règles SG non éditables bloquant le SMTP sortant
 # (TCP 25/465/587). Sans déblocage support Scaleway, les MailingList Stalwart ne peuvent
 # pas relayer vers des MX externes (ex. igor@mages.pro → Google).
@@ -138,16 +150,20 @@ resource "local_file" "env_production" {
     primary_domain       = var.primary_platform_domain
     s3_endpoint          = module.uploads.s3_endpoint
     s3_region            = module.uploads.s3_region
-    s3_bucket_uploads    = module.uploads.bucket_name
-    s3_bucket_backups    = module.backups.bucket_name
-    s3_access_key        = module.uploads.access_key
-    s3_secret_key        = module.uploads.secret_key
+    s3_bucket_uploads      = module.uploads.bucket_name
+    s3_bucket_backups      = module.backups.bucket_name
+    s3_bucket_mail_blobs   = module.mail_blobs.bucket_name
+    s3_access_key          = module.uploads.access_key
+    s3_secret_key          = module.uploads.secret_key
+    s3_mail_blobs_access_key = module.mail_blobs.access_key
+    s3_mail_blobs_secret_key = module.mail_blobs.secret_key
     app_public_ip        = local.app_ingress_ip
     mail_public_ip       = module.mail_vm.public_ip
   })
 
   depends_on = [
     module.uploads,
+    module.mail_blobs,
     module.mail_vm,
     scaleway_iam_api_key.alerts,
     scaleway_tem_domain.alerts,
