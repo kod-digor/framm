@@ -78,7 +78,7 @@ kubectl -n framm create secret generic framm-env \
   --from-literal=MICROSOFT_MIGRATION_CLIENT_SECRET="${MICROSOFT_MIGRATION_CLIENT_SECRET:-}" \
   --from-literal=IMAPSYNC_MAX_PARALLEL="${IMAPSYNC_MAX_PARALLEL:-6}" \
   --from-literal=IMAPSYNC_MAX_BYTES_PER_SECOND="${IMAPSYNC_MAX_BYTES_PER_SECOND:-}" \
-  --from-literal=IMAPSYNC_PATH="${IMAPSYNC_PATH:-/usr/bin/imapsync}" \
+  --from-literal=IMAPSYNC_PATH="${IMAPSYNC_PATH:-/usr/local/bin/imapsync}" \
   --from-literal=MIGRATION_WORKER_CONCURRENCY="${MIGRATION_WORKER_CONCURRENCY:-1}" \
   --from-literal=MIGRATION_STALWART_IMAP_HOST="${MIGRATION_STALWART_IMAP_HOST:-}" \
   --from-literal=MIGRATION_STALWART_IMAP_PORT="${MIGRATION_STALWART_IMAP_PORT:-993}" \

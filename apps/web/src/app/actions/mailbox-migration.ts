@@ -203,7 +203,8 @@ export async function listActiveMigrationsAction(): Promise<
 }
 
 export async function getMigrationStatusAction(
-  mailboxId: string
+  mailboxId: string,
+  migrationId?: string
 ): Promise<MigrationStatusPayload | null> {
   const session = await requireOrgAdmin();
   const orgId = await resolveOrgId(session);
@@ -211,6 +212,18 @@ export async function getMigrationStatusAction(
 
   const mailbox = await assertMailboxOrg(mailboxId, orgId);
   if (!mailbox) return null;
+
+  if (migrationId) {
+    const tracked = await getMigrationById(migrationId);
+    if (
+      tracked &&
+      tracked.mailboxId === mailboxId &&
+      tracked.organizationId === orgId &&
+      tracked.status !== "PENDING_OAUTH"
+    ) {
+      return serializeMigrationStatus(tracked);
+    }
+  }
 
   const migration = await getLaunchedMigrationForMailbox(mailboxId);
   if (!migration) return null;

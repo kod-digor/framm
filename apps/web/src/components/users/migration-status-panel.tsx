@@ -54,10 +54,10 @@ export function MigrationStatusPanel({
   const [polledStatus, setPolledStatus] = useState<MigrationStatusPayload | null>(null);
 
   const refresh = useCallback(async () => {
-    const next = await getMigrationStatusAction(mailboxId);
+    const next = await getMigrationStatusAction(mailboxId, migrationId);
     setPolledStatus(next);
     return next;
-  }, [mailboxId]);
+  }, [mailboxId, migrationId]);
 
   const [, cancelAction] = useActionState(
     async (_prev: ActionResult, formData: FormData) => {
@@ -73,13 +73,13 @@ export function MigrationStatusPanel({
 
   useEffect(() => {
     let cancelled = false;
-    void getMigrationStatusAction(mailboxId).then((next) => {
+    void getMigrationStatusAction(mailboxId, migrationId).then((next) => {
       if (!cancelled) setPolledStatus(next);
     });
     return () => {
       cancelled = true;
     };
-  }, [mailboxId]);
+  }, [mailboxId, migrationId]);
 
   useEffect(() => {
     const status = polledStatus ?? initialStatus;
@@ -93,7 +93,7 @@ export function MigrationStatusPanel({
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [polledStatus, initialStatus, refresh]);
+  }, [polledStatus, initialStatus, refresh, migrationId]);
 
   const status = polledStatus ?? initialStatus;
 

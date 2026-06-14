@@ -63,22 +63,20 @@ function parseProgressLine(line: string, current: MigrationProgress): MigrationP
 }
 
 function resolveImapBinary(): string | null {
-  const envPath = process.env.IMAPSYNC_PATH?.trim();
-  if (envPath && existsSync(envPath)) return envPath;
-
   const candidates = [
-    "imapsync",
+    process.env.IMAPSYNC_PATH?.trim(),
+    "/usr/local/bin/imapsync",
     "/usr/bin/imapsync",
     "/opt/imapsync/imapsync",
-    "/usr/local/bin/imapsync",
-  ];
+    "imapsync",
+  ].filter((value): value is string => Boolean(value));
 
   for (const candidate of candidates) {
     if (candidate === "imapsync") return candidate;
     if (existsSync(candidate)) return candidate;
   }
 
-  return "imapsync";
+  return null;
 }
 
 function buildSourceArgs(source: ImapSourceCredentials): string[] {

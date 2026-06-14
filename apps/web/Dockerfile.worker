@@ -6,7 +6,7 @@ WORKDIR /app
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-    ca-certificates wget \
+    ca-certificates wget procps \
     libauthen-ntlm-perl \
     libcrypt-openssl-rsa-perl \
     libcrypt-openssl-pkcs12-perl \
