@@ -1,0 +1,25 @@
+apps/web/src/app/dashboard/domains/page.tsx
+  s_280d6552d5c766::t_77d940482b3d56 89
+apps/web/src/components/domains/dns-status-panel.tsx
+  s_280d6552d5c766::t_47f02717df62ba 1-3
+  s_280d6552d5c766::t_e64cda43b0c139 91,94,96-97,100-114
+apps/web/src/components/domains/domains-list.tsx
+  s_280d6552d5c766::t_985bffaf0ed38a 92
+  s_280d6552d5c766::t_40b967b1673035 48,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "285a1b6fafecae14703fed37c5619a885a6d1a75",
+  "prompts": {},
+  "sessions": {
+    "s_280d6552d5c766": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7652b204-10aa-4996-b9d7-7a2a57f0f536",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
