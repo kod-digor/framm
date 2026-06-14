@@ -39,6 +39,8 @@ kubectl -n framm create secret generic framm-env \
   --from-literal=WEBMAIL_URL="${WEBMAIL_URL}" \
   --from-literal=STALWART_URL="${STALWART_URL}" \
   --from-literal=STALWART_API_KEY="${STALWART_API_KEY}" \
+  --from-literal=STALWART_PLATFORM_PGP_PUBLIC_KEY="${STALWART_PLATFORM_PGP_PUBLIC_KEY:-}" \
+  --from-literal=STALWART_ENCRYPTION_PUBLIC_KEY_ID="${STALWART_ENCRYPTION_PUBLIC_KEY_ID:-}" \
   --from-literal=PRIMARY_PLATFORM_DOMAIN="${PRIMARY_PLATFORM_DOMAIN}" \
   --from-literal=BUREAU_ADMIN_EMAIL="${BUREAU_ADMIN_EMAIL}" \
   --from-literal=BUREAU_ADMIN_PASSWORD="${BUREAU_ADMIN_PASSWORD}" \
