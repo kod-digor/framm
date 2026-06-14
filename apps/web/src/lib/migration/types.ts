@@ -89,6 +89,15 @@ export function isDraftMigrationStatus(status: MigrationStatus): boolean {
   return DRAFT_MIGRATION_STATUSES.includes(status);
 }
 
+/** Reprendu à l'étape wizard appropriée pour un brouillon PENDING_OAUTH. */
+export function resolveDraftWizardStep(draft: MigrationStatusPayload): "provider" | "credentials" | "scope" {
+  if (draft.sourceAddress) return "scope";
+  if (draft.provider === "ICLOUD" || draft.provider === "IMAP_GENERIC") {
+    return "credentials";
+  }
+  return "provider";
+}
+
 export const MIGRATION_ERROR_CODES = [
   "imapsync_not_found",
   "imapsync_failed",

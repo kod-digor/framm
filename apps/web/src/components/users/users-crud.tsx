@@ -33,7 +33,10 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
-import { isLaunchedMigrationStatus } from "@/lib/migration/types";
+import {
+  isLaunchedMigrationStatus,
+  resolveDraftWizardStep,
+} from "@/lib/migration/types";
 import type { DelegationRow } from "@/components/mail/mailbox-delegations-section";
 import type { OrgMemberOption } from "@/components/shared-mailboxes/org-members-picker";
 import type { MailboxAddressPatternType } from "@prisma/client";
@@ -56,6 +59,10 @@ export type UserRow = {
 
 type DomainOption = { id: string; fqdn: string; isDnsVerified: boolean };
 type DomainSimple = { id: string; fqdn: string };
+
+function draftStorageKey(mailboxId: string) {
+  return `framm:migration-draft:${mailboxId}`;
+}
 
 export function UsersCrud({
   users,
@@ -153,6 +160,10 @@ export function UsersCrud({
       if (!cancelled && draft) {
         setDraftMigration(draft);
         setMigrationInitialId(draft.id);
+        setMigrationInitialStep(resolveDraftWizardStep(draft));
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.setItem(draftStorageKey(oauthMailboxId), draft.id);
+        }
       }
     });
 
@@ -197,33 +208,43 @@ export function UsersCrud({
   ).length;
 
   const openMigration = (mailboxId: string) => {
-    const launched = activeMigrations[mailboxId];
-    if (launched && isLaunchedMigrationStatus(launched.status)) {
-      openStatusDrawer(mailboxId);
-      return;
-    }
+    void (async () => {
+      const cached = activeMigrations[mailboxId];
+      if (cached && isLaunchedMigrationStatus(cached.status)) {
+        openStatusDrawer(mailboxId);
+        return;
+      }
 
-    setStatusDrawerMailboxId(null);
-    setMigrationMailboxId(mailboxId);
-    setMigrationInitialId(null);
-    setMigrationInitialStep(null);
-    setDraftMigration(null);
-    setMigrationStatus(null);
+      const [liveStatus, draftByMailbox] = await Promise.all([
+        getMigrationStatusAction(mailboxId),
+        getDraftMigrationAction(mailboxId, true),
+      ]);
 
-    void getDraftMigrationAction(mailboxId, true).then((draft) => {
-      if (!draft) return;
+      if (liveStatus && isLaunchedMigrationStatus(liveStatus.status)) {
+        setActiveMigrations((prev) => ({ ...prev, [mailboxId]: liveStatus }));
+        openStatusDrawer(mailboxId);
+        return;
+      }
+
+      let draft = draftByMailbox;
+      if (!draft && typeof sessionStorage !== "undefined") {
+        const cachedId = sessionStorage.getItem(draftStorageKey(mailboxId));
+        if (cachedId) {
+          draft = await getDraftMigrationAction(cachedId);
+        }
+      }
+
+      setStatusDrawerMailboxId(null);
+      setMigrationInitialId(draft?.id ?? null);
+      setMigrationInitialStep(draft ? resolveDraftWizardStep(draft) : null);
+      setMigrationStatus(liveStatus ?? draft);
       setDraftMigration(draft);
-      setMigrationInitialId(draft.id);
-      const resumeStep =
-        draft.provider === "ICLOUD" || draft.provider === "IMAP_GENERIC"
-          ? draft.sourceAddress
-            ? "scope"
-            : "credentials"
-          : draft.sourceAddress
-            ? "scope"
-            : "provider";
-      setMigrationInitialStep(resumeStep);
-    });
+      setMigrationMailboxId(mailboxId);
+
+      if (draft?.id && typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem(draftStorageKey(mailboxId), draft.id);
+      }
+    })();
   };
 
   const openStatusDrawer = (mailboxId: string) => {

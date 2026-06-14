@@ -16,8 +16,25 @@ env:
   PRIMARY_PLATFORM_DOMAIN: kod-digor.bzh
   AUTH_URL: https://kod-digor.bzh
   WEBMAIL_URL: https://webmail.kod-digor.bzh
+  REGISTRY: rg.fr-par.scw.cloud/framm-kod-digor
 
 jobs:
+  detect-changes:
+    name: Detect changed paths
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    outputs:
+      mail: ${{ steps.filter.outputs.mail }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            mail:
+              - 'deploy/**'
+              - 'terraform/**'
+
   test-web:
     name: Test web
     runs-on: ubuntu-latest
@@ -36,6 +53,19 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build -- --webpack
+
+  terraform-validate:
+    name: Terraform validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - run: terraform init -backend=false && terraform validate
+        working-directory: terraform/environments/prod
 
   infra-health-checks:
     name: Infra health checks
@@ -94,24 +124,13 @@ jobs:
           TEM_ENABLED: "true"
         run: ./deploy/scripts/ci-terraform-sync.sh
 
-  terraform-validate:
-    name: Terraform validate
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.0
-
-      - run: terraform init -backend=false && terraform validate
-        working-directory: terraform/environments/prod
-
   deploy-prod:
     name: Deploy mail VM
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: [test-web, terraform-sync, infra-health-checks]
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      needs.detect-changes.outputs.mail == 'true'
+    needs: [test-web, terraform-sync, infra-health-checks, detect-changes]
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -126,18 +145,13 @@ jobs:
           BULWARK_SESSION_SECRET: ${{ secrets.BULWARK_SESSION_SECRET }}
         run: ./deploy/scripts/ci-deploy-mail.sh
 
-  # GitOps Kubernetes : construit les images, les pousse au registre Scaleway
-  # puis met à jour le tag dans k8s/apps/web — ArgoCD déploie le reste.
-  # Nécessite le secret SCW_SECRET_KEY ; le job se saute proprement sinon.
-  build-push:
-    name: Build & push images (Kapsule)
+  build-push-web:
+    name: Build & push web image
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     needs: [test-web, terraform-sync, infra-health-checks]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    env:
-      REGISTRY: rg.fr-par.scw.cloud/framm-kod-digor
+    outputs:
+      enabled: ${{ steps.creds.outputs.enabled }}
     steps:
       - uses: actions/checkout@v4
 
@@ -176,6 +190,38 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/web:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/web:buildcache,mode=max
 
+  build-push-worker:
+    name: Build & push worker image
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: [test-web, terraform-sync, infra-health-checks]
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.creds.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check registry credentials
+        id: creds
+        run: |
+          if [ -n "${{ secrets.SCW_SECRET_KEY }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Secret SCW_SECRET_KEY absent — build Kapsule sauté"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.creds.outputs.enabled == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Scaleway registry
+        if: steps.creds.outputs.enabled == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: rg.fr-par.scw.cloud
+          username: nologin
+          password: ${{ secrets.SCW_SECRET_KEY }}
+
       - name: Build & push worker
         if: steps.creds.outputs.enabled == 'true'
         uses: docker/build-push-action@v6
@@ -190,8 +236,21 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/worker:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/worker:buildcache,mode=max
 
+  gitops-update:
+    name: Update image tags (GitOps)
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      needs.build-push-web.outputs.enabled == 'true' &&
+      needs.build-push-worker.outputs.enabled == 'true'
+    needs: [build-push-web, build-push-worker]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Update image tags (GitOps)
-        if: steps.creds.outputs.enabled == 'true'
         run: |
           sed -i "s/newTag: .*/newTag: ${{ github.sha }}/" k8s/apps/web/kustomization.yaml
           git config user.name "framm-ci"

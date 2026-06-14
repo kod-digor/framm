@@ -308,6 +308,7 @@ export async function markMigrationRunning(migrationId: string, firstPhase: Migr
       status: "RUNNING",
       phase: firstPhase,
       startedAt: new Date(),
+      progressJson: { percent: 0, lastLogLine: "migration_started" },
     },
   });
   await logMigrationEvent(migrationId, "migration_started", firstPhase);

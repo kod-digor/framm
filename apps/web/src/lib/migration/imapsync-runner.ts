@@ -2,8 +2,8 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import type { ImapSourceCredentials, MigrationProgress } from "@/lib/migration/types";
 import { unsealSecret } from "@/lib/crypto/seal";
-import { GOOGLE_IMAP, getGoogleClientId } from "@/lib/migration/providers/google";
-import { MICROSOFT_IMAP, getMicrosoftClientId } from "@/lib/migration/providers/microsoft";
+import { GOOGLE_IMAP } from "@/lib/migration/providers/google";
+import { MICROSOFT_IMAP } from "@/lib/migration/providers/microsoft";
 import { ICLOUD_IMAP_PRESET } from "@/lib/migration/providers/imap-generic";
 
 export type ImapsyncRunOptions = {
@@ -24,14 +24,6 @@ export type ImapsyncRunResult = {
 
 const PROGRESS_RE = /(\d+)\s*\/\s*(\d+)\s+msgs/;
 const FOLDER_RE = /Folder\s+(.+)/i;
-
-const DEFAULT_IMAPSYNC_MAX_PARALLEL = 4;
-
-function resolveImapsyncMaxParallel(): number {
-  const raw = Number(process.env.IMAPSYNC_MAX_PARALLEL ?? DEFAULT_IMAPSYNC_MAX_PARALLEL);
-  if (!Number.isFinite(raw)) return DEFAULT_IMAPSYNC_MAX_PARALLEL;
-  return Math.min(8, Math.max(1, Math.round(raw)));
-}
 
 function resolveImapsyncMaxBytesPerSecond(): number | null {
   const raw = process.env.IMAPSYNC_MAX_BYTES_PER_SECOND?.trim();
@@ -106,17 +98,8 @@ function buildSourceArgs(source: ImapSourceCredentials): string[] {
   ];
 
   if (source.oauthAccessToken) {
+    // imapsync 2.323 : --oauthaccesstoken1 suffit (pas de --oauthclientid1).
     args.push("--oauthaccesstoken1", source.oauthAccessToken);
-    const clientId =
-      source.oauthClientId ??
-      (source.oauthProvider === "google"
-        ? getGoogleClientId()
-        : source.oauthProvider === "microsoft"
-          ? getMicrosoftClientId()
-          : null);
-    if (clientId) {
-      args.push("--oauthclientid1", clientId);
-    }
   } else if (source.password) {
     args.push("--password1", source.password);
   }
@@ -148,8 +131,6 @@ export function buildImapsyncArgs(options: ImapsyncRunOptions): string[] {
     "--usecache",
     "--errorsmax",
     "100",
-    "--maxparallel",
-    String(resolveImapsyncMaxParallel()),
   ];
 
   const maxBytesPerSecond = resolveImapsyncMaxBytesPerSecond();

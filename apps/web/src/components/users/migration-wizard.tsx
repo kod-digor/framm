@@ -137,7 +137,17 @@ function MigrationWizardBody({
   onStatusChange,
 }: MigrationWizardProps) {
   const t = useTranslations("users");
-  const [step, setStep] = useState<WizardStep>(initialStep ?? "provider");
+  const [step, setStep] = useState<WizardStep>(() => {
+    if (
+      activeStatus &&
+      (isLaunchedMigrationStatus(activeStatus.status) ||
+        activeStatus.status === "COMPLETED" ||
+        activeStatus.status === "FAILED")
+    ) {
+      return "status";
+    }
+    return initialStep ?? "provider";
+  });
   const [migrationId, setMigrationId] = useState<string | null>(initialMigrationId ?? null);
   const discoveryInFlight = useRef(false);
   const [provider, setProvider] = useState<MigrationProvider | null>(
