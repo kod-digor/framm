@@ -1,0 +1,35 @@
+deploy/docker/docker-compose.mail.yml
+  s_720798f096fd91::t_105f743466157b 32
+deploy/scripts/lib/host-setup.sh
+  s_cd52e868e7f081::t_915a0176894fa6 24-26
+deploy/cloud-init/mail.yaml
+  s_cd52e868e7f081::t_915a0176894fa6 34-40
+deploy/scripts/lib/stalwart-setup.sh
+  s_720798f096fd91::t_23a622dae71982 20-21
+  s_720798f096fd91::t_4af8a078d522a1 4-19,22-34,107
+  s_720798f096fd91::t_4c2063275684a7 409
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "d8d18b8237e09b69f8f740c0dd7965933bda00e8",
+  "prompts": {},
+  "sessions": {
+    "s_720798f096fd91": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b7cbef1c-1a85-4ef1-bc31-6474b620030c",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_cd52e868e7f081": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "23a9811b-4592-4d8e-89e1-35a28faca319",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
