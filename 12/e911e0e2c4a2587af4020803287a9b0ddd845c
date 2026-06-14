@@ -1,0 +1,42 @@
+deploy/scripts/tf-apply.sh
+  s_d71ff762ffb047::t_477636c7d3cff8 65-70
+deploy/scripts/k8s-sync-secrets.sh
+  s_d71ff762ffb047::t_e8e9aa5dc06524 1-65
+deploy/scripts/lib/framm-common.sh
+  s_d71ff762ffb047::t_8fcdda50e7ac6d 192-194,197-207,211-225,229-232
+deploy/scripts/k8s-bootstrap.sh
+  s_d71ff762ffb047::t_8099e2fd4c53c0 52
+terraform/environments/prod/main.tf
+  s_d71ff762ffb047::t_7ee9a2ce9abcd1 149-154
+deploy/scripts/post-tf-apply.sh
+  s_d71ff762ffb047::t_ac74ae1c31502d 1-20,22-50
+  s_d71ff762ffb047::t_7c83b822771669 21
+deploy/scripts/ci-infra-health-checks.sh
+  s_d71ff762ffb047::t_3195c7d1bc9601 35-42
+.github/workflows/deploy.yml
+  s_d71ff762ffb047::t_9fe34950a04b56 43,65-92
+  s_d71ff762ffb047::t_3cf5329895d5c3 110
+  s_d71ff762ffb047::t_cdbe1366aefd28 131
+deploy/scripts/ci-terraform-sync.sh
+  s_d71ff762ffb047::t_1456519244e83c 1-20,38-44
+  s_d71ff762ffb047::t_d075104b7fcf71 21-37
+bin/framm
+  s_d71ff762ffb047::t_b059882b53f33e 53
+  s_d71ff762ffb047::t_ccbae7bb670467 46-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "12e911e0e2c4a2587af4020803287a9b0ddd845c",
+  "prompts": {},
+  "sessions": {
+    "s_d71ff762ffb047": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6c49d8cd-d44f-4c12-aec6-521c2dbbc255",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
