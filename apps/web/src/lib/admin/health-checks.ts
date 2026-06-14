@@ -17,6 +17,12 @@ import {
   resolveStalwartDomainId,
 } from "@/lib/stalwart/client";
 import { getPlatformEmailDomains } from "@/lib/platform-domains";
+import {
+  formatDnsHostLabel,
+  verifyPlatformARecords,
+  verifyPlatformDns,
+} from "@/lib/dns/verify";
+import { getPlatformMailHost } from "@/lib/dns/dns-records";
 import { obtainStalwartSession } from "@/lib/stalwart/webmail-auth";
 import {
   fetchJmapSession,
@@ -828,6 +834,124 @@ async function checkInfraS3() {
   }
 }
 
+function formatPlatformDnsRowLabel(recordName: string, fqdn: string) {
+  return `${formatDnsHostLabel(recordName, fqdn)}`;
+}
+
+async function checkPlatformDnsRecords() {
+  const domain = getPlatformEmailDomains()[0] ?? getPlatformMailHost();
+  const dnsResult = await verifyPlatformDns(domain);
+  const aRecords = await verifyPlatformARecords(domain);
+
+  const rowLabels = dnsResult.results.map((row) => {
+    const label = formatPlatformDnsRowLabel(row.record.name, domain);
+    const type = row.record.type;
+    const status = row.ok ? "OK" : "KO";
+    const suffix = row.ok ? "" : ` (${row.found})`;
+    return `${type} ${label} ${status}${suffix}`;
+  });
+
+  const aLabels = aRecords.map((entry) => {
+    const status = entry.ok ? "OK" : "KO";
+    const suffix = entry.ok ? ` ${entry.addresses.join(", ")}` : ` (${entry.issue ?? "absent"})`;
+    return `A ${entry.label} ${status}${suffix}`;
+  });
+
+  const failedDns = dnsResult.results.filter((row) => !row.ok);
+  const failedA = aRecords.filter((entry) => !entry.ok);
+  const detail = [...rowLabels, ...aLabels].join(" · ");
+
+  if (failedDns.length === 0 && failedA.length === 0) {
+    return { status: "ok" as const, detail: `${domain} — ${detail}` };
+  }
+
+  if (failedA.length > 0 || failedDns.some((row) => row.record.type !== "TXT")) {
+    return { status: "fail" as const, detail: `${domain} — ${detail}` };
+  }
+
+  return { status: "warn" as const, detail: `${domain} — SPF différent de la référence — ${detail}` };
+}
+
+async function checkPlatformDnsAutoconfig() {
+  const domain = getPlatformEmailDomains()[0] ?? getPlatformMailHost();
+  const dnsResult = await verifyPlatformDns(domain);
+
+  const autoconfigRow = dnsResult.results.find(
+    (row) => row.record.type === "CNAME" && row.record.name === `autoconfig.${domain}`
+  );
+  const autodiscoverRow = dnsResult.results.find(
+    (row) => row.record.type === "CNAME" && row.record.name === `autodiscover.${domain}`
+  );
+
+  const dnsParts: string[] = [];
+  if (autoconfigRow) {
+    dnsParts.push(
+      `CNAME autoconfig ${autoconfigRow.ok ? "OK" : `KO (${autoconfigRow.found})`}`
+    );
+  }
+  if (autodiscoverRow) {
+    dnsParts.push(
+      `CNAME autodiscover ${autodiscoverRow.ok ? "OK" : `KO (${autodiscoverRow.found})`}`
+    );
+  }
+
+  const httpTargets = [
+    {
+      label: "autoconfig",
+      url: `https://autoconfig.${domain}/mail/config-v1.1.xml`,
+    },
+    {
+      label: "autodiscover",
+      url: `https://autodiscover.${domain}/autodiscover/autodiscover.xml`,
+    },
+  ];
+
+  const httpParts: string[] = [];
+  const httpFailures: string[] = [];
+
+  for (const target of httpTargets) {
+    const cnameOk =
+      target.label === "autoconfig" ? autoconfigRow?.ok : autodiscoverRow?.ok;
+
+    if (!cnameOk) {
+      httpParts.push(`HTTP ${target.label} ignoré (DNS absent)`);
+      httpFailures.push(target.label);
+      continue;
+    }
+
+    try {
+      const res = await fetch(target.url, {
+        method: "GET",
+        redirect: "follow",
+        signal: AbortSignal.timeout(8_000),
+      });
+      if (res.status >= 200 && res.status < 400) {
+        httpParts.push(`HTTP ${target.label} ${res.status}`);
+      } else {
+        httpParts.push(`HTTP ${target.label} ${res.status}`);
+        httpFailures.push(target.label);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      httpParts.push(`HTTP ${target.label} ${message}`);
+      httpFailures.push(target.label);
+    }
+  }
+
+  const detail = `${domain} — ${dnsParts.join(" · ")} · ${httpParts.join(" · ")}`;
+  const dnsFailed = !autoconfigRow?.ok || !autodiscoverRow?.ok;
+
+  if (dnsFailed) {
+    return { status: "fail" as const, detail };
+  }
+
+  if (httpFailures.length > 0) {
+    return { status: "warn" as const, detail };
+  }
+
+  return { status: "ok" as const, detail };
+}
+
 export const HEALTH_CHECK_DEFINITIONS: HealthCheckDefinition[] = [
   { id: "connection", run: checkConnection },
   { id: "org-create", run: checkOrgCreate },
@@ -845,6 +969,8 @@ export const HEALTH_CHECK_DEFINITIONS: HealthCheckDefinition[] = [
   { id: "infra-mail-external", run: checkInfraMailExternal },
   { id: "infra-tem-relay", run: checkInfraTemRelay },
   { id: "infra-s3", run: checkInfraS3 },
+  { id: "platform-dns-records", run: checkPlatformDnsRecords },
+  { id: "platform-dns-autoconfig", run: checkPlatformDnsAutoconfig },
 ];
 
 export async function runHealthCheck(

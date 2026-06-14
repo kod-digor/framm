@@ -1,40 +1,33 @@
 import { promises as dns } from "dns";
+import {
+  type DnsCheckRow,
+  type DnsLookupIssue,
+  type DnsVerifyResult,
+  expectedRecords,
+  getPlatformMailHost,
+  isPlatformDomain,
+  mailAutoconfigTarget,
+} from "@/lib/dns/dns-records";
 
-export type DnsRecord = { type: string; name: string; value: string };
+export type {
+  DnsCheckRow,
+  DnsLookupIssue,
+  DnsRecord,
+  DnsVerifyResult,
+  MxRecordFinding,
+  TxtRecordFinding,
+} from "@/lib/dns/dns-records";
 
-export type MxRecordFinding = {
-  priority: number;
-  host: string;
-  matchesExpected: boolean;
-};
-
-export type TxtRecordFinding = {
-  value: string;
-  kind: "spf" | "other";
-  matchesExpected: boolean;
-};
-
-export type DnsCheckRow = {
-  record: DnsRecord;
-  ok: boolean;
-  found: string;
-  issue: DnsLookupIssue;
-  mxRecords?: MxRecordFinding[];
-  txtRecords?: TxtRecordFinding[];
-};
-
-export function getPlatformMailHost() {
-  return (
-    process.env.PRIMARY_PLATFORM_DOMAIN ??
-    process.env.PRIMARY_MAIL_HOST ??
-    "kod-digor.bzh"
-  );
-}
-
-export function getExpectedSpfValue(platformHost?: string) {
-  const host = platformHost ?? getPlatformMailHost();
-  return `v=spf1 include:spf.${host} -all`;
-}
+export {
+  expectedRecords,
+  formatDnsHostLabel,
+  getExpectedSpfValue,
+  getPlatformMailHost,
+  isPlatformDomain,
+  mailAutoconfigTarget,
+  parseMxRecordValue,
+  parseSrvRecordValue,
+} from "@/lib/dns/dns-records";
 
 function getSpfIncludeToken(platformHost: string) {
   return `include:spf.${platformHost}`.toLowerCase();
@@ -48,47 +41,16 @@ function spfMatchesExpected(value: string, platformHost: string) {
   return value.toLowerCase().includes(getSpfIncludeToken(platformHost));
 }
 
-export function mailAutoconfigTarget(platformHost: string) {
-  return `mail.${platformHost}.`;
-}
-
-export function expectedRecords(fqdn: string, mailHost?: string): DnsRecord[] {
-  const platformHost = mailHost ?? getPlatformMailHost();
-  const mailTarget = mailAutoconfigTarget(platformHost);
-  return [
-    { type: "MX", name: fqdn, value: `10 ${mailTarget}` },
-    { type: "TXT", name: fqdn, value: getExpectedSpfValue(platformHost) },
-    { type: "CNAME", name: `autoconfig.${fqdn}`, value: mailTarget },
-    { type: "CNAME", name: `autodiscover.${fqdn}`, value: mailTarget },
-    {
-      type: "SRV",
-      name: `_imaps._tcp.${fqdn}`,
-      value: `0 1 993 mail.${platformHost}.`,
-    },
-    {
-      type: "SRV",
-      name: `_submission._tcp.${fqdn}`,
-      value: `0 1 587 mail.${platformHost}.`,
-    },
-  ];
-}
-
-export function isPlatformDomain(fqdn: string) {
-  return fqdn.toLowerCase() === getPlatformMailHost().toLowerCase();
-}
-
 function normalizeHost(host: string) {
   return host.replace(/\.$/, "").toLowerCase();
 }
 
-type DnsLookupIssue = "NXDOMAIN" | "ENODATA" | null;
-
 function formatLookupError(code: string | undefined) {
-  if (code === "ENOTFOUND" || code === "ENODATA") return code as DnsLookupIssue;
+  if (code === "ENOTFOUND" || code === "ENODATA") return code as "NXDOMAIN" | "ENODATA";
   return null;
 }
 
-function formatFoundValue(entries: string[], issue: DnsLookupIssue) {
+function formatFoundValue(entries: string[], issue: "NXDOMAIN" | "ENODATA" | null) {
   if (entries.length > 0) return entries.join(", ");
   if (issue === "NXDOMAIN") return "NXDOMAIN";
   if (issue === "ENODATA") return "—";
@@ -103,13 +65,28 @@ function formatSrvRecord(entry: { priority: number; weight: number; port: number
   return `${entry.priority} ${entry.weight} ${entry.port} ${entry.name}`;
 }
 
-export async function verifyDomainDns(fqdn: string, mailHost?: string) {
-  const platformHost = mailHost ?? getPlatformMailHost();
+export type PlatformARecordCheck = {
+  host: string;
+  label: string;
+  ok: boolean;
+  addresses: string[];
+  issue: DnsLookupIssue;
+};
 
-  if (isPlatformDomain(fqdn)) {
-    return { verified: true, domainExists: true, results: [] };
+async function resolveARecords(host: string): Promise<{ addresses: string[]; issue: DnsLookupIssue }> {
+  try {
+    const addresses = await dns.resolve4(host);
+    return { addresses, issue: null };
+  } catch (err) {
+    const issue = formatLookupError((err as NodeJS.ErrnoException).code);
+    return { addresses: [], issue };
   }
+}
 
+async function verifyDnsRecordsForDomain(
+  fqdn: string,
+  platformHost: string
+): Promise<{ domainExists: boolean; results: DnsCheckRow[] }> {
   const expected = expectedRecords(fqdn, platformHost);
   const expectedMx = normalizeHost(`mail.${platformHost}`);
   const expectedCname = normalizeCnameTarget(mailAutoconfigTarget(platformHost));
@@ -120,7 +97,7 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
   for (const record of expected) {
     if (record.type === "MX") {
       let mx: { exchange: string; priority: number }[] = [];
-      let issue: DnsLookupIssue = null;
+      let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
         mx = await dns.resolveMx(fqdn);
       } catch (err) {
@@ -146,7 +123,7 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
     }
     if (record.type === "TXT") {
       let txt: string[][] = [];
-      let issue: DnsLookupIssue = null;
+      let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
         txt = await dns.resolveTxt(fqdn);
       } catch (err) {
@@ -171,7 +148,7 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
     }
     if (record.type === "CNAME") {
       let cnames: string[] = [];
-      let issue: DnsLookupIssue = null;
+      let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
         cnames = await dns.resolveCname(record.name);
       } catch (err) {
@@ -188,7 +165,7 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
     }
     if (record.type === "SRV") {
       let srv: { priority: number; weight: number; port: number; name: string }[] = [];
-      let issue: DnsLookupIssue = null;
+      let issue: "NXDOMAIN" | "ENODATA" | null = null;
       try {
         srv = await dns.resolveSrv(record.name);
       } catch (err) {
@@ -209,6 +186,51 @@ export async function verifyDomainDns(fqdn: string, mailHost?: string) {
     }
   }
 
+  return { domainExists, results };
+}
+
+export async function verifyPlatformARecords(domain?: string): Promise<PlatformARecordCheck[]> {
+  const fqdn = domain ?? getPlatformMailHost();
+  const entries = [
+    { host: fqdn, label: "@" },
+    { host: `mail.${fqdn}`, label: "mail" },
+    { host: `webmail.${fqdn}`, label: "webmail" },
+  ];
+
+  const checks = await Promise.all(
+    entries.map(async ({ host, label }) => {
+      const { addresses, issue } = await resolveARecords(host);
+      return {
+        host,
+        label,
+        ok: addresses.length > 0,
+        addresses,
+        issue,
+      };
+    })
+  );
+
+  return checks;
+}
+
+export async function verifyDomainDns(fqdn: string, mailHost?: string): Promise<DnsVerifyResult> {
+  const platformHost = mailHost ?? getPlatformMailHost();
+
+  if (isPlatformDomain(fqdn)) {
+    return { verified: true, domainExists: true, results: [] };
+  }
+
+  const { domainExists, results } = await verifyDnsRecordsForDomain(fqdn, platformHost);
+  return {
+    verified: results.every((r) => r.ok),
+    domainExists,
+    results,
+  };
+}
+
+export async function verifyPlatformDns(domain?: string): Promise<DnsVerifyResult> {
+  const fqdn = domain ?? getPlatformMailHost();
+  const { domainExists, results } = await verifyDnsRecordsForDomain(fqdn, fqdn);
   return {
     verified: results.every((r) => r.ok),
     domainExists,

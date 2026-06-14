@@ -9,9 +9,7 @@ import { VerifyDomainForm } from "@/components/domains/verify-domain-form";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
-import type { DnsRecord, verifyDomainDns } from "@/lib/dns/verify";
-
-type DnsCheck = Awaited<ReturnType<typeof verifyDomainDns>>;
+import type { DnsRecord, DnsVerifyResult } from "@/lib/dns/dns-records";
 
 export type DomainCardData = {
   id: string;
@@ -19,7 +17,7 @@ export type DomainCardData = {
   isVerified: boolean;
   isPlatform: boolean;
   records: DnsRecord[];
-  dnsCheck: DnsCheck | null;
+  dnsCheck: DnsVerifyResult | null;
 };
 
 type DomainsListLabels = {
@@ -30,6 +28,7 @@ type DomainsListLabels = {
   usableWhilePending: string;
   records: string;
   recordsIntro: string;
+  recordsAutoconfigHint: string;
 };
 
 type TableLabels = {
@@ -40,6 +39,7 @@ type TableLabels = {
   copy: string;
   copied: string;
   hostRootHint: string;
+  srvValueHint: string;
 };
 
 export function DomainsList({
@@ -86,6 +86,7 @@ export function DomainsList({
                 <div>
                   <h3 className="text-sm font-medium text-zinc-900">{labels.records}</h3>
                   <p className="mt-1 text-sm text-zinc-500">{labels.recordsIntro}</p>
+                  <p className="mt-2 text-sm text-zinc-600">{labels.recordsAutoconfigHint}</p>
                 </div>
                 <DnsRecordsTable
                   records={domain.records}

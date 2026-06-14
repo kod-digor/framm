@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { ScrollText } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -34,6 +35,7 @@ type TableLabels = {
   copy: string;
   copied: string;
   hostRootHint: string;
+  srvValueHint: string;
 };
 
 type DomainsListLabels = {
@@ -44,6 +46,7 @@ type DomainsListLabels = {
   usableWhilePending: string;
   records: string;
   recordsIntro: string;
+  recordsAutoconfigHint: string;
 };
 
 export function DomainsCrud({
@@ -58,10 +61,29 @@ export function DomainsCrud({
   mailHost: string;
 }) {
   const t = useTranslations("domains");
+  const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
-  const [dnsTarget, setDnsTarget] = useState<DomainCardData | null>(null);
+  const [dnsTargetId, setDnsTargetId] = useState<string | null>(null);
+  const [pendingDnsFqdn, setPendingDnsFqdn] = useState<string | null>(null);
   const [deleteState, deleteAction] = useActionState(deleteDomainAction, INITIAL_ACTION_RESULT);
   const [verifyState, verifyAction] = useActionState(verifyDomainAction, INITIAL_ACTION_RESULT);
+
+  const dnsDrawerDomain =
+    (dnsTargetId ? domains.find((d) => d.id === dnsTargetId) : null) ??
+    (pendingDnsFqdn ? domains.find((d) => d.fqdn === pendingDnsFqdn) : null) ??
+    null;
+
+  function handleDomainAdded(fqdn: string) {
+    setCreateOpen(false);
+    setDnsTargetId(null);
+    setPendingDnsFqdn(fqdn);
+    router.refresh();
+  }
+
+  function closeDnsDrawer() {
+    setDnsTargetId(null);
+    setPendingDnsFqdn(null);
+  }
 
   const columns = [
     {
@@ -100,7 +122,10 @@ export function DomainsCrud({
               size="sm"
               className={crudIconButtonClass}
               aria-label={t("viewDnsAria", { fqdn: row.fqdn })}
-              onClick={() => setDnsTarget(row)}
+              onClick={() => {
+                setPendingDnsFqdn(null);
+                setDnsTargetId(row.id);
+              }}
             >
               <ScrollText className="size-4" aria-hidden />
             </Button>
@@ -136,41 +161,49 @@ export function DomainsCrud({
       />
 
       <FormDrawer open={createOpen} onOpenChange={setCreateOpen} title={t("add")}>
-        <AddDomainForm onSuccess={() => setCreateOpen(false)} onCancel={() => setCreateOpen(false)} />
+        <AddDomainForm
+          onSuccess={handleDomainAdded}
+          onCancel={() => setCreateOpen(false)}
+        />
       </FormDrawer>
 
       <FormDrawer
-        open={dnsTarget != null}
+        open={dnsDrawerDomain != null}
         onOpenChange={(open) => {
-          if (!open) setDnsTarget(null);
+          if (!open) closeDnsDrawer();
         }}
         title={t("dnsDialogTitle")}
-        description={dnsTarget ? t("dnsDialogHint", { fqdn: dnsTarget.fqdn }) : undefined}
+        description={
+          dnsDrawerDomain ? t("dnsDialogHint", { fqdn: dnsDrawerDomain.fqdn }) : undefined
+        }
         bodyClassName="py-6"
       >
-        {dnsTarget ? (
+        {dnsDrawerDomain ? (
           <div className="space-y-6">
             <p className="text-sm text-zinc-600">
-              {dnsTarget.isVerified ? labels.verified : labels.pending}
+              {dnsDrawerDomain.isVerified ? labels.verified : labels.pending}
             </p>
-            {!dnsTarget.isVerified && !dnsTarget.isPlatform ? (
+            {!dnsDrawerDomain.isVerified && !dnsDrawerDomain.isPlatform ? (
               <p className="text-sm text-amber-800">{labels.usableWhilePending}</p>
             ) : null}
-            {!dnsTarget.isVerified && !dnsTarget.isPlatform && dnsTarget.records.length > 0 ? (
+            {!dnsDrawerDomain.isVerified &&
+            !dnsDrawerDomain.isPlatform &&
+            dnsDrawerDomain.records.length > 0 ? (
               <>
                 <div>
                   <h3 className="text-sm font-medium text-zinc-900">{labels.records}</h3>
                   <p className="mt-1 text-sm text-zinc-500">{labels.recordsIntro}</p>
+                  <p className="mt-2 text-sm text-zinc-600">{labels.recordsAutoconfigHint}</p>
                 </div>
                 <DnsRecordsTable
-                  records={dnsTarget.records}
-                  fqdn={dnsTarget.fqdn}
+                  records={dnsDrawerDomain.records}
+                  fqdn={dnsDrawerDomain.fqdn}
                   labels={tableLabels}
                 />
-                {dnsTarget.dnsCheck ? (
-                  <DnsStatusPanel check={dnsTarget.dnsCheck} mailHost={mailHost} />
+                {dnsDrawerDomain.dnsCheck ? (
+                  <DnsStatusPanel check={dnsDrawerDomain.dnsCheck} mailHost={mailHost} />
                 ) : null}
-                <VerifyDomainForm domainId={dnsTarget.id} />
+                <VerifyDomainForm domainId={dnsDrawerDomain.id} />
               </>
             ) : null}
           </div>

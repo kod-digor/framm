@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { DnsRecord } from "@/lib/dns/verify";
+import {
+  formatDnsHostLabel,
+  parseMxRecordValue,
+  parseSrvRecordValue,
+  type DnsRecord,
+} from "@/lib/dns/dns-records";
 
 type Labels = {
   colType: string;
@@ -13,15 +18,18 @@ type Labels = {
   copy: string;
   copied: string;
   hostRootHint: string;
+  srvValueHint: string;
 };
 
-function parseMxValue(value: string) {
-  const match = value.match(/^(\d+)\s+(.+)$/);
-  if (!match) return { priority: "—", target: value };
-  return { priority: match[1], target: match[2] };
-}
-
-function CopyButton({ text, copyLabel, copiedLabel }: { text: string; copyLabel: string; copiedLabel: string }) {
+function CopyButton({
+  text,
+  copyLabel,
+  copiedLabel,
+}: {
+  text: string;
+  copyLabel: string;
+  copiedLabel: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -61,30 +69,46 @@ export function DnsRecordsTable({
         </thead>
         <tbody className="divide-y divide-zinc-100">
           {records.map((record) => {
+            const hostLabel = formatDnsHostLabel(record.name, fqdn);
+            const isRoot = hostLabel === "@";
             const isMx = record.type === "MX";
-            const mx = isMx ? parseMxValue(record.value) : null;
-            const displayValue = isMx ? mx!.target : record.value;
-            const isRoot = record.name === fqdn;
+            const isSrv = record.type === "SRV";
+            const mx = isMx ? parseMxRecordValue(record.value) : null;
+            const srv = isSrv ? parseSrvRecordValue(record.value) : null;
+            const priority = isMx ? mx!.priority : isSrv ? srv!.priority : "—";
+            const displayValue = isMx
+              ? mx!.target
+              : isSrv
+                ? `${srv!.weight} ${srv!.port} ${srv!.target}`
+                : record.value;
+            const copyValue = isSrv ? record.value : displayValue;
 
             return (
               <tr key={`${record.type}-${record.name}`} className="bg-white">
                 <td className="px-4 py-3 font-medium text-zinc-900">{record.type}</td>
                 <td className="px-4 py-3">
-                  <span className="font-mono text-zinc-800">{isRoot ? "@" : record.name}</span>
+                  <span className="font-mono text-zinc-800">{hostLabel}</span>
                   {isRoot && (
                     <p className="mt-0.5 text-xs text-zinc-500">{labels.hostRootHint}</p>
                   )}
                 </td>
                 <td className="hidden px-4 py-3 font-mono text-zinc-700 sm:table-cell">
-                  {isMx ? mx!.priority : "—"}
+                  {priority}
                 </td>
                 <td className="px-4 py-3">
                   <code className="break-all rounded bg-zinc-50 px-2 py-1 font-mono text-xs text-zinc-800">
                     {displayValue}
                   </code>
+                  {isSrv && (
+                    <p className="mt-1 text-xs text-zinc-500">{labels.srvValueHint}</p>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <CopyButton text={displayValue} copyLabel={labels.copy} copiedLabel={labels.copied} />
+                  <CopyButton
+                    text={copyValue}
+                    copyLabel={labels.copy}
+                    copiedLabel={labels.copied}
+                  />
                 </td>
               </tr>
             );

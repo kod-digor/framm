@@ -3,7 +3,13 @@ import { PrismaClient } from "@prisma/client";
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
 /** Delegates that must exist after `prisma generate` (stale dev singletons omit new models). */
-const REQUIRED_DELEGATES = ["platformPricing", "mailboxDelegation", "mailboxFilter"] as const;
+const REQUIRED_DELEGATES = [
+  "platformPricing",
+  "userMailbox",
+  "sharedMailboxMember",
+  "mailboxDelegation",
+  "mailboxFilter",
+] as const;
 
 function createPrismaClient() {
   return new PrismaClient({
@@ -32,9 +38,16 @@ function initPrismaClient(): PrismaClient {
 
   if (cached) {
     void cached.$disconnect().catch(() => {});
+    globalForPrisma.prisma = undefined;
   }
 
   const client = createPrismaClient();
+
+  if (isStalePrismaClient(client)) {
+    throw new Error(
+      "Prisma client missing required model delegates. Run `pnpm exec prisma generate` in apps/web, then restart the dev server."
+    );
+  }
 
   if (process.env.NODE_ENV !== "production") {
     globalForPrisma.prisma = client;

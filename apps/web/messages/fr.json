@@ -342,8 +342,10 @@
     "verifying": "Vérification en cours…",
     "verifySuccess": "DNS vérifié pour {domain} — la messagerie est prête.",
     "verifyStillPending": "DNS non détecté pour {domain}. Vérifiez vos enregistrements chez votre registrar, attendez la propagation (jusqu'à 24 h), puis réessayez.",
+    "addSuccess": "Domaine {domain} ajouté — configurez les enregistrements DNS ci-dessous.",
     "records": "Enregistrements à configurer",
-    "recordsIntro": "La messagerie est hébergée sur mail.{mailHost} (serveur Kod Digor). Ajoutez ces entrées dans la zone DNS de votre domaine chez votre registrar, puis cliquez sur Vérifier le DNS.",
+    "recordsIntro": "La messagerie est hébergée sur mail.{mailHost} (serveur Kod Digor). Ajoutez MX, SPF, autoconfig, autodiscover et SRV dans la zone DNS de votre domaine chez votre registrar, puis cliquez sur Vérifier le DNS.",
+    "recordsAutoconfigHint": "Les enregistrements autoconfig, autodiscover et SRV permettent la configuration automatique des clients mail (Outlook, Thunderbird, Apple Mail).",
     "colType": "Type",
     "colHost": "Nom",
     "colPriority": "Priorité",
@@ -351,6 +353,7 @@
     "copy": "Copier",
     "copied": "Copié",
     "hostRootHint": "Racine du domaine — certains registrars affichent « @ »",
+    "srvValueHint": "Poids, port et cible — certains registrars les demandent dans des champs séparés.",
     "delete": "Supprimer",
     "deleting": "Suppression…",
     "deleteConfirm": "Supprimer le domaine {fqdn} ? Cette action est irréversible.",
@@ -703,6 +706,14 @@
       "infra-s3": {
         "label": "Infra — S3 uploads",
         "description": "Head bucket sur le stockage objet Scaleway (uploads)."
+      },
+      "platform-dns-records": {
+        "label": "DNS plateforme — enregistrements mail",
+        "description": "MX, SPF, CNAME autoconfig/autodiscover, SRV IMAPS/submission et A (@, mail, webmail) du domaine plateforme en production."
+      },
+      "platform-dns-autoconfig": {
+        "label": "DNS plateforme — autoconfig",
+        "description": "CNAME autoconfig/autodiscover et endpoints HTTPS Mozilla / Microsoft pour la configuration automatique des clients mail."
       }
     }
   },

@@ -10,8 +10,8 @@ import {
   expectedRecords,
   getPlatformMailHost,
   isPlatformDomain,
-  verifyDomainDns,
-} from "@/lib/dns/verify";
+} from "@/lib/dns/dns-records";
+import { verifyDomainDns } from "@/lib/dns/verify";
 import { DomainStatus } from "@prisma/client";
 
 function extractStalwartDomainId(
@@ -62,7 +62,7 @@ export async function addDomainAction(
   if (stalwartFailed) {
     return { ok: false, message: "stalwartSyncFailed", detail: fqdn, warning: true };
   }
-  return null;
+  return { ok: true, message: "addSuccess", detail: fqdn };
 }
 
 export async function verifyDomainAction(

@@ -8,8 +8,8 @@ import {
   expectedRecords,
   getPlatformMailHost,
   isPlatformDomain,
-  verifyDomainDns,
-} from "@/lib/dns/verify";
+} from "@/lib/dns/dns-records";
+import { verifyDomainDns } from "@/lib/dns/verify";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +54,7 @@ export default async function DomainsPage() {
     copy: t("copy"),
     copied: t("copied"),
     hostRootHint: t("hostRootHint"),
+    srvValueHint: t("srvValueHint"),
   };
 
   const listLabels = {
@@ -64,6 +65,7 @@ export default async function DomainsPage() {
     usableWhilePending: t("usableWhilePending"),
     records: t("records"),
     recordsIntro: t("recordsIntro", { mailHost: platformHost }),
+    recordsAutoconfigHint: t("recordsAutoconfigHint"),
   };
 
   return (

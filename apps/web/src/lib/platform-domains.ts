@@ -1,4 +1,4 @@
-import { getPlatformMailHost } from "@/lib/dns/verify";
+import { getPlatformMailHost } from "@/lib/dns/dns-records";
 
 export function getPlatformEmailDomains(): string[] {
   const raw =

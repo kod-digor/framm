@@ -27,14 +27,14 @@ export function AddDomainForm({
   onSuccess,
   onCancel,
 }: {
-  onSuccess?: () => void;
+  onSuccess?: (fqdn: string) => void;
   onCancel?: () => void;
 }) {
   const t = useTranslations("domains");
   const [state, formAction] = useActionState(addDomainAction, INITIAL_ACTION_RESULT);
 
   useEffect(() => {
-    if (state?.ok && onSuccess) onSuccess();
+    if (state?.ok && state.detail && onSuccess) onSuccess(state.detail);
   }, [state, onSuccess]);
 
   return (

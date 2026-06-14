@@ -1,10 +1,11 @@
 "use client";
 
 import { useT } from "@/i18n/t";
-import type { verifyDomainDns } from "@/lib/dns/verify";
-import type { DnsRecord } from "@/lib/dns/verify";
-
-type DnsCheck = Awaited<ReturnType<typeof verifyDomainDns>>;
+import {
+  parseMxRecordValue,
+  type DnsRecord,
+  type DnsVerifyResult,
+} from "@/lib/dns/dns-records";
 
 type ValueTone = "neutral" | "success" | "error";
 
@@ -16,9 +17,8 @@ const valueToneClass: Record<ValueTone, string> = {
 };
 
 function parseMxValue(value: string) {
-  const match = value.match(/^(\d+)\s+(.+)$/);
-  if (!match) return { priority: "—", host: value };
-  return { priority: match[1], host: match[2] };
+  const parsed = parseMxRecordValue(value);
+  return { priority: parsed.priority, host: parsed.target };
 }
 
 function DnsValueEntry({
@@ -137,7 +137,7 @@ export function DnsStatusPanel({
   check,
   mailHost,
 }: {
-  check: DnsCheck;
+  check: DnsVerifyResult;
   mailHost: string;
 }) {
   const t = useT("domains");
@@ -168,8 +168,13 @@ export function DnsStatusPanel({
       )}
       <dl className="mt-3 space-y-4">
         {check.results.map((row) => (
-          <div key={row.record.type}>
-            <dt className="font-medium text-zinc-700">{row.record.type}</dt>
+          <div key={`${row.record.type}-${row.record.name}`}>
+            <dt className="font-medium text-zinc-700">
+              {row.record.type}
+              {row.record.type === "CNAME" || row.record.type === "SRV" ? (
+                <span className="ml-2 font-normal text-zinc-500">{row.record.name}</span>
+              ) : null}
+            </dt>
             <dd className="mt-1 space-y-3 text-zinc-600">
               <div className="space-y-2">
                 <p className="text-zinc-500">{labels.expected} :</p>
