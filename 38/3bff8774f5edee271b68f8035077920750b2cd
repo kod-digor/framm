@@ -1,0 +1,23 @@
+apps/web/src/components/admin/health-panel.tsx
+  s_d8a8ed756b4aab::t_fe24bcaa6404e0 8,57-58,72-91,121-123,159,168,178-180,209
+apps/web/src/lib/admin/health-checks.ts
+  s_d8a8ed756b4aab::t_fe24bcaa6404e0 1023-1033
+apps/web/messages/fr.json
+  s_d8a8ed756b4aab::t_fe24bcaa6404e0 700-701
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "383bff8774f5edee271b68f8035077920750b2cd",
+  "prompts": {},
+  "sessions": {
+    "s_d8a8ed756b4aab": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d6074ef9-41fc-4d2c-b9bf-63f3c3b2b359",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
