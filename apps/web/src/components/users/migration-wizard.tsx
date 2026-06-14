@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ComponentProps } from "react";
 import { useFormStatus } from "react-dom";
 import {
   ArrowLeft,
@@ -30,17 +30,29 @@ import { cn } from "@/lib/utils";
 
 type ProviderOption = {
   id: MigrationProvider;
-  labelKey: string;
   icon: typeof Mail;
   oauth?: boolean;
 };
 
 const PROVIDERS: ProviderOption[] = [
-  { id: "GOOGLE", labelKey: "providerGoogle", icon: Mail, oauth: true },
-  { id: "MICROSOFT", labelKey: "providerMicrosoft", icon: Cloud, oauth: true },
-  { id: "ICLOUD", labelKey: "providerIcloud", icon: Cloud },
-  { id: "IMAP_GENERIC", labelKey: "providerImap", icon: Server },
+  { id: "GOOGLE", icon: Mail, oauth: true },
+  { id: "MICROSOFT", icon: Cloud, oauth: true },
+  { id: "ICLOUD", icon: Cloud },
+  { id: "IMAP_GENERIC", icon: Server },
 ];
+
+const PROVIDER_LABELS: Record<
+  MigrationProvider,
+  | "migration.providerGoogle"
+  | "migration.providerMicrosoft"
+  | "migration.providerIcloud"
+  | "migration.providerImap"
+> = {
+  GOOGLE: "migration.providerGoogle",
+  MICROSOFT: "migration.providerMicrosoft",
+  ICLOUD: "migration.providerIcloud",
+  IMAP_GENERIC: "migration.providerImap",
+};
 
 type WizardStep = "provider" | "credentials" | "scope" | "confirm" | "status";
 
@@ -193,7 +205,7 @@ function MigrationWizardBody({
                     <Icon className="size-5 text-ardoise/70" aria-hidden />
                   </div>
                   <div>
-                    <p className="font-medium text-encre">{t(`migration.${item.labelKey}`)}</p>
+                    <p className="font-medium text-encre">{t(PROVIDER_LABELS[item.id])}</p>
                     {item.oauth ? (
                       <p className="text-xs text-ardoise/60">{t("migration.oauthBadge")}</p>
                     ) : null}
@@ -370,8 +382,8 @@ function ImapCredentialsForm({
 }: {
   migrationId: string | null;
   provider: MigrationProvider;
-  action: typeof saveImapCredentialsAction;
-  state: typeof INITIAL_ACTION_RESULT;
+  action: NonNullable<ComponentProps<"form">["action"]>;
+  state: ActionResult;
   defaultHost: string;
   defaultPort: number;
   onBack: () => void;

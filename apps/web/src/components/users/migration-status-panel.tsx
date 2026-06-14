@@ -11,7 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 import type { ActionResult } from "@/lib/action-result";
-import type { MigrationStatusPayload } from "@/lib/migration/types";
+import {
+  isMigrationErrorCode,
+  MIGRATION_ERROR_I18N_KEYS,
+  type MigrationStatusPayload,
+} from "@/lib/migration/types";
 import { cn } from "@/lib/utils";
 
 function CancelButton() {
@@ -137,9 +141,9 @@ export function MigrationStatusPanel({
         ) : null}
         {status.errorMessage ? (
           <p className="text-sm text-red-700">
-            {t(`migration.error_${status.errorMessage}`, {
-              defaultValue: status.errorMessage,
-            })}
+            {isMigrationErrorCode(status.errorMessage)
+              ? t(MIGRATION_ERROR_I18N_KEYS[status.errorMessage])
+              : status.errorMessage}
           </p>
         ) : null}
       </div>

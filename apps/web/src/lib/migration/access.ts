@@ -1,8 +1,45 @@
+import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
 import { canAdminOrg, getMembership } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 
-export async function requireMigrationAdmin() {
+export type MigrationAccessError = {
+  error: "unauthorized" | "forbidden" | "not_found";
+};
+
+type MigrationAdminContext = {
+  session: Session;
+  orgId: string;
+  userId: string;
+};
+
+const migrationForAdminInclude = {
+  mailbox: { select: { id: true, address: true, credentialsEnc: true } },
+} as const;
+
+export type MigrationForAdmin = MigrationAdminContext & {
+  migration: NonNullable<
+    Awaited<
+      ReturnType<
+        typeof prisma.mailboxMigration.findFirst<{
+          include: typeof migrationForAdminInclude;
+        }>
+      >
+    >
+  >;
+};
+
+export type MailboxForAdmin = MigrationAdminContext & {
+  mailbox: NonNullable<Awaited<ReturnType<typeof prisma.mailbox.findFirst>>>;
+};
+
+export type MigrationAdminAuthError = {
+  error: "unauthorized" | "forbidden";
+};
+
+export async function requireMigrationAdmin(): Promise<
+  MigrationAdminAuthError | MigrationAdminContext
+> {
   const session = await auth();
   if (!session?.user?.id) return { error: "unauthorized" as const };
 
@@ -19,28 +56,34 @@ export async function requireMigrationAdmin() {
   return { session, orgId, userId: session.user.id };
 }
 
-export async function resolveMigrationForAdmin(migrationId: string) {
+export async function resolveMigrationForAdmin(
+  migrationId: string
+): Promise<MigrationAccessError | MigrationForAdmin> {
   const authResult = await requireMigrationAdmin();
-  if ("error" in authResult) return authResult;
+  if ("error" in authResult) {
+    return { error: authResult.error };
+  }
 
   const migration = await prisma.mailboxMigration.findFirst({
     where: {
       id: migrationId,
       organizationId: authResult.orgId,
     },
-    include: {
-      mailbox: { select: { id: true, address: true, credentialsEnc: true } },
-    },
+    include: migrationForAdminInclude,
   });
 
-  if (!migration) return { error: "not_found" as const };
+  if (!migration) return { error: "not_found" };
 
   return { ...authResult, migration };
 }
 
-export async function resolveMailboxForAdmin(mailboxId: string) {
+export async function resolveMailboxForAdmin(
+  mailboxId: string
+): Promise<MigrationAccessError | MailboxForAdmin> {
   const authResult = await requireMigrationAdmin();
-  if ("error" in authResult) return authResult;
+  if ("error" in authResult) {
+    return { error: authResult.error };
+  }
 
   const mailbox = await prisma.mailbox.findFirst({
     where: {
@@ -49,7 +92,7 @@ export async function resolveMailboxForAdmin(mailboxId: string) {
     },
   });
 
-  if (!mailbox) return { error: "not_found" as const };
+  if (!mailbox) return { error: "not_found" };
 
   return { ...authResult, mailbox };
 }

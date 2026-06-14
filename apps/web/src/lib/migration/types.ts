@@ -65,3 +65,30 @@ export const ACTIVE_MIGRATION_STATUSES: MigrationStatus[] = [
   "QUEUED",
   "RUNNING",
 ];
+
+export const MIGRATION_ERROR_CODES = [
+  "imapsync_not_found",
+  "imapsync_failed",
+  "target_credentials_missing",
+  "source_credentials_missing",
+  "oauth_refresh_failed",
+  "mail_scope_disabled",
+] as const;
+
+export type MigrationErrorCode = (typeof MIGRATION_ERROR_CODES)[number];
+
+export function isMigrationErrorCode(code: string): code is MigrationErrorCode {
+  return (MIGRATION_ERROR_CODES as readonly string[]).includes(code);
+}
+
+export const MIGRATION_ERROR_I18N_KEYS: Record<
+  MigrationErrorCode,
+  `migration.error_${MigrationErrorCode}`
+> = {
+  imapsync_not_found: "migration.error_imapsync_not_found",
+  imapsync_failed: "migration.error_imapsync_failed",
+  target_credentials_missing: "migration.error_target_credentials_missing",
+  source_credentials_missing: "migration.error_source_credentials_missing",
+  oauth_refresh_failed: "migration.error_oauth_refresh_failed",
+  mail_scope_disabled: "migration.error_mail_scope_disabled",
+};

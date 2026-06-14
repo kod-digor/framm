@@ -1,4 +1,5 @@
 import type { MigrationPhase, MigrationProvider, MigrationStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sealSecret } from "@/lib/crypto/seal";
 import type {
@@ -111,7 +112,7 @@ export async function logMigrationEvent(
       migrationId,
       message,
       phase,
-      metadata: metadata ?? undefined,
+      metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
     },
   });
 }
