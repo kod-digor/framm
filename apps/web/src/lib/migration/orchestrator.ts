@@ -18,6 +18,7 @@ import {
   parseSourceStatsJson,
   type MigrationSourceStats,
 } from "@/lib/migration/discovery/types";
+import { parseImapsyncProgressLine } from "@/lib/migration/imapsync-runner";
 
 function parseProgressJson(value: unknown): MigrationProgress | null {
   if (!value || typeof value !== "object") return null;
@@ -74,6 +75,55 @@ export function serializeMigrationStatus(
       createdAt: e.createdAt.toISOString(),
     })),
   };
+}
+
+type MigrationStatusRecord = Parameters<typeof serializeMigrationStatus>[0];
+
+/** Recalcule la progression mail depuis le journal si progressJson est bloqué à 0 %. */
+export async function resolveLiveMailProgress(
+  migration: Pick<
+    MigrationStatusRecord,
+    "id" | "status" | "phase" | "progressJson" | "sourceStatsJson"
+  >
+): Promise<MigrationProgress | null> {
+  const stored = parseProgressJson(migration.progressJson);
+  if (migration.status !== "RUNNING" || migration.phase !== "SYNCING_MAIL") {
+    return stored;
+  }
+  if (stored && stored.percent > 0) return stored;
+
+  const totalMessages = parseSourceStatsJson(migration.sourceStatsJson)?.mail.messageCount;
+  if (!totalMessages) return stored;
+
+  const mailEvents = await prisma.migrationEvent.findMany({
+    where: { migrationId: migration.id, phase: "SYNCING_MAIL" },
+    orderBy: { createdAt: "asc" },
+    select: { message: true },
+  });
+
+  let state = {
+    progress: { percent: 0 } as MigrationProgress,
+    copiedKeys: new Set<string>(),
+    foldersSeen: new Set<string>(),
+  };
+
+  for (const event of mailEvents) {
+    state = parseImapsyncProgressLine(event.message, state, totalMessages);
+  }
+
+  if ((state.progress.messagesSynced ?? 0) === 0) return stored;
+  return state.progress;
+}
+
+export async function serializeMigrationStatusWithLiveProgress(
+  migration: MigrationStatusRecord
+): Promise<MigrationStatusPayload> {
+  const payload = serializeMigrationStatus(migration);
+  const liveProgress = await resolveLiveMailProgress(migration);
+  if (liveProgress) {
+    payload.progress = liveProgress;
+  }
+  return payload;
 }
 
 const migrationWithEventsInclude = {

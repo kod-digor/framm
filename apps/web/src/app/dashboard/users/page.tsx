@@ -7,7 +7,7 @@ import { isDnsVerifiedDomainStatus, MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/do
 import {
   cancelStaleDraftMigrations,
   getActiveMigrationsForOrg,
-  serializeMigrationStatus,
+  serializeMigrationStatusWithLiveProgress,
 } from "@/lib/migration/orchestrator";
 
 export default async function UsersPage() {
@@ -53,10 +53,12 @@ export default async function UsersPage() {
   ]);
 
   const activeMigrationsByMailbox = Object.fromEntries(
-    activeMigrations.map((migration) => [
-      migration.mailboxId,
-      serializeMigrationStatus(migration),
-    ])
+    await Promise.all(
+      activeMigrations.map(async (migration) => [
+        migration.mailboxId,
+        await serializeMigrationStatusWithLiveProgress(migration),
+      ])
+    )
   );
 
   const domainOptions = domains.map((d) => ({

@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { unsealSecret } from "@/lib/crypto/seal";
 import {
   decodeSourceCredentials,
+  redactImapsyncLogLine,
   runImapsync,
+  shouldLogImapsyncLine,
 } from "@/lib/migration/imapsync-runner";
 import { runContactsMigration } from "@/lib/migration/contacts-runner";
 import { runCalendarMigration } from "@/lib/migration/calendar-runner";
@@ -15,6 +17,7 @@ import {
 } from "@/lib/migration/orchestrator";
 import { refreshGoogleAccessToken } from "@/lib/migration/providers/google";
 import { refreshMicrosoftAccessToken } from "@/lib/migration/providers/microsoft";
+import { parseSourceStatsJson } from "@/lib/migration/discovery/types";
 import type { ImapSourceCredentials, MigrationProgress } from "@/lib/migration/types";
 import type { MigrationPhase } from "@prisma/client";
 
@@ -140,6 +143,8 @@ async function processMigration(migrationId: string) {
   if (migration.scopeMail) {
     const targetHost = process.env.MIGRATION_STALWART_IMAP_HOST ?? resolveStalwartImapHost();
     const targetPort = Number(process.env.MIGRATION_STALWART_IMAP_PORT ?? "993");
+    const sourceStats = parseSourceStatsJson(migration.sourceStatsJson);
+    const totalMessages = sourceStats?.mail.messageCount;
 
     const result = await runImapsync({
       source,
@@ -147,6 +152,7 @@ async function processMigration(migrationId: string) {
       targetPort,
       targetUser: migration.mailbox.address,
       targetPassword: mailboxPassword,
+      totalMessages,
       onProgress: (progress, line) => {
         const scaled: MigrationProgress = {
           ...progress,
@@ -154,8 +160,13 @@ async function processMigration(migrationId: string) {
         };
         currentProgress = scaled;
         void updateMigrationProgress(migrationId, scaled, "SYNCING_MAIL");
-        if (line.trim()) {
-          void logMigrationEvent(migrationId, line.trim().slice(0, 500), "SYNCING_MAIL");
+        const trimmed = line.trim();
+        if (trimmed && shouldLogImapsyncLine(trimmed)) {
+          void logMigrationEvent(
+            migrationId,
+            redactImapsyncLogLine(trimmed).slice(0, 500),
+            "SYNCING_MAIL"
+          );
         }
       },
     });

@@ -15,6 +15,7 @@ import {
   getMigrationById,
   queueMigration,
   serializeMigrationStatus,
+  serializeMigrationStatusWithLiveProgress,
   storeImapCredentials,
   storeSourceStats,
 } from "@/lib/migration/orchestrator";
@@ -197,7 +198,7 @@ export async function listActiveMigrationsAction(): Promise<
   const migrations = await getLaunchedMigrationsForOrg(orgId);
   const map: Record<string, MigrationStatusPayload> = {};
   for (const migration of migrations) {
-    map[migration.mailboxId] = serializeMigrationStatus(migration);
+    map[migration.mailboxId] = await serializeMigrationStatusWithLiveProgress(migration);
   }
   return map;
 }
@@ -221,14 +222,14 @@ export async function getMigrationStatusAction(
       tracked.organizationId === orgId &&
       tracked.status !== "PENDING_OAUTH"
     ) {
-      return serializeMigrationStatus(tracked);
+      return serializeMigrationStatusWithLiveProgress(tracked);
     }
   }
 
   const migration = await getLaunchedMigrationForMailbox(mailboxId);
   if (!migration) return null;
 
-  return serializeMigrationStatus(migration);
+  return serializeMigrationStatusWithLiveProgress(migration);
 }
 
 export async function getDraftMigrationAction(

@@ -10,6 +10,8 @@ export type ImapsyncRunOptions = {
   targetPort: number;
   targetUser: string;
   targetPassword: string;
+  /** Total messages source (discovery) — sert au calcul du pourcentage mail. */
+  totalMessages?: number;
   onProgress?: (progress: MigrationProgress, line: string) => void;
   onLog?: (line: string) => void;
 };
@@ -20,8 +22,13 @@ export type ImapsyncRunResult = {
   progress: MigrationProgress;
 };
 
-const PROGRESS_RE = /(\d+)\s*\/\s*(\d+)\s+msgs/;
-const FOLDER_RE = /Folder\s+(.+)/i;
+/** Ancien format imapsync (rare) : « 42 / 100 msgs » */
+const LEGACY_PROGRESS_RE = /(\d+)\s*\/\s*(\d+)\s+msgs/;
+/** imapsync 2.323+ : « Host1: folder [INBOX] selected 42 messages, duplicates 0 » */
+const HOST1_FOLDER_RE =
+  /Host1:\s+folder\s+(.+?)\s+selected\s+(\d+)\s+messages?(?:,\s*duplicates\s+\d+)?/i;
+/** imapsync 2.323+ : « msg INBOX/12 {1234} copied to INBOX/1 … » */
+const MSG_COPIED_RE = /^msg\s+(.+?)\/(\d+)\s+\{/i;
 
 function resolveImapsyncMaxBytesPerSecond(): number | null {
   const raw = process.env.IMAPSYNC_MAX_BYTES_PER_SECOND?.trim();
@@ -31,25 +38,107 @@ function resolveImapsyncMaxBytesPerSecond(): number | null {
   return Math.round(value);
 }
 
-function parseProgressLine(line: string, current: MigrationProgress): MigrationProgress {
-  const next = { ...current, lastLogLine: line.trim() };
+type ImapsyncProgressState = {
+  progress: MigrationProgress;
+  copiedKeys: Set<string>;
+  foldersSeen: Set<string>;
+};
 
-  const msgMatch = PROGRESS_RE.exec(line);
-  if (msgMatch) {
-    const done = Number(msgMatch[1]);
-    const total = Number(msgMatch[2]);
+function computeMailPercent(messagesSynced: number, totalMessages?: number): number {
+  if (totalMessages && totalMessages > 0) {
+    return Math.min(99, Math.round((messagesSynced / totalMessages) * 100));
+  }
+  return 0;
+}
+
+export function parseImapsyncProgressLine(
+  line: string,
+  state: ImapsyncProgressState,
+  totalMessages?: number
+): ImapsyncProgressState {
+  const trimmed = line.trim();
+  const next: MigrationProgress = { ...state.progress, lastLogLine: trimmed };
+
+  const legacyMatch = LEGACY_PROGRESS_RE.exec(trimmed);
+  if (legacyMatch) {
+    const done = Number(legacyMatch[1]);
+    const total = Number(legacyMatch[2]);
     if (total > 0) {
       next.messagesSynced = done;
       next.percent = Math.min(99, Math.round((done / total) * 100));
     }
+    return { ...state, progress: next };
   }
 
-  const folderMatch = FOLDER_RE.exec(line);
+  const folderMatch = HOST1_FOLDER_RE.exec(trimmed);
   if (folderMatch) {
-    next.currentFolder = folderMatch[1].trim();
+    const folderName = folderMatch[1].trim();
+    next.currentFolder = folderName;
+    if (!state.foldersSeen.has(folderName)) {
+      const foldersSeen = new Set(state.foldersSeen);
+      foldersSeen.add(folderName);
+      next.foldersSynced = foldersSeen.size;
+      state = { ...state, foldersSeen };
+    }
+    return { ...state, progress: next };
   }
 
-  return next;
+  const copiedMatch = MSG_COPIED_RE.exec(trimmed);
+  if (copiedMatch) {
+    const key = `${copiedMatch[1]}/${copiedMatch[2]}`;
+    if (!state.copiedKeys.has(key)) {
+      const copiedKeys = new Set(state.copiedKeys);
+      copiedKeys.add(key);
+      const messagesSynced = copiedKeys.size;
+      next.messagesSynced = messagesSynced;
+      next.percent = computeMailPercent(messagesSynced, totalMessages);
+      return { ...state, copiedKeys, progress: next };
+    }
+  }
+
+  return { ...state, progress: next };
+}
+
+/** Lignes imapsync utiles au journal migration (évite bruit root/PID/bannières). */
+export function redactImapsyncLogLine(line: string): string {
+  return line
+    .replace(/--oauthaccesstoken1\s+\S+/gi, "--oauthaccesstoken1 <redacted>")
+    .replace(/--oauthaccesstoken2\s+\S+/gi, "--oauthaccesstoken2 <redacted>")
+    .replace(/--password1\s+\S+/gi, "--password1 <redacted>")
+    .replace(/--password2\s+\S+/gi, "--password2 <redacted>");
+}
+
+export function shouldLogImapsyncLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (/^Real user id is /i.test(trimmed)) return false;
+  if (/^Effective user id is /i.test(trimmed)) return false;
+  if (/^Here is imapsync /i.test(trimmed)) return false;
+  if (/^PID is /i.test(trimmed)) return false;
+  if (/^my PPID is /i.test(trimmed)) return false;
+  if (/^Log file is /i.test(trimmed)) return false;
+  if (/^Load is /i.test(trimmed)) return false;
+  if (/^\$RCSfile:/i.test(trimmed)) return false;
+  if (/^Command line used,/i.test(trimmed)) return false;
+  if (/^\/usr\/local\/bin\/imapsync\s+/i.test(trimmed)) return false;
+  if (/^kill -/i.test(trimmed)) return false;
+  if (/^Current directory is /i.test(trimmed)) return false;
+  if (/^Temp directory is /i.test(trimmed)) return false;
+  if (/^Creating temp directory /i.test(trimmed)) return false;
+  if (/^Removing old /i.test(trimmed)) return false;
+  if (/^Removed old /i.test(trimmed)) return false;
+  if (/^PID file is /i.test(trimmed)) return false;
+  if (/^Writing my PID /i.test(trimmed)) return false;
+  if (/^Writing also my logfile /i.test(trimmed)) return false;
+  if (/^Logging to a logfile /i.test(trimmed)) return false;
+  if (/^Transfer started at /i.test(trimmed)) return false;
+  if (HOST1_FOLDER_RE.test(trimmed)) return true;
+  if (MSG_COPIED_RE.test(trimmed)) return true;
+  if (/Host1: banner/i.test(trimmed)) return true;
+  if (/\bERROR\b/i.test(trimmed)) return true;
+  if (/\bFATAL\b/i.test(trimmed)) return true;
+  if (/\bExiting with /i.test(trimmed)) return true;
+  return false;
 }
 
 function resolveImapBinary(): string | null {
@@ -165,10 +254,14 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
   }
 
   const args = buildImapsyncArgs(options);
-  let progress: MigrationProgress = { percent: 0 };
+  let parseState: ImapsyncProgressState = {
+    progress: { percent: 0 },
+    copiedKeys: new Set(),
+    foldersSeen: new Set(),
+  };
   const commandPreview = `${binary} ${redactImapsyncArgsForLog(args)}`;
   options.onLog?.(commandPreview);
-  progress = { ...progress, lastLogLine: commandPreview };
+  parseState.progress = { ...parseState.progress, lastLogLine: commandPreview };
 
   return new Promise((resolve) => {
     const child = spawn(binary, args, {
@@ -176,18 +269,26 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       stdio: ["ignore", "pipe", "pipe"],
     });
 
-    const handleLine = (chunk: Buffer) => {
+    const handleStdout = (chunk: Buffer) => {
       const lines = chunk.toString("utf8").split(/\r?\n/);
       for (const line of lines) {
         if (!line.trim()) continue;
         options.onLog?.(line);
-        progress = parseProgressLine(line, progress);
-        options.onProgress?.(progress, line);
+        parseState = parseImapsyncProgressLine(line, parseState, options.totalMessages);
+        options.onProgress?.(parseState.progress, line);
       }
     };
 
-    child.stdout?.on("data", handleLine);
-    child.stderr?.on("data", handleLine);
+    const handleStderr = (chunk: Buffer) => {
+      const lines = chunk.toString("utf8").split(/\r?\n/);
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        options.onLog?.(line);
+      }
+    };
+
+    child.stdout?.on("data", handleStdout);
+    child.stderr?.on("data", handleStderr);
 
     child.on("error", (err) => {
       const message =
@@ -197,7 +298,7 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       resolve({
         ok: false,
         error: message,
-        progress,
+        progress: parseState.progress,
       });
     });
 
@@ -205,13 +306,13 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       if (code === 0) {
         resolve({
           ok: true,
-          progress: { ...progress, percent: 100 },
+          progress: { ...parseState.progress, percent: 100 },
         });
       } else {
         resolve({
           ok: false,
-          error: progress.lastLogLine ?? `imapsync_exit_${code ?? "unknown"}`,
-          progress,
+          error: parseState.progress.lastLogLine ?? `imapsync_exit_${code ?? "unknown"}`,
+          progress: parseState.progress,
         });
       }
     });

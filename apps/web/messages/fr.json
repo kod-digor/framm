@@ -372,7 +372,8 @@
       "phase_SYNCING_CALENDAR": "Import du calendrier…",
       "phase_FINALIZING": "Finalisation…",
       "progressContacts": "Contacts : {synced} / {total}",
-      "progressCalendar": "Événements : {synced} / {total}"
+      "progressCalendar": "Événements : {synced} / {total}",
+      "progressMessages": "E-mails : {synced} / {total}"
     }
   },
   "sharedMailboxes": {

@@ -43,5 +43,12 @@ COPY . .
 RUN npx prisma generate
 
 ENV IMAPSYNC_PATH=/usr/local/bin/imapsync
+RUN groupadd --system framm && useradd --system --gid framm --home-dir /app --no-create-home framm \
+  && mkdir -p /app/tmp/imapsync \
+  && chown -R framm:framm /app
+
+USER framm
+ENV HOME=/app
+ENV TMPDIR=/app/tmp/imapsync
 
 CMD ["npm", "run", "worker"]

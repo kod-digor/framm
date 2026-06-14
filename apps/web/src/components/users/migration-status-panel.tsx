@@ -140,6 +140,14 @@ export function MigrationStatusPanel({
             {t("migration.currentFolder", { folder: status.progress.currentFolder })}
           </p>
         ) : null}
+        {status.sourceStats?.mail.messageCount && status.progress?.messagesSynced != null ? (
+          <p className="text-xs text-ardoise/60">
+            {t("migration.progressMessages", {
+              synced: status.progress.messagesSynced,
+              total: status.sourceStats.mail.messageCount,
+            })}
+          </p>
+        ) : null}
         {status.phase ? (
           <p className="text-xs text-ardoise/60">
             {t(`migration.phase_${status.phase}`)}
