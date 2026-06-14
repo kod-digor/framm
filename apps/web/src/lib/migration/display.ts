@@ -25,12 +25,48 @@ export function isImapsyncJournalNoise(message: string): boolean {
   return false;
 }
 
+/** Ligne d'erreur imapsync exploitable (hors bruit journal). */
+export function isImapsyncErrorLine(message: string): boolean {
+  const trimmed = message.trim();
+  if (!trimmed || isImapsyncJournalNoise(trimmed)) return false;
+  if (/^Err \d+\/\d+:/i.test(trimmed)) return true;
+  if (/\b(?:ERROR|FATAL)\b/i.test(trimmed)) return true;
+  if (/\bExiting with /i.test(trimmed)) return true;
+  return false;
+}
+
+/** Dernière erreur imapsync utile dans le journal (événements récents en premier). */
+export function findLastImapsyncErrorInEvents(
+  events: { message: string }[]
+): string | null {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const msg = events[i]!.message;
+    if (isImapsyncErrorLine(msg)) return msg.trim();
+  }
+  return null;
+}
+
+/**
+ * errorMessage DB parfois pollué (ex. « Log file is … » en fin de sync).
+ * Retombe sur le journal ou sur le code imapsync_failed.
+ */
+export function resolveMigrationErrorMessage(
+  errorMessage: string | null,
+  events: { message: string }[]
+): string | null {
+  if (!errorMessage) return null;
+  const trimmed = errorMessage.trim();
+  if (!isImapsyncJournalNoise(trimmed)) return trimmed;
+  return findLastImapsyncErrorInEvents(events) ?? "imapsync_failed";
+}
+
 /** Journal migration : messages copiés, erreurs et fin uniquement. */
 export function shouldLogImapsyncLine(line: string): boolean {
   if (isImapsyncJournalNoise(line)) return false;
   const trimmed = line.trim();
   if (IMAPSYNC_MSG_COPIED_RE.test(trimmed)) return true;
   if (LEGACY_PROGRESS_RE.test(trimmed)) return true;
+  if (/^Err \d+\/\d+:/i.test(trimmed)) return true;
   if (/\bERROR\b/i.test(trimmed)) return true;
   if (/\bFATAL\b/i.test(trimmed)) return true;
   if (/\bExiting with /i.test(trimmed)) return true;

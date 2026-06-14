@@ -27,6 +27,7 @@ import {
   estimateMigrationEtaMs,
   filterMigrationEvents,
   formatDurationMs,
+  formatImapsyncJournalLine,
   formatMigrationEventMessage,
   formatMigrationFolderName,
   formatMigrationPercentLabel,
@@ -34,6 +35,7 @@ import {
   getMigrationProgressBarWidth,
   getMigrationProgressSummary,
   shouldShowMigrationEtaCalculating,
+  truncateText,
 } from "@/lib/migration/display";
 import {
   isMigrationErrorCode,
@@ -227,6 +229,12 @@ export function MigrationStatusPanel({
     ? formatMigrationFolderName(status.progress.currentFolder)
     : null;
 
+  const formattedError = status.errorMessage
+    ? isMigrationErrorCode(status.errorMessage)
+      ? t(MIGRATION_ERROR_I18N_KEYS[status.errorMessage])
+      : truncateText(formatImapsyncJournalLine(status.errorMessage), 280)
+    : null;
+
   return (
     <div className="space-y-6">
       <div className="space-y-4 rounded-lg border border-canal bg-neutral-50/50 p-4">
@@ -308,15 +316,13 @@ export function MigrationStatusPanel({
             </div>
           ) : null}
         </dl>
-
-        {status.errorMessage ? (
-          <p className="text-sm text-red-700">
-            {isMigrationErrorCode(status.errorMessage)
-              ? t(MIGRATION_ERROR_I18N_KEYS[status.errorMessage])
-              : status.errorMessage}
-          </p>
-        ) : null}
       </div>
+
+      {isFailed && formattedError ? (
+        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {formattedError}
+        </p>
+      ) : null}
 
       <div className="rounded-lg border border-canal bg-white">
         <h4 className="border-b border-canal px-4 py-3 text-sm font-semibold text-encre">

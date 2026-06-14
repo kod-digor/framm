@@ -4,6 +4,7 @@ import type { UserRole } from "@prisma/client";
 import { canAdminOrg, getMembership } from "@/lib/tenant";
 import { getSubscription, requiresBillingSetup } from "@/lib/modules";
 import { prisma } from "@/lib/prisma";
+import { isDbUnavailableError } from "@/lib/auth-errors";
 
 type RequireAuthOptions = {
   /** Autorise l'accès même si le changement de mot de passe est requis. */
@@ -17,12 +18,17 @@ type RequireOrgAdminOptions = {
 };
 
 async function enforcePasswordChange(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { mustChangePassword: true },
-  });
-  if (user?.mustChangePassword) {
-    redirect("/change-password");
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { mustChangePassword: true },
+    });
+    if (user?.mustChangePassword) {
+      redirect("/change-password");
+    }
+  } catch (err) {
+    if (isDbUnavailableError(err)) return;
+    throw err;
   }
 }
 

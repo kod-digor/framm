@@ -12,6 +12,7 @@ import type {
 import {
   BLOCKING_MIGRATION_STATUSES,
   DRAFT_MIGRATION_STATUSES,
+  isMigrationErrorCode,
   LAUNCHED_MIGRATION_STATUSES,
 } from "@/lib/migration/types";
 import {
@@ -19,7 +20,12 @@ import {
   type MigrationSourceStats,
 } from "@/lib/migration/discovery/types";
 import {
+  isImapsyncJournalNoise,
+  resolveMigrationErrorMessage,
+} from "@/lib/migration/display";
+import {
   parseImapsyncProgressLine,
+  pickImapsyncFailureError,
   redactImapsyncLogLine,
 } from "@/lib/migration/imapsync-runner";
 
@@ -68,9 +74,13 @@ export function serializeMigrationStatus(
     scopeCalendar: migration.scopeCalendar,
     progress: parseProgressJson(migration.progressJson),
     sourceStats: parseSourceStatsJson(migration.sourceStatsJson),
-    errorMessage: migration.errorMessage
-      ? redactImapsyncLogLine(migration.errorMessage)
-      : null,
+    errorMessage: (() => {
+      const resolved = resolveMigrationErrorMessage(
+        migration.errorMessage,
+        migration.events
+      );
+      return resolved ? redactImapsyncLogLine(resolved) : null;
+    })(),
     startedAt: migration.startedAt?.toISOString() ?? null,
     completedAt: migration.completedAt?.toISOString() ?? null,
     events: migration.events.map((e) => ({
@@ -416,16 +426,18 @@ export async function completeMigration(migrationId: string) {
 }
 
 export async function failMigration(migrationId: string, error: string) {
-  const safeError = redactImapsyncLogLine(error).slice(0, 500);
+  const storedError = pickImapsyncFailureError(error, undefined);
   await prisma.mailboxMigration.update({
     where: { id: migrationId },
     data: {
       status: "FAILED",
-      errorMessage: safeError,
+      errorMessage: storedError,
       completedAt: new Date(),
     },
   });
-  await logMigrationEvent(migrationId, safeError);
+  if (!isImapsyncJournalNoise(storedError) && !isMigrationErrorCode(storedError)) {
+    await logMigrationEvent(migrationId, storedError);
+  }
 }
 
 export async function wipeMigrationSecrets(migrationId: string) {

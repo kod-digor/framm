@@ -5,6 +5,8 @@ import {
   decodeImapFolderName,
   IMAPSYNC_HOST1_FOLDER_SCAN_RE,
   IMAPSYNC_MSG_COPIED_RE,
+  isImapsyncErrorLine,
+  isImapsyncJournalNoise,
   shouldLogImapsyncLine,
 } from "@/lib/migration/display";
 import { unsealSecret } from "@/lib/crypto/seal";
@@ -58,13 +60,32 @@ function computeMailPercent(messagesSynced: number, totalMessages?: number): num
   return 0;
 }
 
+export function pickImapsyncFailureError(
+  lastErrorLine: string | undefined,
+  lastLogLine: string | undefined,
+  exitCode?: number | null
+): string {
+  if (lastErrorLine?.trim() && !isImapsyncJournalNoise(lastErrorLine)) {
+    return redactImapsyncLogLine(lastErrorLine).slice(0, 500);
+  }
+  const logCandidate = lastLogLine?.trim();
+  if (logCandidate && !isImapsyncJournalNoise(logCandidate)) {
+    return redactImapsyncLogLine(logCandidate).slice(0, 500);
+  }
+  if (exitCode != null) return `imapsync_exit_${exitCode}`;
+  return "imapsync_failed";
+}
+
 export function parseImapsyncProgressLine(
   line: string,
   state: ImapsyncProgressState,
   totalMessages?: number
 ): ImapsyncProgressState {
   const trimmed = line.trim();
-  const next: MigrationProgress = { ...state.progress, lastLogLine: trimmed };
+  const next: MigrationProgress = { ...state.progress };
+  if (!isImapsyncJournalNoise(trimmed)) {
+    next.lastLogLine = trimmed;
+  }
 
   const legacyMatch = LEGACY_PROGRESS_RE.exec(trimmed);
   if (legacyMatch) {
@@ -236,6 +257,7 @@ export function buildImapsyncArgs(options: ImapsyncRunOptions): string[] {
     "--usecache",
     "--errorsmax",
     "100",
+    "--nolog",
   ];
 
   const maxBytesPerSecond = resolveImapsyncMaxBytesPerSecond();
@@ -266,6 +288,14 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
   parseState.progress = { ...parseState.progress, lastLogLine: commandPreview };
 
   return new Promise((resolve) => {
+    let lastErrorLine: string | undefined;
+
+    const trackErrorLine = (line: string) => {
+      if (isImapsyncErrorLine(line)) {
+        lastErrorLine = line.trim();
+      }
+    };
+
     const child = spawn(binary, args, {
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
@@ -275,6 +305,7 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       const lines = chunk.toString("utf8").split(/\r?\n/);
       for (const line of lines) {
         if (!line.trim()) continue;
+        trackErrorLine(line);
         const safeLine = redactImapsyncLogLine(line);
         if (shouldLogImapsyncLine(safeLine)) {
           options.onLog?.(safeLine);
@@ -288,6 +319,7 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       const lines = chunk.toString("utf8").split(/\r?\n/);
       for (const line of lines) {
         if (!line.trim()) continue;
+        trackErrorLine(line);
         const safeLine = redactImapsyncLogLine(line);
         if (shouldLogImapsyncLine(safeLine)) {
           options.onLog?.(safeLine);
@@ -319,7 +351,11 @@ export async function runImapsync(options: ImapsyncRunOptions): Promise<Imapsync
       } else {
         resolve({
           ok: false,
-          error: parseState.progress.lastLogLine ?? `imapsync_exit_${code ?? "unknown"}`,
+          error: pickImapsyncFailureError(
+            lastErrorLine,
+            parseState.progress.lastLogLine,
+            code
+          ),
           progress: parseState.progress,
         });
       }
