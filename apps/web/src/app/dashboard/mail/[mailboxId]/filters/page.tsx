@@ -28,7 +28,7 @@ export default async function MailboxFiltersPage({
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <Button asChild variant="outline" size="sm">
           <Link href={`/dashboard/mail/${mailboxId}`}>{t("backToMail")}</Link>

@@ -4,6 +4,7 @@ import { useFormStatus } from "react-dom";
 import { Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { crudDeleteIconButtonClass } from "@/components/ui/crud-row-actions";
 
 function DeleteSubmitButton() {
   const { pending } = useFormStatus();
@@ -14,7 +15,7 @@ function DeleteSubmitButton() {
       type="submit"
       variant="ghost"
       size="sm"
-      className="size-8 p-0 text-zinc-500 hover:text-red-600"
+      className={crudDeleteIconButtonClass}
       disabled={pending}
       aria-busy={pending}
       aria-label={pending ? t("deleting") : t("delete")}

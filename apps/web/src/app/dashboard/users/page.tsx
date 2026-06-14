@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getOrgId, requireOrgAdmin } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { UsersCrud } from "@/components/users/users-crud";
@@ -87,12 +88,14 @@ export default async function UsersPage() {
   return (
     <div className="space-y-6">
       <StalwartStatusBanner namespace="users" />
-      <UsersCrud
-        users={users}
-        domains={domains.map((d) => ({ id: d.id, fqdn: d.fqdn }))}
-        domainOptions={domainOptions}
-        orgMembers={orgMembers}
-      />
+      <Suspense fallback={null}>
+        <UsersCrud
+          users={users}
+          domains={domains.map((d) => ({ id: d.id, fqdn: d.fqdn }))}
+          domainOptions={domainOptions}
+          orgMembers={orgMembers}
+        />
+      </Suspense>
     </div>
   );
 }

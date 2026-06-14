@@ -2,6 +2,7 @@ import { syncPricingIfStale } from "@/lib/billing/pricing";
 import { processMonthlyWalletDeductions } from "@/lib/billing/wallet";
 import { prisma } from "@/lib/prisma";
 import { getOrgStorageBytes } from "@/lib/storage/s3";
+import { startMigrationPoller } from "@/worker/migration-worker";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -34,6 +35,8 @@ async function run() {
   if (deducted > 0) {
     console.log(`Wallet: ${deducted} monthly consumption(s) deducted`);
   }
+
+  startMigrationPoller();
 
   setInterval(syncUsage, DAY_MS);
   setInterval(() => {

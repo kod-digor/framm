@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useActionState } from "react";
-import { Pencil } from "lucide-react";
+import { ArrowRightLeft, Pencil } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { removeWorkspaceUserAction } from "@/app/actions/workspace-users";
+import { getMigrationStatusAction } from "@/app/actions/mailbox-migration";
 import { CrudListCard } from "@/components/layout/crud-list-card";
 import { CrudPageHeader } from "@/components/layout/crud-page-header";
 import { CreateWorkspaceUserForm } from "@/components/users/create-workspace-user-form";
 import { DeleteWorkspaceUserForm } from "@/components/users/delete-workspace-user-form";
 import { EditUserDrawer } from "@/components/users/edit-workspace-user-form";
+import { MigrationWizard } from "@/components/users/migration-wizard";
 import { CrudAddButton } from "@/components/ui/crud-add-button";
 import {
   CrudRowActions,
@@ -22,6 +25,7 @@ import { FormDrawer } from "@/components/ui/form-drawer";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
+import type { MigrationStatusPayload } from "@/lib/migration/types";
 import type { DelegationRow } from "@/components/mail/mailbox-delegations-section";
 import type { OrgMemberOption } from "@/components/shared-mailboxes/org-members-picker";
 import type { MailboxAddressPatternType } from "@prisma/client";
@@ -57,14 +61,58 @@ export function UsersCrud({
   orgMembers: OrgMemberOption[];
 }) {
   const t = useTranslations("users");
+  const searchParams = useSearchParams();
+  const oauthMailboxId = searchParams.get("migrationMailboxId");
+  const oauthMigrationId = searchParams.get("migrationId");
+  const oauthStep = searchParams.get("migrationStep");
+  const oauthError = searchParams.get("migrationError");
+
   const [createOpen, setCreateOpen] = useState(false);
   const [openUserId, setOpenUserId] = useState<string | null>(null);
+  const [migrationMailboxId, setMigrationMailboxId] = useState<string | null>(
+    oauthMailboxId
+  );
+  const [migrationInitialId, setMigrationInitialId] = useState<string | null>(
+    oauthMigrationId
+  );
+  const [migrationInitialStep, setMigrationInitialStep] = useState<"scope" | "status" | null>(
+    oauthStep === "scope" ? "scope" : null
+  );
+  const [migrationStatus, setMigrationStatus] = useState<MigrationStatusPayload | null>(null);
   const [deleteState, deleteAction] = useActionState(
     removeWorkspaceUserAction,
     INITIAL_ACTION_RESULT
   );
 
+  const refreshMigrationStatus = useCallback(async (mailboxId: string) => {
+    const status = await getMigrationStatusAction(mailboxId);
+    setMigrationStatus(status);
+  }, []);
+
+  if (oauthError) {
+    console.warn("[migration] OAuth error:", oauthError);
+  }
+
+  useEffect(() => {
+    if (!oauthMailboxId) return;
+    let cancelled = false;
+    void getMigrationStatusAction(oauthMailboxId).then((status) => {
+      if (!cancelled) setMigrationStatus(status);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [oauthMailboxId]);
+
   const selectedUser = users.find((user) => user.memberId === openUserId) ?? null;
+  const migrationUser = users.find((u) => u.mailboxId === migrationMailboxId) ?? null;
+
+  const openMigration = (mailboxId: string) => {
+    setMigrationMailboxId(mailboxId);
+    setMigrationInitialId(null);
+    setMigrationInitialStep(null);
+    void refreshMigrationStatus(mailboxId);
+  };
 
   const columns = [
     {
@@ -115,6 +163,18 @@ export function UsersCrud({
       cellClassName: CRUD_ACTIONS_CELL_CLASS,
       cell: (row: UserRow) => (
         <CrudRowActions>
+          {row.mailboxId ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={crudIconButtonClass}
+              aria-label={t("migration.migrateAria", { email: row.userEmail })}
+              onClick={() => openMigration(row.mailboxId!)}
+            >
+              <ArrowRightLeft className="size-4" aria-hidden />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
@@ -179,6 +239,27 @@ export function UsersCrud({
           domains={domains}
           delegationsGranted={selectedUser.delegationsGranted}
           orgMembers={orgMembers}
+        />
+      ) : null}
+
+      {migrationUser?.mailboxId && migrationUser.primaryAddress ? (
+        <MigrationWizard
+          open={migrationMailboxId !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setMigrationMailboxId(null);
+              setMigrationInitialId(null);
+              setMigrationInitialStep(null);
+              setMigrationStatus(null);
+            }
+          }}
+          mailboxId={migrationUser.mailboxId}
+          targetAddress={migrationUser.primaryAddress}
+          userEmail={migrationUser.userEmail}
+          initialMigrationId={migrationInitialId}
+          initialStep={migrationInitialStep}
+          activeStatus={migrationStatus}
+          onStatusChange={() => refreshMigrationStatus(migrationUser.mailboxId!)}
         />
       ) : null}
 

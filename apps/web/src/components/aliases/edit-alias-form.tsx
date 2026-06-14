@@ -11,6 +11,7 @@ import { FormDrawer } from "@/components/ui/form-drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { crudIconButtonClass } from "@/components/ui/crud-row-actions";
 import { INITIAL_ACTION_RESULT } from "@/lib/action-result";
 
 function SaveButton() {
@@ -97,7 +98,7 @@ export function EditAliasForm({
           type="button"
           variant="ghost"
           size="sm"
-          className="size-8 cursor-pointer p-0 text-zinc-500 hover:text-zinc-900"
+          className={crudIconButtonClass}
           aria-label={t("edit")}
         >
           <Pencil className="size-4" />

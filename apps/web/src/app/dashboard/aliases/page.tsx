@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { AliasesCrud } from "@/components/aliases/aliases-crud";
 import { StalwartStatusBanner } from "@/components/stalwart/status-banner";
 import { isDnsVerifiedDomainStatus, MAIL_USABLE_DOMAIN_STATUSES } from "@/lib/domain-status";
-import { getT } from "@/i18n/t";
 
 function domainFromSource(source: string) {
   const at = source.indexOf("@");
@@ -13,7 +12,6 @@ function domainFromSource(source: string) {
 export default async function AliasesPage() {
   const session = await requireOrgAdmin();
   const orgId = getOrgId(session)!;
-  const t = await getT("aliases");
 
   const [aliases, domains] = await Promise.all([
     prisma.emailAlias.findMany({
@@ -33,15 +31,6 @@ export default async function AliasesPage() {
     domain: domainFromSource(alias.source),
   }));
 
-  const listLabels = {
-    colSource: t("colSource"),
-    colDestination: t("colDestination"),
-    colDomain: t("colDomain"),
-    colStatus: t("colStatus"),
-    colActions: t("colActions"),
-    statusActive: t("statusActive"),
-  };
-
   return (
     <div className="space-y-6">
       <StalwartStatusBanner namespace="aliases" />
@@ -52,7 +41,6 @@ export default async function AliasesPage() {
           fqdn: d.fqdn,
           isDnsVerified: isDnsVerifiedDomainStatus(d.status),
         }))}
-        listLabels={listLabels}
       />
     </div>
   );

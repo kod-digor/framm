@@ -57,6 +57,29 @@ enum MailboxFilterAction {
   STOP
 }
 
+enum MigrationProvider {
+  GOOGLE
+  MICROSOFT
+  ICLOUD
+  IMAP_GENERIC
+}
+
+enum MigrationStatus {
+  PENDING_OAUTH
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum MigrationPhase {
+  CONNECTING
+  SCANNING
+  SYNCING_MAIL
+  FINALIZING
+}
+
 model Organization {
   id                 String               @id @default(cuid())
   name               String
@@ -85,6 +108,7 @@ model Organization {
   usageSnapshots     UsageSnapshot[]
   walletTransactions WalletTransaction[]
   auditLogs          AuditLog[]
+  mailboxMigrations  MailboxMigration[]
 }
 
 model User {
@@ -179,6 +203,7 @@ model Mailbox {
   sharedMailbox     SharedMailbox?
   delegations       MailboxDelegation[]
   filters           MailboxFilter[]
+  migrations        MailboxMigration[]
 }
 
 /// Adresse email secondaire rattachée à une boîte utilisateur (Workspace-style)
@@ -337,4 +362,47 @@ model AuditLog {
   target         String?
   metadata       Json?
   createdAt      DateTime      @default(now())
+}
+
+/// Migration IMAP → Stalwart (imapsync) pour une boîte utilisateur
+model MailboxMigration {
+  id                   String             @id @default(cuid())
+  organizationId       String
+  organization         Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mailboxId            String
+  mailbox              Mailbox            @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  provider             MigrationProvider
+  status               MigrationStatus    @default(PENDING_OAUTH)
+  phase                MigrationPhase?
+  sourceAddress        String?
+  targetAddress        String
+  /// Mot de passe IMAP ou JSON tokens OAuth chiffré (AES-GCM)
+  sourceCredentialsEnc String?
+  oauthRefreshTokenEnc String?
+  scopeMail            Boolean            @default(true)
+  scopeContacts        Boolean            @default(false)
+  scopeCalendar        Boolean            @default(false)
+  progressJson         Json?
+  errorMessage         String?
+  startedAt            DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  events               MigrationEvent[]
+
+  @@index([status])
+  @@index([mailboxId])
+  @@index([organizationId])
+}
+
+model MigrationEvent {
+  id          String            @id @default(cuid())
+  migrationId String
+  migration   MailboxMigration  @relation(fields: [migrationId], references: [id], onDelete: Cascade)
+  phase       MigrationPhase?
+  message     String
+  metadata    Json?
+  createdAt   DateTime          @default(now())
+
+  @@index([migrationId, createdAt])
 }
