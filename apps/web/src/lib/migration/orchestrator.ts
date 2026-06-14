@@ -171,6 +171,44 @@ export async function getDraftMigrationForMailbox(mailboxId: string) {
   });
 }
 
+export function migrationHasStoredCredentials(migration: {
+  sourceCredentialsEnc: string | null;
+  oauthRefreshTokenEnc?: string | null;
+}): boolean {
+  return Boolean(migration.sourceCredentialsEnc);
+}
+
+/** Brouillon actif ou dernière migration échouée avec identifiants conservés. */
+export async function getReusableMigrationForMailbox(mailboxId: string) {
+  const draft = await getDraftMigrationForMailbox(mailboxId);
+  if (draft) return draft;
+
+  return prisma.mailboxMigration.findFirst({
+    where: {
+      mailboxId,
+      status: "FAILED",
+      sourceCredentialsEnc: { not: null },
+    },
+    orderBy: { createdAt: "desc" },
+    include: migrationWithEventsInclude,
+  });
+}
+
+export async function reopenMigrationAsDraft(migrationId: string) {
+  await prisma.mailboxMigration.update({
+    where: { id: migrationId },
+    data: {
+      status: "PENDING_OAUTH",
+      errorMessage: null,
+      completedAt: null,
+      phase: null,
+      progressJson: Prisma.DbNull,
+      startedAt: null,
+    },
+  });
+  return getMigrationById(migrationId);
+}
+
 export async function getMigrationById(migrationId: string) {
   return prisma.mailboxMigration.findUnique({
     where: { id: migrationId },

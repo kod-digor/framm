@@ -89,14 +89,35 @@ export function isDraftMigrationStatus(status: MigrationStatus): boolean {
   return DRAFT_MIGRATION_STATUSES.includes(status);
 }
 
+export type MigrationWizardStep = "provider" | "credentials" | "auth" | "scope" | "confirm" | "status";
+
 /** Reprendu à l'étape wizard appropriée pour un brouillon PENDING_OAUTH. */
-export function resolveDraftWizardStep(draft: MigrationStatusPayload): "provider" | "credentials" | "scope" {
-  if (draft.sourceAddress) return "scope";
+export function resolveDraftWizardStep(
+  draft: MigrationStatusPayload,
+  options?: { hasCredentials?: boolean; authExpired?: boolean }
+): Exclude<MigrationWizardStep, "confirm" | "status"> {
+  const hasCredentials = options?.hasCredentials ?? false;
+  const oauthProvider = draft.provider === "GOOGLE" || draft.provider === "MICROSOFT";
+
+  if (oauthProvider) {
+    if (options?.authExpired && hasCredentials) return "auth";
+    if (hasCredentials || draft.sourceAddress) return "scope";
+    return "provider";
+  }
+
+  if (draft.sourceAddress || hasCredentials) return "scope";
   if (draft.provider === "ICLOUD" || draft.provider === "IMAP_GENERIC") {
     return "credentials";
   }
   return "provider";
 }
+
+export type MigrationWizardEntry = {
+  migration: MigrationStatusPayload;
+  step: MigrationWizardStep;
+  existingAuth: boolean;
+  authExpired: boolean;
+};
 
 export const MIGRATION_ERROR_CODES = [
   "imapsync_not_found",

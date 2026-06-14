@@ -10,6 +10,7 @@ import {
   getDraftMigrationAction,
   getMigrationStatusAction,
   listActiveMigrationsAction,
+  resolveMigrationWizardEntryAction,
 } from "@/app/actions/mailbox-migration";
 import { CrudListCard } from "@/components/layout/crud-list-card";
 import { CrudPageHeader } from "@/components/layout/crud-page-header";
@@ -95,16 +96,20 @@ export function UsersCrud({
     oauthMigrationId
   );
   const [migrationInitialStep, setMigrationInitialStep] = useState<
-    "provider" | "credentials" | "scope" | "confirm" | "status" | null
+    "provider" | "credentials" | "auth" | "scope" | "confirm" | "status" | null
   >(
     oauthStep === "scope"
       ? "scope"
       : oauthStep === "credentials"
         ? "credentials"
-        : oauthStep === "confirm"
-          ? "confirm"
-          : null
+        : oauthStep === "auth"
+          ? "auth"
+          : oauthStep === "confirm"
+            ? "confirm"
+            : null
   );
+  const [migrationExistingAuth, setMigrationExistingAuth] = useState(false);
+  const [migrationAuthExpired, setMigrationAuthExpired] = useState(false);
   const [activeMigrations, setActiveMigrations] = useState<
     Record<string, MigrationStatusPayload>
   >(initialActiveMigrations);
@@ -191,7 +196,9 @@ export function UsersCrud({
       if (!cancelled && draft) {
         setDraftMigration(draft);
         setMigrationInitialId(draft.id);
-        setMigrationInitialStep(resolveDraftWizardStep(draft));
+        setMigrationInitialStep(oauthStep === "scope" ? "scope" : resolveDraftWizardStep(draft));
+        setMigrationExistingAuth(true);
+        setMigrationAuthExpired(false);
         if (typeof sessionStorage !== "undefined") {
           sessionStorage.setItem(draftStorageKey(oauthMailboxId), draft.id);
         }
@@ -246,18 +253,31 @@ export function UsersCrud({
         return;
       }
 
-      const [liveStatus, draftByMailbox] = await Promise.all([
-        getMigrationStatusAction(mailboxId),
-        getDraftMigrationAction(mailboxId, true),
-      ]);
+      const entry = await resolveMigrationWizardEntryAction(mailboxId);
 
-      if (liveStatus && isLaunchedMigrationStatus(liveStatus.status)) {
-        setActiveMigrations((prev) => ({ ...prev, [mailboxId]: liveStatus }));
+      if (entry?.step === "status") {
+        setActiveMigrations((prev) => ({ ...prev, [mailboxId]: entry.migration }));
         openStatusDrawer(mailboxId);
         return;
       }
 
-      let draft = draftByMailbox;
+      if (entry) {
+        setStatusDrawerMailboxId(null);
+        setMigrationInitialId(entry.migration.id);
+        setMigrationInitialStep(entry.step);
+        setMigrationExistingAuth(entry.existingAuth);
+        setMigrationAuthExpired(entry.authExpired);
+        setMigrationStatus(entry.migration);
+        setDraftMigration(entry.migration);
+        setMigrationMailboxId(mailboxId);
+
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.setItem(draftStorageKey(mailboxId), entry.migration.id);
+        }
+        return;
+      }
+
+      let draft = await getDraftMigrationAction(mailboxId, true);
       if (!draft && typeof sessionStorage !== "undefined") {
         const cachedId = sessionStorage.getItem(draftStorageKey(mailboxId));
         if (cachedId) {
@@ -268,7 +288,9 @@ export function UsersCrud({
       setStatusDrawerMailboxId(null);
       setMigrationInitialId(draft?.id ?? null);
       setMigrationInitialStep(draft ? resolveDraftWizardStep(draft) : null);
-      setMigrationStatus(liveStatus ?? draft);
+      setMigrationExistingAuth(false);
+      setMigrationAuthExpired(false);
+      setMigrationStatus(draft);
       setDraftMigration(draft);
       setMigrationMailboxId(mailboxId);
 
@@ -435,6 +457,8 @@ export function UsersCrud({
               setMigrationMailboxId(null);
               setMigrationInitialId(null);
               setMigrationInitialStep(null);
+              setMigrationExistingAuth(false);
+              setMigrationAuthExpired(false);
               setDraftMigration(null);
               setMigrationStatus(null);
               void refreshAllActiveMigrations();
@@ -445,6 +469,8 @@ export function UsersCrud({
           userEmail={migrationUser.userEmail}
           initialMigrationId={migrationInitialId}
           initialStep={migrationInitialStep}
+          initialExistingAuth={migrationExistingAuth}
+          initialAuthExpired={migrationAuthExpired}
           activeStatus={
             migrationStatus ??
             (draftMigration?.mailboxId === migrationUser.mailboxId ? draftMigration : null)

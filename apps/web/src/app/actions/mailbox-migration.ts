@@ -14,7 +14,10 @@ import {
   getLaunchedMigrationForMailbox,
   getLaunchedMigrationsForOrg,
   getMigrationById,
+  getReusableMigrationForMailbox,
+  migrationHasStoredCredentials,
   queueMigration,
+  reopenMigrationAsDraft,
   serializeMigrationStatus,
   serializeMigrationStatusWithLiveProgress,
   storeImapCredentials,
@@ -24,12 +27,15 @@ import { discoverMigrationSource } from "@/lib/migration/discovery";
 import { AUTH_UNAVAILABLE_REASONS } from "@/lib/migration/discovery/api-error";
 import type { MigrationSourceStats } from "@/lib/migration/discovery/types";
 import { isDbUnavailableError } from "@/lib/auth-errors";
+import { decodeSourceCredentials } from "@/lib/migration/imapsync-runner";
+import { resolveOAuthAccessToken } from "@/lib/migration/oauth-access";
 import {
   normalizeImapCredentials,
   validateImapHost,
   validateImapPort,
 } from "@/lib/migration/providers/imap-generic";
-import type { MigrationStatusPayload } from "@/lib/migration/types";
+import type { MigrationStatusPayload, MigrationWizardEntry } from "@/lib/migration/types";
+import { resolveDraftWizardStep } from "@/lib/migration/types";
 
 const PROVIDERS: MigrationProvider[] = [
   "GOOGLE",
@@ -296,6 +302,74 @@ export async function getDraftMigrationAction(
   if (migration.status !== "PENDING_OAUTH") return null;
 
   return serializeMigrationStatus(migration);
+}
+
+async function verifyMigrationAuth(migration: {
+  provider: MigrationProvider;
+  sourceCredentialsEnc: string | null;
+  oauthRefreshTokenEnc: string | null;
+}): Promise<{ existingAuth: boolean; authExpired: boolean }> {
+  if (!migrationHasStoredCredentials(migration)) {
+    return { existingAuth: false, authExpired: false };
+  }
+
+  if (migration.provider === "GOOGLE" || migration.provider === "MICROSOFT") {
+    const source = decodeSourceCredentials(
+      migration.sourceCredentialsEnc,
+      migration.oauthRefreshTokenEnc
+    );
+    if (!source) return { existingAuth: false, authExpired: false };
+
+    const oauth = await resolveOAuthAccessToken(source, migration.oauthRefreshTokenEnc);
+    if (oauth.accessToken) {
+      return { existingAuth: true, authExpired: false };
+    }
+    return { existingAuth: false, authExpired: true };
+  }
+
+  return { existingAuth: true, authExpired: false };
+}
+
+export async function resolveMigrationWizardEntryAction(
+  mailboxId: string
+): Promise<MigrationWizardEntry | null> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) return null;
+
+  const mailbox = await assertMailboxOrg(mailboxId, orgId);
+  if (!mailbox) return null;
+
+  const launched = await getLaunchedMigrationForMailbox(mailboxId);
+  if (launched) {
+    return {
+      migration: await serializeMigrationStatusWithLiveProgress(launched),
+      step: "status",
+      existingAuth: false,
+      authExpired: false,
+    };
+  }
+
+  let migration = await getReusableMigrationForMailbox(mailboxId);
+  if (!migration || migration.organizationId !== orgId) return null;
+
+  if (migration.status === "FAILED") {
+    const reopened = await reopenMigrationAsDraft(migration.id);
+    if (!reopened) return null;
+    migration = reopened;
+  }
+
+  const hasCredentials = migrationHasStoredCredentials(migration);
+  const { existingAuth, authExpired } = await verifyMigrationAuth(migration);
+  const payload = serializeMigrationStatus(migration);
+  const step = resolveDraftWizardStep(payload, { hasCredentials, authExpired });
+
+  return {
+    migration: payload,
+    step,
+    existingAuth,
+    authExpired,
+  };
 }
 
 export type DiscoverMigrationSourceResult =

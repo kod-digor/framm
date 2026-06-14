@@ -16,6 +16,7 @@ import {
   discoverMigrationSourceAction,
   saveImapCredentialsAction,
   startMigrationAction,
+  cancelMigrationAction,
 } from "@/app/actions/mailbox-migration";
 import { MigrationStatusPanel } from "@/components/users/migration-status-panel";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -33,7 +34,7 @@ import {
 } from "@/lib/migration/discovery/provider-support";
 import { ICLOUD_IMAP_PRESET } from "@/lib/migration/providers/imap-generic";
 import type { MigrationProvider } from "@prisma/client";
-import type { MigrationStatusPayload } from "@/lib/migration/types";
+import type { MigrationStatusPayload, MigrationWizardStep } from "@/lib/migration/types";
 import { isLaunchedMigrationStatus } from "@/lib/migration/types";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +64,14 @@ const PROVIDER_LABELS: Record<
   IMAP_GENERIC: "migration.providerImap",
 };
 
-type WizardStep = "provider" | "credentials" | "scope" | "confirm" | "status";
+type WizardStep = MigrationWizardStep;
+
+const ALREADY_CONNECTED_KEYS: Partial<
+  Record<MigrationProvider, "migration.alreadyConnectedGoogle" | "migration.alreadyConnectedMicrosoft">
+> = {
+  GOOGLE: "migration.alreadyConnectedGoogle",
+  MICROSOFT: "migration.alreadyConnectedMicrosoft",
+};
 
 function formatFrNumber(value: number): string {
   return new Intl.NumberFormat("fr-FR").format(value);
@@ -117,6 +125,8 @@ type MigrationWizardProps = {
   userEmail: string;
   initialMigrationId?: string | null;
   initialStep?: WizardStep | null;
+  initialExistingAuth?: boolean;
+  initialAuthExpired?: boolean;
   activeStatus?: MigrationStatusPayload | null;
   onStatusChange?: () => void;
 };
@@ -133,6 +143,8 @@ function MigrationWizardBody({
   userEmail,
   initialMigrationId,
   initialStep,
+  initialExistingAuth = false,
+  initialAuthExpired = false,
   activeStatus,
   onStatusChange,
 }: MigrationWizardProps) {
@@ -153,12 +165,14 @@ function MigrationWizardBody({
   const [provider, setProvider] = useState<MigrationProvider | null>(
     activeStatus?.provider ?? null
   );
+  const [existingAuth, setExistingAuth] = useState(initialExistingAuth);
+  const [authExpired, setAuthExpired] = useState(initialAuthExpired);
   const [sourceAddress, setSourceAddress] = useState(
     activeStatus?.sourceAddress ?? ""
   );
-  const [scopeMail, setScopeMail] = useState(true);
-  const [scopeContacts, setScopeContacts] = useState(true);
-  const [scopeCalendar, setScopeCalendar] = useState(true);
+  const [scopeMail, setScopeMail] = useState(activeStatus?.scopeMail ?? true);
+  const [scopeContacts, setScopeContacts] = useState(activeStatus?.scopeContacts ?? true);
+  const [scopeCalendar, setScopeCalendar] = useState(activeStatus?.scopeCalendar ?? true);
   const [sourceStats, setSourceStats] = useState<MigrationSourceStats | null>(
     activeStatus?.sourceStats ?? null
   );
@@ -184,6 +198,34 @@ function MigrationWizardBody({
       : effectiveProvider === "MICROSOFT"
         ? `/api/migration/oauth/microsoft?migrationId=${encodeURIComponent(migrationId ?? "")}`
         : null;
+
+  const changeAccount = () => {
+    if (!reauthHref) return;
+    window.location.href = reauthHref;
+  };
+
+  const changeService = () => {
+    void (async () => {
+      if (migrationId) {
+        const formData = new FormData();
+        formData.set("migrationId", migrationId);
+        await cancelMigrationAction(INITIAL_ACTION_RESULT, formData);
+      }
+      setMigrationId(null);
+      setProvider(null);
+      setExistingAuth(false);
+      setAuthExpired(false);
+      setSourceStats(null);
+      setDiscoveryAttemptedFor(null);
+      setStep("provider");
+      onStatusChange?.();
+    })();
+  };
+
+  const alreadyConnectedKey =
+    effectiveProvider && ALREADY_CONNECTED_KEYS[effectiveProvider]
+      ? ALREADY_CONNECTED_KEYS[effectiveProvider]
+      : null;
 
   const needsDiscovery =
     step === "scope" &&
@@ -234,6 +276,8 @@ function MigrationWizardBody({
         }
         setMigrationId(result.detail);
         setStep("credentials");
+        setExistingAuth(false);
+        setAuthExpired(false);
       }
 
       return result;
@@ -244,7 +288,11 @@ function MigrationWizardBody({
   const [imapState, imapAction] = useActionState(
     async (prev: ActionResult, formData: FormData) => {
       const result = await saveImapCredentialsAction(prev, formData);
-      if (result?.ok) setStep("scope");
+      if (result?.ok) {
+        setExistingAuth(true);
+        setAuthExpired(false);
+        setStep("scope");
+      }
       return result;
     },
     INITIAL_ACTION_RESULT
@@ -354,11 +402,58 @@ function MigrationWizardBody({
         />
       ) : null}
 
+      {!showStatus && step === "auth" && effectiveProvider && reauthHref ? (
+        <div className="space-y-4">
+          <p className="text-sm text-ardoise/70">{t("migration.authExpiredHint")}</p>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="font-medium text-encre">{t(PROVIDER_LABELS[effectiveProvider])}</p>
+            {sourceAddress ? (
+              <p className="mt-1 font-mono-data text-sm text-ardoise/80">{sourceAddress}</p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild>
+              <a href={reauthHref}>{t("migration.reconnectOAuth")}</a>
+            </Button>
+            <Button type="button" variant="outline" onClick={changeAccount}>
+              {t("migration.changeAccount")}
+            </Button>
+          </div>
+          <div className="flex justify-between pt-2">
+            <Button type="button" variant="ghost" className="px-0" onClick={changeService}>
+              {t("migration.changeService")}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t("migration.cancel")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {!showStatus && step === "scope" ? (
         <div className="space-y-6">
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-encre">{t("migration.scopeTitle")}</h3>
             <p className="text-sm text-ardoise/70">{t("migration.scopeIntro")}</p>
+
+            {existingAuth && alreadyConnectedKey && !authExpired ? (
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                <p>{t(alreadyConnectedKey)}</p>
+                {sourceAddress ? (
+                  <p className="mt-1 font-mono-data text-xs text-emerald-800/80">{sourceAddress}</p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {reauthHref ? (
+                    <Button type="button" variant="outline" size="sm" onClick={changeAccount}>
+                      {t("migration.changeAccount")}
+                    </Button>
+                  ) : null}
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={changeService}>
+                    {t("migration.changeService")}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
 
             {needsDiscovery ? (
               <div className="flex items-center gap-2 rounded-md border border-canal bg-neutral-50 px-4 py-3 text-sm text-ardoise/70">
@@ -412,10 +507,17 @@ function MigrationWizardBody({
           </div>
 
           <div className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => setStep("provider")}>
-              <ArrowLeft className="mr-1 size-4" aria-hidden />
-              {t("migration.back")}
-            </Button>
+            {existingAuth ? (
+              <Button type="button" variant="outline" onClick={changeService}>
+                <ArrowLeft className="mr-1 size-4" aria-hidden />
+                {t("migration.changeService")}
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" onClick={() => setStep("provider")}>
+                <ArrowLeft className="mr-1 size-4" aria-hidden />
+                {t("migration.back")}
+              </Button>
+            )}
             <Button
               type="button"
               onClick={() => setStep("confirm")}
