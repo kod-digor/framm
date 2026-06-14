@@ -158,6 +158,8 @@ export type MigrationWizardEntry = {
 export const MIGRATION_ERROR_CODES = [
   "imapsync_not_found",
   "imapsync_failed",
+  "stalwart_disk_full",
+  "imap_append_failed",
   "target_credentials_missing",
   "source_credentials_missing",
   "oauth_refresh_failed",
@@ -181,6 +183,8 @@ export const MIGRATION_ERROR_I18N_KEYS: Record<
 > = {
   imapsync_not_found: "migration.error_imapsync_not_found",
   imapsync_failed: "migration.error_imapsync_failed",
+  stalwart_disk_full: "migration.error_stalwart_disk_full",
+  imap_append_failed: "migration.error_imap_append_failed",
   target_credentials_missing: "migration.error_target_credentials_missing",
   source_credentials_missing: "migration.error_source_credentials_missing",
   oauth_refresh_failed: "migration.error_oauth_refresh_failed",

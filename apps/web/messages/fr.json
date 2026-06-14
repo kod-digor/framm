@@ -371,6 +371,8 @@
       "status_CANCELLED": "Annulée",
       "error_imapsync_not_found": "imapsync n'est pas installé sur le serveur de migration.",
       "error_imapsync_failed": "La synchronisation IMAP a échoué.",
+      "error_stalwart_disk_full": "Espace disque insuffisant sur le serveur mail (erreur RocksDB). Libérez de l'espace sur la VM mail puis relancez la synchronisation.",
+      "error_imap_append_failed": "Impossible d'écrire un message sur le serveur mail (connexion interrompue ou message refusé). Relancez la synchronisation — les messages déjà copiés seront ignorés.",
       "error_target_credentials_missing": "Mot de passe de la boîte cible introuvable.",
       "error_source_credentials_missing": "Identifiants source introuvables.",
       "error_oauth_refresh_failed": "Impossible de renouveler l'accès OAuth.",

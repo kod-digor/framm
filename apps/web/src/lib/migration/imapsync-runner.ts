@@ -60,18 +60,45 @@ function computeMailPercent(messagesSynced: number, totalMessages?: number): num
   return 0;
 }
 
+/** Erreurs Stalwart côté cible (souvent disque plein sur la VM mail). */
+export function classifyStalwartTargetError(line: string): string | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  if (/RocksDB error/i.test(trimmed) || /\[CONTACTADMIN\]/i.test(trimmed)) {
+    return "stalwart_disk_full";
+  }
+  return null;
+}
+
+/** Échec APPEND IMAP (connexion coupée, message refusé, etc.). */
+export function classifyImapsyncAppendError(line: string): string | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  if (/could not append/i.test(trimmed)) return "imap_append_failed";
+  if (/lost connection for host2/i.test(trimmed)) return "imap_append_failed";
+  if (/socket closed while reading/i.test(trimmed)) return "imap_append_failed";
+  if (/Connection reset by peer/i.test(trimmed)) return "imap_append_failed";
+  if (/not connected/i.test(trimmed)) return "imap_append_failed";
+  return null;
+}
+
 export function pickImapsyncFailureError(
   lastErrorLine: string | undefined,
   lastLogLine: string | undefined,
   exitCode?: number | null
 ): string {
-  if (lastErrorLine?.trim() && !isImapsyncJournalNoise(lastErrorLine)) {
-    return redactImapsyncLogLine(lastErrorLine).slice(0, 500);
+  let fallback: string | undefined;
+  for (const candidate of [lastErrorLine, lastLogLine]) {
+    const trimmed = candidate?.trim();
+    if (!trimmed || isImapsyncJournalNoise(trimmed)) continue;
+    const diskError = classifyStalwartTargetError(trimmed);
+    if (diskError) return diskError;
+    const appendError = classifyImapsyncAppendError(trimmed);
+    if (appendError) return appendError;
+    fallback ??= redactImapsyncLogLine(trimmed).slice(0, 500);
   }
-  const logCandidate = lastLogLine?.trim();
-  if (logCandidate && !isImapsyncJournalNoise(logCandidate)) {
-    return redactImapsyncLogLine(logCandidate).slice(0, 500);
-  }
+  if (fallback) return fallback;
+  if (exitCode === 114) return "imap_append_failed";
   if (exitCode != null) return `imapsync_exit_${exitCode}`;
   return "imapsync_failed";
 }
@@ -257,6 +284,10 @@ export function buildImapsyncArgs(options: ImapsyncRunOptions): string[] {
     "--usecache",
     "--errorsmax",
     "100",
+    "--reconnectretry1",
+    "3",
+    "--reconnectretry2",
+    "5",
     "--nolog",
   ];
 

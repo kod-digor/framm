@@ -517,7 +517,9 @@ export async function completeMigration(migrationId: string) {
 }
 
 export async function failMigration(migrationId: string, error: string) {
-  const storedError = pickImapsyncFailureError(error, undefined);
+  const storedError = isMigrationErrorCode(error)
+    ? error
+    : pickImapsyncFailureError(error, undefined);
   await prisma.mailboxMigration.update({
     where: { id: migrationId },
     data: {
