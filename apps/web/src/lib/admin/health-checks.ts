@@ -1020,11 +1020,17 @@ export async function runHealthCheck(
 }
 
 export async function runAllHealthChecks(ctx: HealthCheckContext): Promise<HealthCheckResult[]> {
-  const results: HealthCheckResult[] = [];
-  for (const definition of HEALTH_CHECK_DEFINITIONS) {
-    results.push(await runHealthCheck(definition, ctx));
-  }
-  return results;
+  const settled = await Promise.allSettled(
+    HEALTH_CHECK_DEFINITIONS.map((definition) => runHealthCheck(definition, ctx))
+  );
+
+  return settled.map((outcome, index) => {
+    if (outcome.status === "fulfilled") return outcome.value;
+    const id = HEALTH_CHECK_DEFINITIONS[index].id;
+    const detail =
+      outcome.reason instanceof Error ? outcome.reason.message : String(outcome.reason);
+    return { id, status: "fail" as const, detail, durationMs: 0 };
+  });
 }
 
 export function findHealthCheckDefinition(id: string): HealthCheckDefinition | undefined {

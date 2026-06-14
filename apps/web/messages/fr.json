@@ -697,6 +697,8 @@
     "subtitle": "Tests de santé et vérifications infrastructure — réservé au bureau Kod Digor.",
     "runAll": "Lancer tous les tests",
     "runningAll": "Tests en cours…",
+    "progress": "{completed} / {total} terminés",
+    "pending": "En attente…",
     "refresh": "Actualiser",
     "runOne": "Tester",
     "notRun": "—",

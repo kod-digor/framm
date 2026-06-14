@@ -5,11 +5,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useT } from "@/i18n/t";
-import {
-  runAllHealthChecksAction,
-  runSingleHealthCheckAction,
-  type HealthCheckView,
-} from "@/app/actions/admin-health";
+import { runSingleHealthCheckAction, type HealthCheckView } from "@/app/actions/admin-health";
 
 type HealthPanelProps = {
   checkIds: string[];
@@ -58,6 +54,8 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
   const [ranAt, setRanAt] = useState<string | null>(null);
   const [runningAll, setRunningAll] = useState(false);
   const [runningId, setRunningId] = useState<string | null>(null);
+  const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
+  const [completedCount, setCompletedCount] = useState(0);
 
   const mergeResult = useCallback((updated: HealthCheckView) => {
     setResults((prev) => {
@@ -71,9 +69,26 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
 
   const handleRunAll = async () => {
     setRunningAll(true);
-    const payload = await runAllHealthChecksAction();
-    setResults(payload.results);
-    setRanAt(payload.ranAt);
+    setCompletedCount(0);
+    setPendingIds(new Set(checkIds));
+    setRanAt(new Date().toISOString());
+
+    await Promise.allSettled(
+      checkIds.map(async (checkId) => {
+        const payload = await runSingleHealthCheckAction(checkId);
+        if (payload) {
+          mergeResult(payload.result);
+        }
+        setPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(checkId);
+          return next;
+        });
+        setCompletedCount((count) => count + 1);
+      })
+    );
+
+    setPendingIds(new Set());
     setRunningAll(false);
   };
 
@@ -103,6 +118,9 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
                 {t("runningAll")}
+                <span className="ml-2 text-xs opacity-80">
+                  {t("progress", { completed: completedCount, total: checkIds.length })}
+                </span>
               </>
             ) : (
               t("runAll")
@@ -138,7 +156,7 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
         {checkIds.map((checkId, index) => {
           const meta = labels[checkId];
           const result = resultMap.get(checkId);
-          const loading = runningAll || runningId === checkId;
+          const loading = pendingIds.has(checkId) || runningId === checkId;
 
           return (
             <div
@@ -147,10 +165,7 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
             >
               <div className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3">
                 <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
-                  <StatusDot
-                    status={result?.status}
-                    loading={loading && (!result || runningAll)}
-                  />
+                  <StatusDot status={result?.status} loading={loading} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
                       <span className="shrink-0 text-sm font-medium leading-tight">{meta.label}</span>
@@ -160,7 +175,9 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
                 </div>
 
                 <div className="flex items-center justify-between gap-2 pl-5 sm:shrink-0 sm:justify-end sm:pl-0">
-                  {result ? (
+                  {loading ? (
+                    <span className="text-xs text-zinc-400">{t("pending")}</span>
+                  ) : result ? (
                     <>
                       <span className={statusTextClass(result.status)}>
                         {statusLabel(result.status, t)}
@@ -189,7 +206,7 @@ export function HealthPanel({ checkIds, labels }: HealthPanelProps) {
                 </div>
               </div>
 
-              {result?.detail && (
+              {result?.detail && !loading && (
                 <p className="border-t border-zinc-50 px-3 py-1.5 pl-8 text-xs leading-relaxed break-words text-zinc-600">
                   {result.detail}
                 </p>
