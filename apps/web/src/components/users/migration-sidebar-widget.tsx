@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 import { listActiveMigrationsAction } from "@/app/actions/mailbox-migration";
 import {
   formatMigrationFolderName,
+  formatMigrationPercentLabel,
+  getMigrationProgressBarWidth,
   getMigrationProgressSummary,
   truncateText,
 } from "@/lib/migration/display";
@@ -73,11 +75,16 @@ export function MigrationSidebarWidget() {
   if (!primary) return null;
 
   const percent = primary.progress?.percent ?? 0;
+  const summary = progressSummaryLabel(t, primary);
+  const progressSummary = getMigrationProgressSummary(primary);
+  const syncedCount =
+    progressSummary.kind === "messages" ? progressSummary.synced : 0;
+  const percentLabel = formatMigrationPercentLabel(percent, syncedCount);
+  const progressBarWidth = getMigrationProgressBarWidth(percent, syncedCount);
   const folder = primary.progress?.currentFolder
     ? truncateText(formatMigrationFolderName(primary.progress.currentFolder), 28)
     : null;
   const extraCount = migrations.length - 1;
-  const summary = progressSummaryLabel(t, primary);
 
   return (
     <div className="shrink-0 border-t border-canal p-3">
@@ -100,20 +107,20 @@ export function MigrationSidebarWidget() {
             {t("migration.sidebarTitle")}
           </span>
           <span className="text-xs font-medium tabular-nums text-ardoise/70">
-            {percent}%
+            {percentLabel}
           </span>
         </div>
         <div
           className="mb-2 h-1.5 overflow-hidden rounded-full bg-canal"
           role="progressbar"
-          aria-valuenow={percent}
+          aria-valuenow={syncedCount > 0 && percent === 0 ? 1 : percent}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label={t("migration.progressAria")}
         >
           <div
             className="h-full bg-encre transition-all duration-500"
-            style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
+            style={{ width: `${progressBarWidth}%` }}
           />
         </div>
         <p className="truncate text-xs text-ardoise/80">{summary}</p>

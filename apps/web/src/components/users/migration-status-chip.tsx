@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
 import { isLaunchedMigrationStatus } from "@/lib/migration/types";
+import { formatMigrationPercentLabel } from "@/lib/migration/display";
 import { cn } from "@/lib/utils";
 
 export function MigrationStatusChip({
@@ -15,6 +16,8 @@ export function MigrationStatusChip({
 }) {
   const t = useTranslations("users");
   const percent = status.progress?.percent ?? 0;
+  const syncedCount = status.progress?.messagesSynced ?? 0;
+  const percentLabel = formatMigrationPercentLabel(percent, syncedCount);
   const isActive = isLaunchedMigrationStatus(status.status);
 
   if (!isActive) return null;
@@ -34,7 +37,7 @@ export function MigrationStatusChip({
     >
       {isActive ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
       <span>{t(`migration.status_${status.status}`)}</span>
-      {isActive ? <span className="tabular-nums">{percent}%</span> : null}
+      {isActive ? <span className="tabular-nums">{percentLabel}</span> : null}
     </button>
   );
 }

@@ -29,8 +29,11 @@ import {
   formatDurationMs,
   formatMigrationEventMessage,
   formatMigrationFolderName,
+  formatMigrationPercentLabel,
   formatRelativeTimeFr,
+  getMigrationProgressBarWidth,
   getMigrationProgressSummary,
+  shouldShowMigrationEtaCalculating,
 } from "@/lib/migration/display";
 import {
   isMigrationErrorCode,
@@ -198,6 +201,10 @@ export function MigrationStatusPanel({
   const isFailed = status.status === "FAILED";
   const isCancelled = status.status === "CANCELLED";
   const progressSummary = getMigrationProgressSummary(status);
+  const syncedCount =
+    progressSummary.kind === "messages" ? progressSummary.synced : 0;
+  const percentLabel = formatMigrationPercentLabel(percent, syncedCount);
+  const progressBarWidth = getMigrationProgressBarWidth(percent, syncedCount);
 
   const etaMs =
     progressSummary.kind === "messages"
@@ -207,6 +214,13 @@ export function MigrationStatusPanel({
           progressSummary.total
         )
       : null;
+  const showEtaCalculating =
+    progressSummary.kind === "messages" &&
+    shouldShowMigrationEtaCalculating(
+      progressSummary.synced,
+      progressSummary.total,
+      etaMs
+    );
 
   const statusLabel = t(`migration.status_${status.status}`);
   const formattedFolder = status.progress?.currentFolder
@@ -225,7 +239,7 @@ export function MigrationStatusPanel({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-ardoise/70">{t("migration.progressAria")}</span>
-              <span className="font-medium tabular-nums text-encre">{percent}%</span>
+              <span className="font-medium tabular-nums text-encre">{percentLabel}</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-canal">
               <div
@@ -233,9 +247,9 @@ export function MigrationStatusPanel({
                   "h-full transition-all duration-500",
                   isSuccess ? "bg-green-600" : isFailed ? "bg-red-600" : "bg-encre"
                 )}
-                style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
+                style={{ width: `${progressBarWidth}%` }}
                 role="progressbar"
-                aria-valuenow={percent}
+                aria-valuenow={syncedCount > 0 && percent === 0 ? 1 : percent}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label={t("migration.progressAria")}
@@ -245,6 +259,8 @@ export function MigrationStatusPanel({
               <p className="text-xs text-ardoise/60">
                 {t("migration.etaRemaining", { duration: formatDurationMs(etaMs) })}
               </p>
+            ) : showEtaCalculating ? (
+              <p className="text-xs text-ardoise/60">{t("migration.etaCalculating")}</p>
             ) : null}
           </div>
         ) : null}

@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import type { ImapSourceCredentials, MigrationProgress } from "@/lib/migration/types";
+import { decodeImapFolderName } from "@/lib/migration/display";
 import { unsealSecret } from "@/lib/crypto/seal";
 import { ICLOUD_IMAP_PRESET } from "@/lib/migration/providers/imap-generic";
 
@@ -72,7 +73,7 @@ export function parseImapsyncProgressLine(
 
   const folderMatch = HOST1_FOLDER_RE.exec(trimmed);
   if (folderMatch) {
-    const folderName = folderMatch[1].trim();
+    const folderName = decodeImapFolderName(folderMatch[1].trim());
     next.currentFolder = folderName;
     if (!state.foldersSeen.has(folderName)) {
       const foldersSeen = new Set(state.foldersSeen);
@@ -119,12 +120,13 @@ export function redactImapsyncLogLine(line: string): string {
     .replace(GOOGLE_REFRESH_TOKEN_RE, "1//<redacted>");
 }
 
-/** Journal migration : progression dossiers/messages, erreurs et fin uniquement. */
+/** Journal migration : messages copiés, erreurs et fin uniquement. */
 export function shouldLogImapsyncLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
   if (/Log file is LOG_imapsync/i.test(trimmed)) return false;
-  if (HOST1_FOLDER_RE.test(trimmed)) return true;
+  if (/\bDEBUG\b/i.test(trimmed)) return false;
+  if (/Undefined SSL object/i.test(trimmed)) return false;
   if (MSG_COPIED_RE.test(trimmed)) return true;
   if (LEGACY_PROGRESS_RE.test(trimmed)) return true;
   if (/\bERROR\b/i.test(trimmed)) return true;

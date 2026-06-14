@@ -1,14 +1,82 @@
 import type { MigrationPhase } from "@prisma/client";
 import type { MigrationStatusPayload } from "@/lib/migration/types";
 
+/** imapsync 2.323+ : « Host1: folder [INBOX] selected 42 messages » */
+const HOST1_FOLDER_RE =
+  /Host1:\s+folder\s+(.+?)\s+selected\s+(\d+)\s+messages?(?:,\s*duplicates\s+\d+)?/i;
+/** imapsync 2.323+ : « msg INBOX/12 {1234} copied to … » */
+const MSG_COPIED_RE = /^msg\s+(.+?)\/(\d+)\s+\{/i;
+
+function decodeImapUtf7Segment(segment: string): string {
+  let b64 = segment.replace(/,/g, "/");
+  while (b64.length % 4 !== 0) b64 += "=";
+  const binary = atob(b64);
+  let decoded = "";
+  for (let j = 0; j + 1 < binary.length; j += 2) {
+    decoded += String.fromCharCode((binary.charCodeAt(j) << 8) | binary.charCodeAt(j + 1));
+  }
+  return decoded;
+}
+
+/**
+ * Décode un nom de dossier IMAP en modified UTF-7 (RFC 3501).
+ * Ex. « Messages envoy&AOk-s » → « Messages envoyés », « &AMA- faire » → « À faire ».
+ */
+export function decodeImapFolderName(name: string): string {
+  let result = "";
+  let i = 0;
+  while (i < name.length) {
+    const amp = name.indexOf("&", i);
+    if (amp === -1) {
+      result += name.slice(i);
+      break;
+    }
+    result += name.slice(i, amp);
+    i = amp + 1;
+    if (i >= name.length) {
+      result += "&";
+      break;
+    }
+    if (name[i] === "-") {
+      result += "&";
+      i += 1;
+      continue;
+    }
+    const dash = name.indexOf("-", i);
+    if (dash === -1) {
+      result += `&${name.slice(i)}`;
+      break;
+    }
+    const segment = name.slice(i, dash);
+    if (segment) result += decodeImapUtf7Segment(segment);
+    i = dash + 1;
+  }
+  return result;
+}
+
 /** Retire les préfixes IMAP type [[Gmail]/Important] → Important. */
 export function formatMigrationFolderName(folder: string): string {
-  const trimmed = folder.trim();
+  const trimmed = decodeImapFolderName(folder.trim());
   const doubleBracket = trimmed.match(/^\[\[([^\]]+)\]\/(.+)\]$/);
   if (doubleBracket) return doubleBracket[2];
   const singleBracket = trimmed.match(/^\[([^\]]+)\]\/(.+)$/);
   if (singleBracket) return singleBracket[2];
   return trimmed;
+}
+
+/** Décode les noms de dossiers dans une ligne de journal imapsync. */
+export function formatImapsyncJournalLine(line: string): string {
+  const folderMatch = HOST1_FOLDER_RE.exec(line);
+  if (folderMatch) {
+    const raw = folderMatch[1]!.trim();
+    return line.replace(raw, decodeImapFolderName(raw));
+  }
+  const copiedMatch = MSG_COPIED_RE.exec(line);
+  if (copiedMatch) {
+    const raw = copiedMatch[1]!;
+    return line.replace(raw, decodeImapFolderName(raw));
+  }
+  return line;
 }
 
 export function truncateText(text: string, maxLen: number): string {
@@ -43,7 +111,7 @@ export function formatMigrationEventMessage(
   if (message in EVENT_I18N_KEYS) {
     return translate(EVENT_I18N_KEYS[message as keyof typeof EVENT_I18N_KEYS]);
   }
-  return truncateText(message, 120);
+  return truncateText(formatImapsyncJournalLine(message), 120);
 }
 
 /** Garde un seul événement source_discovered (le plus récent). */
@@ -52,12 +120,15 @@ export function filterMigrationEvents(
 ): MigrationStatusPayload["events"] {
   const reversed = [...events].reverse();
   let seenSourceDiscovered = false;
+  const seenMessages = new Set<string>();
   const filtered = reversed.filter((event) => {
     if (/Log file is LOG_imapsync/i.test(event.message)) return false;
     if (event.message === "source_discovered") {
       if (seenSourceDiscovered) return false;
       seenSourceDiscovered = true;
     }
+    if (seenMessages.has(event.message)) return false;
+    seenMessages.add(event.message);
     return true;
   });
   return filtered.reverse();
@@ -76,8 +147,13 @@ export function formatRelativeTimeFr(iso: string, now = Date.now()): string {
   return `il y a ${days} j`;
 }
 
+const ETA_MIN_SYNCED = 10;
+const ETA_MIN_ELAPSED_MS = 30_000;
+const ETA_MAX_MS = 7 * 24 * 60 * 60 * 1000;
+
 export function formatDurationMs(ms: number): string {
-  const totalMinutes = Math.max(1, Math.ceil(ms / 60_000));
+  const capped = Math.min(ms, ETA_MAX_MS);
+  const totalMinutes = Math.max(1, Math.ceil(capped / 60_000));
   if (totalMinutes < 60) return `${totalMinutes} min`;
   const hours = Math.floor(totalMinutes / 60);
   const remMin = totalMinutes % 60;
@@ -90,12 +166,33 @@ export function estimateMigrationEtaMs(
   synced: number,
   total: number
 ): number | null {
-  if (!startedAt || synced <= 0 || total <= synced) return null;
+  if (!startedAt || synced < ETA_MIN_SYNCED || total <= synced) return null;
   const elapsed = Date.now() - new Date(startedAt).getTime();
-  if (elapsed <= 0) return null;
+  if (elapsed < ETA_MIN_ELAPSED_MS) return null;
   const rate = synced / elapsed;
+  if (rate <= 0) return null;
   const remaining = total - synced;
-  return remaining / rate;
+  const eta = remaining / rate;
+  if (!Number.isFinite(eta) || eta > ETA_MAX_MS) return null;
+  return eta;
+}
+
+export function formatMigrationPercentLabel(percent: number, synced: number): string {
+  if (synced > 0 && percent === 0) return "<1%";
+  return `${percent}%`;
+}
+
+export function getMigrationProgressBarWidth(percent: number, synced: number): number {
+  if (synced > 0 && percent === 0) return 0.5;
+  return Math.min(100, Math.max(0, percent));
+}
+
+export function shouldShowMigrationEtaCalculating(
+  synced: number,
+  total: number,
+  etaMs: number | null
+): boolean {
+  return synced > 0 && synced < total && etaMs == null;
 }
 
 export type MigrationProgressSummary =

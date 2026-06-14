@@ -383,6 +383,7 @@
       "folderLabel": "Dossier : {folder}",
       "folderLabelShort": "Dossier",
       "etaRemaining": "Temps restant estimé : {duration}",
+      "etaCalculating": "Calcul en cours…",
       "event_source_discovered": "Compte source analysé",
       "event_migration_queued": "Migration planifiée",
       "event_migration_started": "Migration démarrée",
