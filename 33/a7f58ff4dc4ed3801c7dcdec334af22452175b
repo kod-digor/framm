@@ -1,0 +1,27 @@
+apps/web/src/app/actions/admin-health.ts
+  s_f8d7e7b8ee0fb9::t_8c57e8b9f63ea8 9,11,28,41
+apps/web/src/lib/admin/health-present.ts
+  s_f8d7e7b8ee0fb9::t_213a474cba36a4 1-17
+apps/web/src/app/api/admin/health/run/route.ts
+  s_f8d7e7b8ee0fb9::t_386f1a7344dd63 1-34
+apps/web/src/components/admin/health-panel.tsx
+  s_f8d7e7b8ee0fb9::t_c4b2fdf7ba18a0 8-18
+  s_f8d7e7b8ee0fb9::t_5ab52080706b33 88
+  s_f8d7e7b8ee0fb9::t_ec441812d54b41 107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "33a7f58ff4dc4ed3801c7dcdec334af22452175b",
+  "prompts": {},
+  "sessions": {
+    "s_f8d7e7b8ee0fb9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "04c6feb2-220b-44e2-990b-0c49c7461b2d",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
