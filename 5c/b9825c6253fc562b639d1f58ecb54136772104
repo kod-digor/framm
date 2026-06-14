@@ -1,0 +1,47 @@
+apps/web/src/lib/migration/orchestrator.ts
+  s_ab900379461725::t_6a04ceb6c8f7bf 21
+  s_ab900379461725::t_c3b513c109c51f 80-128
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_ab900379461725::t_e734bf04f678a6 301,309,314-315
+  s_ab900379461725::t_6d95db043f8468 13-14
+  s_ab900379461725::t_1cfdaede1a06bf 41-52,54-65,70,73,75-83,86-102,111-122,124-141
+  s_ab900379461725::t_dd23366570d971 103-110,123
+  s_ab900379461725::t_625aaeddea3996 257-261,264,272-282,290-291
+  s_ab900379461725::t_ba648b40a51c11 25-31
+apps/web/Dockerfile.worker
+  s_ab900379461725::t_649150c9d5b23f 46-52
+apps/web/messages/fr.json
+  s_ab900379461725::t_e2fed3d7254c32 375-376
+apps/web/src/app/actions/mailbox-migration.ts
+  s_ab900379461725::t_731711b3ae497e 201
+  s_ab900379461725::t_0c5430ef9514e7 18
+  s_ab900379461725::t_33cdcd49588fb0 232
+  s_ab900379461725::t_9fa9e864dfa58f 225
+apps/web/src/components/users/migration-status-panel.tsx
+  s_ab900379461725::t_6ed234a12034d0 143-150
+apps/web/src/app/dashboard/users/page.tsx
+  s_ab900379461725::t_44c63e7c5ebc24 10
+  s_ab900379461725::t_2a23d68a03d3b7 56-61
+apps/web/src/worker/migration-worker.ts
+  s_ab900379461725::t_7f063fa63e0048 165-169
+  s_ab900379461725::t_2812dae4de4ae8 20
+  s_ab900379461725::t_e475c8a0eb8c96 5
+  s_ab900379461725::t_8903064ca9de02 7
+  s_ab900379461725::t_8f507ab3de008e 146-147,155,163-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "5cb9825c6253fc562b639d1f58ecb54136772104",
+  "prompts": {},
+  "sessions": {
+    "s_ab900379461725": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "973d9dd0-3763-44b6-9aa9-436739a78f71",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
