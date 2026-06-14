@@ -1,0 +1,25 @@
+apps/web/src/lib/migration/access.ts
+  s_d8a8ed756b4aab::t_845210be891314 1,6-42,59-61,63-65,72,75,80-82,84-86,95
+apps/web/src/components/users/migration-status-panel.tsx
+  s_d8a8ed756b4aab::t_27fbd0d8b65f2d 14-18,144-146
+apps/web/src/components/users/migration-wizard.tsx
+  s_d8a8ed756b4aab::t_27fbd0d8b65f2d 3,38-41,44-56,208,385-386
+apps/web/src/lib/migration/types.ts
+  s_d8a8ed756b4aab::t_27fbd0d8b65f2d 68-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "7520c35a7e966ec898bb64943d522b4ffeefde09",
+  "prompts": {},
+  "sessions": {
+    "s_d8a8ed756b4aab": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d6074ef9-41fc-4d2c-b9bf-63f3c3b2b359",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
