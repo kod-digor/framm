@@ -1,0 +1,54 @@
+apps/web/src/app/autodiscover/autodiscover.xml/route.ts
+  s_3251886291e309::t_3ebc899123a569 7-9,20-34
+apps/web/src/lib/mail/autoconfig-proxy.ts
+  s_3251886291e309::t_d1110d2653fe3b 12-16
+  s_3251886291e309::t_e54c85dd6ab685 23-24,32,35,39,41
+apps/web/src/lib/dns/dns-records.ts
+  s_3251886291e309::t_7ba9f04a4346cf 40,46-49
+deploy/scripts/tf-apply.sh
+  s_3251886291e309::t_5faf99fc818a3d 45-47,55
+terraform/environments/prod/alerting.tf
+  s_3251886291e309::t_d420d0011ab655 24-32
+apps/web/src/app/.well-known/autoconfig/mail/config-v1.1.xml/route.ts
+  s_42de8518db6e55::t_adfa07608db78b 1-20
+apps/web/src/lib/admin/health-checks.ts
+  s_3251886291e309::t_b789b204d13ae2 905,911,916,918,922-924,932-933,936-939,943-946,954,959,961-962,967
+  s_42de8518db6e55::t_f6ea3ecc7c2a4b 902-904,906-908,912,917,921,925
+  s_3251886291e309::t_14ce80ee3369fc 875-878
+  s_42de8518db6e55::t_67d87d012f66ad 952-953
+  s_42de8518db6e55::t_57b510b5e3b49f 935,940-942
+apps/web/src/lib/dns/verify.ts
+  s_3251886291e309::t_945d8d838e1571 167
+  s_3251886291e309::t_4f0b4c6b01b469 184
+  s_3251886291e309::t_9d302f41ef74b3 35
+  s_3251886291e309::t_917f57f09abc81 1,7,13,15-20
+  s_3251886291e309::t_fc0c3bd1e107a5 142,152
+  s_3251886291e309::t_f3bdee5cce8e0e 88,90
+  s_3251886291e309::t_6c5e513e73f808 47-52
+  s_3251886291e309::t_8c678e7ed9f2a0 105-106,116
+  s_3251886291e309::t_33459a94ec82f1 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "fef686f153dfa7c5794facb08f0dcbd3a3ce5c9c",
+  "prompts": {},
+  "sessions": {
+    "s_3251886291e309": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "58039a81-8c81-4d7d-b12f-234dfeefe4c1",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_42de8518db6e55": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "0129a6b4-f3b1-48a1-9110-51d9c5da7808",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
