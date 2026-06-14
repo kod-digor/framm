@@ -1,0 +1,20 @@
+apps/web/src/lib/migration/orchestrator.ts
+  s_d0713b4d131c88::t_27de69dae64975 71-73
+  s_d0713b4d131c88::t_3fa7e24173bc4e 403,408,412
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "562dd8f9b15db2f8a232a3cd56947ce668b4e191",
+  "prompts": {},
+  "sessions": {
+    "s_d0713b4d131c88": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1c7db72f-0748-4dbf-8c52-d53e4d5340d8",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
