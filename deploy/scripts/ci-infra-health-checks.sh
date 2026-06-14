@@ -32,10 +32,14 @@ export PLATFORM_DOMAINS="${PLATFORM_DOMAINS:-kod-digor.bzh}"
 export PRIMARY_PLATFORM_DOMAIN="${PRIMARY_PLATFORM_DOMAIN:-kod-digor.bzh}"
 
 if [[ -z "${OUTBOUND_SMTP_RELAY_HOST:-}" ]]; then
-  OUTBOUND_SMTP_RELAY_HOST="$(framm_ssh "$MAIL_PUBLIC_IP" \
-    "grep '^OUTBOUND_SMTP_RELAY_HOST=' /opt/framm/deploy/.generated/env.production | cut -d= -f2-" \
-    2>/dev/null || true)"
-  export OUTBOUND_SMTP_RELAY_HOST
+  for key in OUTBOUND_SMTP_RELAY_HOST OUTBOUND_SMTP_RELAY_PORT OUTBOUND_SMTP_RELAY_USER OUTBOUND_SMTP_RELAY_SECRET; do
+    if [[ -z "${!key:-}" ]]; then
+      value="$(framm_ssh "$MAIL_PUBLIC_IP" \
+        "grep '^${key}=' /opt/framm/deploy/.generated/env.production 2>/dev/null | cut -d= -f2-" \
+        2>/dev/null || true)"
+      [[ -n "$value" ]] && export "${key}=${value}"
+    fi
+  done
 fi
 
 cd "${ROOT}/apps/web"

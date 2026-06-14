@@ -146,5 +146,10 @@ resource "local_file" "env_production" {
     mail_public_ip       = module.mail_vm.public_ip
   })
 
-  depends_on = [module.uploads, module.mail_vm]
+  depends_on = [
+    module.uploads,
+    module.mail_vm,
+    scaleway_iam_api_key.alerts,
+    scaleway_tem_domain.alerts,
+  ]
 }

@@ -189,22 +189,47 @@ framm_push_env() {
   [[ -f "$env_file" ]] || return 0
   local host="$MAIL_PUBLIC_IP"
   framm_ssh "$host" "mkdir -p /opt/framm/deploy/.generated"
-    if framm_ssh "$host" "test -f /opt/framm/deploy/.generated/env.production" 2>/dev/null; then
-      scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/tmp/framm-env.new"
-      framm_ssh "$host" bash <<'MERGE'
+  if framm_ssh "$host" "test -f /opt/framm/deploy/.generated/env.production" 2>/dev/null; then
+    scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/tmp/framm-env.new"
+    framm_ssh "$host" bash <<'MERGE'
 set -euo pipefail
 target=/opt/framm/deploy/.generated/env.production
+terraform_managed_keys=(
+  OUTBOUND_SMTP_RELAY_HOST
+  OUTBOUND_SMTP_RELAY_PORT
+  OUTBOUND_SMTP_RELAY_USER
+  OUTBOUND_SMTP_RELAY_SECRET
+  ALERT_SMTP_HOST
+  ALERT_SMTP_PORT
+  ALERT_SMTP_USER
+  ALERT_SMTP_PASSWORD
+  ALERT_SMTP_FROM
+)
 while IFS= read -r line; do
   [[ "$line" == *=* ]] || continue
   key="${line%%=*}"
-  grep -q "^${key}=" "$target" || printf '%s\n' "$line" >> "$target"
+  value="${line#*=}"
+  if grep -q "^${key}=" "$target" 2>/dev/null; then
+    update=false
+    for managed in "${terraform_managed_keys[@]}"; do
+      if [[ "$key" == "$managed" && -n "$value" ]]; then
+        update=true
+        break
+      fi
+    done
+    if $update; then
+      sed -i "s|^${key}=.*|${key}=${value}|" "$target"
+    fi
+  else
+    printf '%s\n' "$line" >> "$target"
+  fi
 done < /tmp/framm-env.new
 rm -f /tmp/framm-env.new
 MERGE
-    else
-      scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/opt/framm/deploy/.generated/env.production"
-      echo "env.production déposé sur ${host}"
-    fi
+  else
+    scp "${SSH_OPTS[@]}" "$env_file" "root@${host}:/opt/framm/deploy/.generated/env.production"
+    echo "env.production déposé sur ${host}"
+  fi
 }
 
 framm_render_nginx() {

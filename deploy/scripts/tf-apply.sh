@@ -62,3 +62,9 @@ terraform apply -auto-approve \
   -var="alert_smtp_from=${ALERT_SMTP_FROM:-}" \
   "${TF_EXTRA_ARGS[@]}" \
   "$@"
+
+if [[ "${FRAMM_SKIP_POST_APPLY:-}" != "true" ]]; then
+  "${ROOT}/deploy/scripts/post-tf-apply.sh" || {
+    echo "AVERTISSEMENT : post-tf-apply échoué — relancez bin/framm k8s-sync-secrets ou bin/framm deploy" >&2
+  }
+fi

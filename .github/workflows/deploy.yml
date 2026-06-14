@@ -40,7 +40,7 @@ jobs:
   infra-health-checks:
     name: Infra health checks
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: test-web
+    needs: [test-web, terraform-sync]
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -62,6 +62,34 @@ jobs:
           PRIMARY_PLATFORM_DOMAIN: ${{ env.PRIMARY_PLATFORM_DOMAIN }}
         run: ./deploy/scripts/ci-infra-health-checks.sh
 
+  terraform-sync:
+    name: Terraform sync (TEM relay)
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: test-web
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://kod-digor.bzh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Apply Terraform and propagate OUTBOUND_SMTP_RELAY
+        env:
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_PROJECT_ID: ${{ secrets.SCW_PROJECT_ID }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          BUREAU_ADMIN_EMAIL: ${{ secrets.BUREAU_ADMIN_EMAIL }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          MAIL_PUBLIC_IP: ${{ secrets.MAIL_PUBLIC_IP }}
+          DNS_ENABLED: "true"
+          TEM_ENABLED: "true"
+        run: ./deploy/scripts/ci-terraform-sync.sh
+
   terraform-validate:
     name: Terraform validate
     if: github.event_name == 'pull_request'
@@ -79,7 +107,7 @@ jobs:
   deploy-prod:
     name: Deploy mail VM
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: [test-web, infra-health-checks]
+    needs: [test-web, terraform-sync, infra-health-checks]
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -100,7 +128,7 @@ jobs:
   build-push:
     name: Build & push images (Kapsule)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: [test-web, infra-health-checks]
+    needs: [test-web, terraform-sync, infra-health-checks]
     runs-on: ubuntu-latest
     permissions:
       contents: write
