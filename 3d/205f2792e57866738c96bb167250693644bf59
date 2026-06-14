@@ -1,0 +1,20 @@
+.github/workflows/deploy.yml
+  s_ed9dbe4636c2f5::t_2dc201a257ca1d 24
+  s_ed9dbe4636c2f5::t_7b83be41157469 28,38-39,62-65,79-83,107-111,163-170,214-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3d205f2792e57866738c96bb167250693644bf59",
+  "prompts": {},
+  "sessions": {
+    "s_ed9dbe4636c2f5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6279163c-6dc4-4e36-805f-ccc9b27bb794",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
