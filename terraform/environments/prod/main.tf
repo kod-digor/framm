@@ -110,7 +110,7 @@ resource "local_file" "env_production" {
     webmail_url          = local.webmail_url
     stalwart_url         = local.mail_url
     stalwart_api_key     = random_password.stalwart_api_key.result
-    stalwart_platform_pgp_public_key = replace(trimspace(file("${path.module}/../../../deploy/config/stalwart-platform-public.pem")), "\n", "\\n")
+    stalwart_platform_pgp_public_key = replace(replace(replace(trimspace(file("${path.module}/../../../deploy/config/stalwart-platform-public.pem")), "\n", "\\n"), "\"", "\\\""), "$", "\\$")
     bulwark_session_secret = random_password.bulwark_session_secret.result
     db_password          = random_password.db_password.result
     db_host              = "127.0.0.1"
