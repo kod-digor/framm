@@ -1,0 +1,39 @@
+apps/web/src/lib/migration/imapsync-runner.ts
+  s_1fe3e93520fd45::t_c5704f362e9ed9 64-69,82-84,91-93
+  s_4f7390883005c8::t_7b01d9a1f3734c 287-290
+  s_4f7390883005c8::t_9404b13919da76 63,70-81,90,94-98,100-101
+apps/web/src/lib/migration/types.ts
+  s_4f7390883005c8::t_1628cc91572662 162
+  s_4f7390883005c8::t_93cfd267ca7ce4 187
+  s_1fe3e93520fd45::t_6ea60411c425d3 161
+  s_1fe3e93520fd45::t_865fe2fce9f0a4 186
+apps/web/src/lib/migration/orchestrator.ts
+  s_1fe3e93520fd45::t_843acea47bdee4 520-522
+apps/web/messages/fr.json
+  s_1fe3e93520fd45::t_514d098aa5b56b 374
+  s_4f7390883005c8::t_ec4ead1358c69f 375
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "5a4ee842a4c2679c55bb159de0c28a6ca81e2b07",
+  "prompts": {},
+  "sessions": {
+    "s_1fe3e93520fd45": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "472e2c1d-3f0c-4231-8699-56e1f3b4930d",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    },
+    "s_4f7390883005c8": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a3530b95-433d-4ccf-bf78-5f76688eb933",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
