@@ -326,9 +326,9 @@ export function UsersCrud({
         const migration = row.mailboxId ? activeMigrations[row.mailboxId] : null;
 
         return (
-          <div className="space-y-1.5">
+          <div className="flex min-w-0 flex-col items-start gap-1.5">
             {row.primaryAddress ? (
-              <span className="font-mono-data text-encre">{row.primaryAddress}</span>
+              <span className="font-mono-data text-encre break-all">{row.primaryAddress}</span>
             ) : (
               <span className="text-ardoise/50">{t("noMailbox")}</span>
             )}
