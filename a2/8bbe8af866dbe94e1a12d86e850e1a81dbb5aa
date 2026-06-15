@@ -1,0 +1,19 @@
+apps/web/src/components/users/users-crud.tsx
+  s_a738b29c774cec::t_75d53f07ee8d71 329,331
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "a28bbe8af866dbe94e1a12d86e850e1a81dbb5aa",
+  "prompts": {},
+  "sessions": {
+    "s_a738b29c774cec": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c48441aa-c6cc-43ee-ae23-d21cc2517751",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
