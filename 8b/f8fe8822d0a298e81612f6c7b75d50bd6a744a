@@ -1,0 +1,19 @@
+apps/web/env.example
+  s_18cbb93801d265::t_3b4db1c03224a9 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "8bf8fe8822d0a298e81612f6c7b75d50bd6a744a",
+  "prompts": {},
+  "sessions": {
+    "s_18cbb93801d265": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f67b1cb5-8925-4af2-a467-658ae169b921",
+        "model": "composer-2.5-fast"
+      },
+      "human_author": "Igor Magès <igor@mages.pro>"
+    }
+  }
+}
