@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Exécute imapsync sur la VM mail (Perl + binaire déjà installés par cloud-init).
+set -euo pipefail
+MAIL_HOST="${MIGRATION_IMAPSYNC_SSH_HOST:-mail.kod-digor.bzh}"
+exec ssh -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=120 "root@${MAIL_HOST}" /usr/local/bin/imapsync "$@"
