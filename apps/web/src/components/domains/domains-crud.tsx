@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { ScrollText } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { deleteDomainAction, verifyDomainAction } from "@/app/actions/domains";
+import { deleteDomainAction, forceApproveDomainAction, verifyDomainAction } from "@/app/actions/domains";
 import { CrudListCard } from "@/components/layout/crud-list-card";
 import { CrudPageHeader } from "@/components/layout/crud-page-header";
 import { AddDomainForm } from "@/components/domains/add-domain-form";
@@ -13,6 +13,7 @@ import { DeleteDomainForm } from "@/components/domains/delete-domain-form";
 import { DnsRecordsTable } from "@/components/domains/dns-records-table";
 import { DnsStatusPanel } from "@/components/domains/dns-status-panel";
 import { VerifyDomainForm } from "@/components/domains/verify-domain-form";
+import { ForceApproveDomainForm } from "@/components/domains/force-approve-domain-form";
 import { CrudAddButton } from "@/components/ui/crud-add-button";
 import {
   CrudRowActions,
@@ -67,6 +68,10 @@ export function DomainsCrud({
   const [pendingDnsFqdn, setPendingDnsFqdn] = useState<string | null>(null);
   const [deleteState, deleteAction] = useActionState(deleteDomainAction, INITIAL_ACTION_RESULT);
   const [verifyState, verifyAction] = useActionState(verifyDomainAction, INITIAL_ACTION_RESULT);
+  const [forceApproveState, forceApproveAction] = useActionState(
+    forceApproveDomainAction,
+    INITIAL_ACTION_RESULT
+  );
 
   const dnsDrawerDomain =
     (dnsTargetId ? domains.find((d) => d.id === dnsTargetId) : null) ??
@@ -204,6 +209,12 @@ export function DomainsCrud({
                   <DnsStatusPanel check={dnsDrawerDomain.dnsCheck} mailHost={mailHost} />
                 ) : null}
                 <VerifyDomainForm domainId={dnsDrawerDomain.id} />
+                <ForceApproveDomainForm
+                  domainId={dnsDrawerDomain.id}
+                  fqdn={dnsDrawerDomain.fqdn}
+                  action={forceApproveAction}
+                  state={forceApproveState}
+                />
               </>
             ) : null}
           </div>
@@ -212,6 +223,7 @@ export function DomainsCrud({
 
       <FormFeedback state={deleteState} namespace="domains" paramKey="domain" />
       <FormFeedback state={verifyState} namespace="domains" paramKey="domain" />
+      <FormFeedback state={forceApproveState} namespace="domains" paramKey="domain" />
 
       <CrudListCard>
         <DataTable

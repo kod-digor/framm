@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { requireOrgAdmin, resolveOrgId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/action-result";
-import { createDomain, deleteDomain as deleteStalwartDomain, isStalwartFailure } from "@/lib/stalwart/client";
+import {
+  createDomain,
+  deleteDomain as deleteStalwartDomain,
+  isStalwartFailure,
+  resolveStalwartDomainId,
+} from "@/lib/stalwart/client";
 import {
   expectedRecords,
   getPlatformMailHost,
@@ -97,6 +102,85 @@ export async function verifyDomainAction(
     return { ok: true, message: "verifySuccess", detail: domain.fqdn };
   }
   return { ok: false, message: "verifyStillPending", detail: domain.fqdn, warning: true };
+}
+
+async function ensureStalwartDomain(
+  fqdn: string,
+  cachedId: string | null
+): Promise<{ id: string | null; unavailable: boolean }> {
+  const resolved = await resolveStalwartDomainId(fqdn, cachedId);
+  if (resolved.unavailable) return { id: null, unavailable: true };
+  if (resolved.id) return { id: resolved.id, unavailable: false };
+
+  const createRes = await createDomain(fqdn);
+  if (isStalwartFailure(createRes)) return { id: null, unavailable: true };
+  return { id: extractStalwartDomainId(createRes), unavailable: false };
+}
+
+export async function forceApproveDomainAction(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const session = await requireOrgAdmin();
+  const orgId = await resolveOrgId(session);
+  if (!orgId) redirect("/login?error=session");
+
+  const domainId = formData.get("domainId") as string;
+  if (!domainId) return null;
+
+  const domain = await prisma.domain.findFirst({
+    where: { id: domainId, organizationId: orgId },
+  });
+  if (!domain) return null;
+
+  if (isPlatformDomain(domain.fqdn)) return null;
+
+  if (domain.status === "VERIFIED" || domain.status === "ACTIVE") {
+    return { ok: true, message: "forceApproveAlreadyVerified", detail: domain.fqdn };
+  }
+
+  const platformHost = getPlatformMailHost();
+  const stalwart = await ensureStalwartDomain(domain.fqdn, domain.stalwartDomainId);
+
+  await prisma.domain.update({
+    where: { id: domainId },
+    data: {
+      status: DomainStatus.VERIFIED,
+      dnsRecordsJson: expectedRecords(domain.fqdn, platformHost),
+      ...(stalwart.id && !domain.stalwartDomainId
+        ? { stalwartDomainId: stalwart.id }
+        : {}),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: session.user.id,
+      organizationId: orgId,
+      action: "domain.force_approve",
+      target: domain.fqdn,
+      metadata: {
+        domainId: domain.id,
+        previousStatus: domain.status,
+        stalwartDomainId: stalwart.id ?? domain.stalwartDomainId,
+        stalwartUnavailable: stalwart.unavailable,
+      },
+    },
+  });
+
+  revalidatePath("/dashboard/domains", "page");
+  revalidatePath("/dashboard");
+
+  if (stalwart.unavailable) {
+    return {
+      ok: false,
+      message: "forceApproveStalwartFailed",
+      detail: domain.fqdn,
+      warning: true,
+    };
+  }
+
+  return { ok: true, message: "forceApproveSuccess", detail: domain.fqdn };
 }
 
 export async function deleteDomainAction(
