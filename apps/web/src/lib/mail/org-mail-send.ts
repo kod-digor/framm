@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { isDnsVerifiedDomainStatus } from "@/lib/domain-status";
-import { decryptMailboxPassword } from "@/lib/mail/outbound-smtp";
-import { sendViaStalwartJmap } from "@/lib/mail/stalwart-jmap-send";
+import { sendViaStalwartMailbox } from "@/lib/mail/outbound-smtp";
+import { resolveStalwartAccountId } from "@/lib/stalwart/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,40 +50,36 @@ export async function findOrganizationIdByFromAddress(
   return domain?.organizationId ?? null;
 }
 
-/** Identifiants SMTP Stalwart : boîte From, sinon une autre boîte du même domaine. */
+/** Compte Stalwart pour envoyer depuis cette adresse (JMAP admin). */
 export async function findStalwartSmtpAuth(
   fromEmail: string,
   organizationId?: string
-): Promise<{ address: string; password: string } | null> {
+): Promise<{ address: string; accountId: string } | null> {
   const exact = await prisma.mailbox.findFirst({
     where: {
       address: fromEmail,
       ...(organizationId ? { organizationId } : {}),
     },
-    select: { address: true, credentialsEnc: true },
+    select: { address: true, stalwartAccountId: true },
   });
-  const exactPassword = exact?.credentialsEnc
-    ? decryptMailboxPassword(exact.credentialsEnc)
-    : null;
-  if (exact && exactPassword) {
-    return { address: exact.address, password: exactPassword };
+  if (exact) {
+    const resolved = await resolveStalwartAccountId(exact.stalwartAccountId, exact.address);
+    if (resolved.id) return { address: exact.address, accountId: resolved.id };
   }
 
   const domainFqdn = extractDomain(fromEmail);
   const fallback = await prisma.mailbox.findFirst({
     where: {
-      credentialsEnc: { not: null },
+      stalwartAccountId: { not: null },
       domain: { fqdn: domainFqdn },
       ...(organizationId ? { organizationId } : {}),
     },
-    select: { address: true, credentialsEnc: true },
+    select: { address: true, stalwartAccountId: true },
     orderBy: { createdAt: "asc" },
   });
-  const fallbackPassword = fallback?.credentialsEnc
-    ? decryptMailboxPassword(fallback.credentialsEnc)
-    : null;
-  if (fallback && fallbackPassword) {
-    return { address: fallback.address, password: fallbackPassword };
+  if (fallback) {
+    const resolved = await resolveStalwartAccountId(fallback.stalwartAccountId, fallback.address);
+    if (resolved.id) return { address: fallback.address, accountId: resolved.id };
   }
 
   return null;
@@ -142,16 +138,16 @@ export async function sendOrgMail(
     return {
       ok: false,
       error: "smtp_not_configured",
-      detail: "Aucune boîte Stalwart avec identifiants pour cet expéditeur.",
+      detail: "Aucune boîte Stalwart pour cet expéditeur.",
     };
   }
 
-  const result = await sendViaStalwartJmap(smtpAuth.address, smtpAuth.password, mailPayload);
+  const result = await sendViaStalwartMailbox(smtpAuth.accountId, mailPayload);
 
   if (!result.ok) {
     return {
       ok: false,
-      error: "send_failed",
+      error: result.code,
       detail: result.detail,
     };
   }

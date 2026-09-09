@@ -116,11 +116,11 @@ export async function sendAdminMail(
     return {
       ok: false,
       code: "relay_error",
-      detail: "Aucune boîte Stalwart avec identifiants pour cet expéditeur.",
+      detail: "Aucune boîte Stalwart pour cet expéditeur.",
     };
   }
 
-  const result = await sendViaStalwartMailbox(smtpAuth.address, smtpAuth.password, {
+  const result = await sendViaStalwartMailbox(smtpAuth.accountId, {
     from: input.from,
     to: input.to,
     subject: input.subject,

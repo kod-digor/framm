@@ -920,6 +920,172 @@ export async function resolveStalwartAccountId(
   return { id: match?.id ?? null, unavailable: false };
 }
 
+function asJmapResponses(res: unknown): unknown[][] {
+  if (!res || typeof res !== "object" || !("methodResponses" in res)) return [];
+  const responses = (res as { methodResponses: unknown[][] }).methodResponses;
+  return Array.isArray(responses) ? responses : [];
+}
+
+function jmapSendError(res: unknown): string | null {
+  if (isStalwartFailure(res)) {
+    if (typeof res === "object" && res && "error" in res) return String((res as { error: string }).error);
+    if (typeof res === "object" && res && "unavailable" in res) return "Stalwart JMAP indisponible";
+  }
+  for (const row of asJmapResponses(res)) {
+    const name = String(row[0] ?? "");
+    const body = row[1] as {
+      type?: string;
+      description?: string;
+      notCreated?: Record<string, { type?: string; description?: string; properties?: string[] }>;
+    };
+    if (name.endsWith("/error") || name === "error") {
+      return body?.description || body?.type || name;
+    }
+    const first = body?.notCreated ? Object.values(body.notCreated)[0] : undefined;
+    if (first) {
+      const props = first.properties?.length ? ` (${first.properties.join(", ")})` : "";
+      return `${first.description || first.type || "notCreated"}${props}`;
+    }
+  }
+  return null;
+}
+
+function emailsFromPayload(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  return (Array.isArray(value) ? value : [value])
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/** Envoi via JMAP HTTPS (seul port joignable depuis K8s). Pas de TEM Scaleway. */
+export async function sendMailViaStalwartJmap(input: {
+  accountId: string;
+  from: string;
+  to: string | string[];
+  subject: string;
+  text?: string;
+  html?: string;
+  cc?: string | string[];
+  bcc?: string | string[];
+  replyTo?: string;
+}): Promise<
+  { ok: true; messageId: string; via: string } | { ok: false; code: "smtp_not_configured" | "send_failed"; detail?: string }
+> {
+  if (!STALWART_API_KEY) {
+    return { ok: false, code: "smtp_not_configured", detail: "STALWART_API_KEY manquant" };
+  }
+
+  const fromMatch = input.from.match(/^(?:"?([^"]*)"?\s*)?<?([^>]+@[^>]+)>?$/);
+  const fromEmail = (fromMatch?.[2] ?? input.from).trim().toLowerCase();
+  const fromName = fromMatch?.[1]?.trim() || undefined;
+  const to = emailsFromPayload(input.to);
+  if (!fromEmail || to.length === 0) {
+    return { ok: false, code: "send_failed", detail: "From ou To invalide" };
+  }
+
+  const boxesRes = await jmapCall(
+    [
+      ["Mailbox/query", { accountId: input.accountId, filter: { role: "drafts" } }, "q1"],
+      [
+        "Mailbox/get",
+        {
+          accountId: input.accountId,
+          "#ids": { resultOf: "q1", name: "Mailbox/query", path: "/ids" },
+          properties: ["id", "role"],
+        },
+        "g1",
+      ],
+    ],
+    15_000,
+    JMAP_MAIL_USING
+  );
+  const boxes = asJmapResponses(boxesRes);
+  const boxList = (boxes.find((row) => row[0] === "Mailbox/get")?.[1] as { list?: Array<{ id: string }> })
+    ?.list;
+  const draftsId = boxList?.[0]?.id;
+
+  const identitiesRes = await listAccountSendIdentities(input.accountId);
+  let identityId = isStalwartFailure(identitiesRes)
+    ? null
+    : findSendIdentityIdByEmail(identitiesRes, fromEmail);
+  if (!identityId) {
+    const created = await createAccountSendIdentity(input.accountId, fromEmail, fromName);
+    if (!isStalwartFailure(created)) {
+      const again = await listAccountSendIdentities(input.accountId);
+      identityId = isStalwartFailure(again) ? null : findSendIdentityIdByEmail(again, fromEmail);
+    }
+  }
+
+  const emailId = `send-${Date.now()}`;
+  const emailCreate: Record<string, unknown> = {
+    from: [{ ...(fromName ? { name: fromName } : {}), email: fromEmail }],
+    to: to.map((email) => ({ email })),
+    subject: input.subject,
+    keywords: { $seen: true, $draft: true },
+  };
+  if (draftsId) emailCreate.mailboxIds = { [draftsId]: true };
+  const cc = emailsFromPayload(input.cc);
+  const bcc = emailsFromPayload(input.bcc);
+  if (cc.length) emailCreate.cc = cc.map((email) => ({ email }));
+  if (bcc.length) emailCreate.bcc = bcc.map((email) => ({ email }));
+  if (input.replyTo) emailCreate.replyTo = [{ email: input.replyTo }];
+  if (input.html?.trim()) {
+    emailCreate.bodyValues = {
+      text: { value: input.text?.trim() || "" },
+      html: { value: input.html },
+    };
+    emailCreate.textBody = [{ partId: "text", type: "text/plain" }];
+    emailCreate.htmlBody = [{ partId: "html", type: "text/html" }];
+  } else {
+    emailCreate.bodyValues = { "1": { value: input.text ?? "" } };
+    emailCreate.textBody = [{ partId: "1", type: "text/plain" }];
+  }
+
+  const submissionCreate: Record<string, unknown> = {
+    emailId: `#${emailId}`,
+    envelope: {
+      mailFrom: { email: fromEmail },
+      rcptTo: [...to, ...cc, ...bcc].map((email) => ({ email })),
+    },
+  };
+  if (identityId) submissionCreate.identityId = identityId;
+
+  const sendRes = await jmapCall(
+    [
+      ["Email/set", { accountId: input.accountId, create: { [emailId]: emailCreate } }, "e1"],
+      [
+        "EmailSubmission/set",
+        { accountId: input.accountId, create: { s1: submissionCreate } },
+        "s1",
+      ],
+    ],
+    20_000,
+    JMAP_MAIL_USING
+  );
+
+  const sendErr = jmapSendError(sendRes);
+  if (sendErr) {
+    return { ok: false, code: "send_failed", detail: sendErr };
+  }
+
+  const createdSub = (
+    asJmapResponses(sendRes).find((row) => row[0] === "EmailSubmission/set")?.[1] as {
+      created?: Record<string, { id?: string }>;
+    }
+  )?.created?.s1?.id;
+  const createdEmail = (
+    asJmapResponses(sendRes).find((row) => row[0] === "Email/set")?.[1] as {
+      created?: Record<string, { id?: string }>;
+    }
+  )?.created?.[emailId]?.id;
+
+  return {
+    ok: true,
+    messageId: createdSub || createdEmail || "unknown",
+    via: "stalwart-jmap",
+  };
+}
+
 export function getMailConfig() {
   const base = getStalwartJmapUrl() || STALWART_URL;
   const host = base.replace(/^https?:\/\//, "").replace(/\/$/, "");
