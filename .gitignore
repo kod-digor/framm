@@ -26,7 +26,11 @@ terraform/environments/*/backend.tf
 crash.log
 
 # IDE
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/environment.json
+!.cursor/install.sh
+!.cursor/start.sh
 .idea/
 .vscode/
 *.swp
