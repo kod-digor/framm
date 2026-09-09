@@ -17,6 +17,7 @@ const REQUIRED_DELEGATES = [
   "mailboxFilter",
   "mailboxMigration",
   "migrationEvent",
+  "organizationApiKey",
 ] as const;
 
 /** Champs récents à vérifier sur le runtime embarqué (singleton dev avant `prisma generate`). */

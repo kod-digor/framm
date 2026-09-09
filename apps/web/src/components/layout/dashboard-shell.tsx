@@ -158,6 +158,12 @@ export async function DashboardShell({
           icon: "globe",
         },
         {
+          id: "api-keys",
+          href: "/dashboard/api-keys",
+          label: t("apiKeys"),
+          icon: "modules",
+        },
+        {
           id: "billing",
           href: "/dashboard/billing",
           label: t("billing"),
