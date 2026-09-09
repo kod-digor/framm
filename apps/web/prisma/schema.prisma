@@ -111,6 +111,7 @@ model Organization {
   walletTransactions WalletTransaction[]
   auditLogs          AuditLog[]
   mailboxMigrations  MailboxMigration[]
+  apiKeys            OrganizationApiKey[]
 }
 
 model User {
@@ -126,6 +127,7 @@ model User {
   updatedAt              DateTime                 @updatedAt
   memberships            OrganizationMember[]
   auditLogs              AuditLog[]
+  apiKeysCreated         OrganizationApiKey[] @relation("ApiKeyCreatedBy")
   mailboxes              UserMailbox[]
   sharedMailboxMembers     SharedMailboxMember[]
   mailboxDelegationsReceived MailboxDelegation[] @relation("MailboxDelegationsReceived")
@@ -409,4 +411,25 @@ model MigrationEvent {
   createdAt   DateTime          @default(now())
 
   @@index([migrationId, createdAt])
+}
+
+/// Clé API organisation — envoi mail transactionnel et intégrations externes
+model OrganizationApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  /// Préfixe affiché (ex. framm_ab12…)
+  keyPrefix      String
+  /// SHA-256 hex du secret complet
+  keyHash        String       @unique
+  scopes         String[]     @default(["mail:send"])
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+  createdById    String?
+  createdBy      User?        @relation("ApiKeyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([keyPrefix])
 }
