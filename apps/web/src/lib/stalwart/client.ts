@@ -1016,14 +1016,25 @@ export async function sendMailViaStalwartJmap(input: {
     }
   }
 
-  const emailId = `send-${Date.now()}`;
+  if (!identityId) {
+    return {
+      ok: false,
+      code: "send_failed",
+      detail: `Identité d'envoi introuvable pour ${fromEmail}`,
+    };
+  }
+  if (!draftsId) {
+    return { ok: false, code: "send_failed", detail: "Boîte Brouillons introuvable" };
+  }
+
+  const draftKey = "draft";
   const emailCreate: Record<string, unknown> = {
+    mailboxIds: { [draftsId]: true },
     from: [{ ...(fromName ? { name: fromName } : {}), email: fromEmail }],
     to: to.map((email) => ({ email })),
     subject: input.subject,
-    keywords: { $seen: true, $draft: true },
+    keywords: { $draft: true },
   };
-  if (draftsId) emailCreate.mailboxIds = { [draftsId]: true };
   const cc = emailsFromPayload(input.cc);
   const bcc = emailsFromPayload(input.bcc);
   if (cc.length) emailCreate.cc = cc.map((email) => ({ email }));
@@ -1041,21 +1052,20 @@ export async function sendMailViaStalwartJmap(input: {
     emailCreate.textBody = [{ partId: "1", type: "text/plain" }];
   }
 
-  const submissionCreate: Record<string, unknown> = {
-    emailId: `#${emailId}`,
-    envelope: {
-      mailFrom: { email: fromEmail },
-      rcptTo: [...to, ...cc, ...bcc].map((email) => ({ email })),
-    },
-  };
-  if (identityId) submissionCreate.identityId = identityId;
-
   const sendRes = await jmapCall(
     [
-      ["Email/set", { accountId: input.accountId, create: { [emailId]: emailCreate } }, "e1"],
+      ["Email/set", { accountId: input.accountId, create: { [draftKey]: emailCreate } }, "e1"],
       [
         "EmailSubmission/set",
-        { accountId: input.accountId, create: { s1: submissionCreate } },
+        {
+          accountId: input.accountId,
+          create: {
+            s1: {
+              emailId: `#${draftKey}`,
+              identityId,
+            },
+          },
+        },
         "s1",
       ],
     ],
@@ -1077,7 +1087,7 @@ export async function sendMailViaStalwartJmap(input: {
     asJmapResponses(sendRes).find((row) => row[0] === "Email/set")?.[1] as {
       created?: Record<string, { id?: string }>;
     }
-  )?.created?.[emailId]?.id;
+  )?.created?.[draftKey]?.id;
 
   return {
     ok: true,
