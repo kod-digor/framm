@@ -894,9 +894,10 @@ export function findSendIdentityIdByEmail(
   email: string
 ): string | null {
   const normalized = email.trim().toLowerCase();
-  const match = extractSendIdentities(res).find(
-    (identity) => identity.email?.trim().toLowerCase() === normalized
-  );
+  const match = extractSendIdentities(res).find((identity) => {
+    const raw = identity.email?.trim().toLowerCase() ?? "";
+    return raw === normalized || raw.endsWith(`<${normalized}>`);
+  });
   return match?.id ?? null;
 }
 
@@ -1008,17 +1009,12 @@ export async function sendMailViaStalwartJmap(input: {
   let identityId = isStalwartFailure(identitiesRes)
     ? null
     : findSendIdentityIdByEmail(identitiesRes, fromEmail);
-  if (!identityId && !isStalwartFailure(identitiesRes)) {
-    identityId = extractSendIdentities(identitiesRes)[0]?.id ?? null;
-  }
   if (!identityId) {
     const created = await createAccountSendIdentity(input.accountId, fromEmail, fromName);
     identityId = extractStalwartCreatedId(created);
     if (!identityId) {
       const again = await listAccountSendIdentities(input.accountId);
-      identityId = isStalwartFailure(again)
-        ? null
-        : findSendIdentityIdByEmail(again, fromEmail) ?? extractSendIdentities(again)[0]?.id ?? null;
+      identityId = isStalwartFailure(again) ? null : findSendIdentityIdByEmail(again, fromEmail);
     }
   }
   if (!identityId) {
@@ -1064,10 +1060,6 @@ export async function sendMailViaStalwartJmap(input: {
             s1: {
               emailId: `#${draftKey}`,
               identityId,
-              envelope: {
-                mailFrom: { email: fromEmail },
-                rcptTo: [...to, ...cc, ...bcc].map((email) => ({ email })),
-              },
             },
           },
         },
