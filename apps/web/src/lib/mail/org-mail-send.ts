@@ -1,10 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { isDnsVerifiedDomainStatus } from "@/lib/domain-status";
-import {
-  decryptMailboxPassword,
-  sendOutboundMail,
-  sendViaStalwartMailbox,
-} from "@/lib/mail/outbound-smtp";
+import { decryptMailboxPassword, sendViaStalwartMailbox } from "@/lib/mail/outbound-smtp";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -51,6 +47,45 @@ export async function findOrganizationIdByFromAddress(
     orderBy: { createdAt: "asc" },
   });
   return domain?.organizationId ?? null;
+}
+
+/** Identifiants SMTP Stalwart : boîte From, sinon une autre boîte du même domaine. */
+export async function findStalwartSmtpAuth(
+  fromEmail: string,
+  organizationId?: string
+): Promise<{ address: string; password: string } | null> {
+  const exact = await prisma.mailbox.findFirst({
+    where: {
+      address: fromEmail,
+      ...(organizationId ? { organizationId } : {}),
+    },
+    select: { address: true, credentialsEnc: true },
+  });
+  const exactPassword = exact?.credentialsEnc
+    ? decryptMailboxPassword(exact.credentialsEnc)
+    : null;
+  if (exact && exactPassword) {
+    return { address: exact.address, password: exactPassword };
+  }
+
+  const domainFqdn = extractDomain(fromEmail);
+  const fallback = await prisma.mailbox.findFirst({
+    where: {
+      credentialsEnc: { not: null },
+      domain: { fqdn: domainFqdn },
+      ...(organizationId ? { organizationId } : {}),
+    },
+    select: { address: true, credentialsEnc: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const fallbackPassword = fallback?.credentialsEnc
+    ? decryptMailboxPassword(fallback.credentialsEnc)
+    : null;
+  if (fallback && fallbackPassword) {
+    return { address: fallback.address, password: fallbackPassword };
+  }
+
+  return null;
 }
 
 export async function validateFromDomainForOrg(
@@ -101,18 +136,16 @@ export async function sendOrgMail(
     replyTo: input.replyTo,
   };
 
-  const mailbox = await prisma.mailbox.findFirst({
-    where: { organizationId: input.organizationId, address: fromEmail },
-    select: { address: true, credentialsEnc: true },
-  });
-  const mailboxPassword = mailbox?.credentialsEnc
-    ? decryptMailboxPassword(mailbox.credentialsEnc)
-    : null;
+  const smtpAuth = await findStalwartSmtpAuth(fromEmail, input.organizationId);
+  if (!smtpAuth) {
+    return {
+      ok: false,
+      error: "smtp_not_configured",
+      detail: "Aucune boîte Stalwart avec identifiants pour cet expéditeur.",
+    };
+  }
 
-  const result =
-    mailbox && mailboxPassword
-      ? await sendViaStalwartMailbox(mailbox.address, mailboxPassword, mailPayload)
-      : await sendOutboundMail(mailPayload);
+  const result = await sendViaStalwartMailbox(smtpAuth.address, smtpAuth.password, mailPayload);
 
   if (!result.ok) {
     return {

@@ -1,7 +1,8 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { getPlatformEmailDomains } from "@/lib/platform-domains";
-import { sendViaOutboundRelay, type OutboundSendResult } from "@/lib/mail/outbound-relay";
+import { findStalwartSmtpAuth } from "@/lib/mail/org-mail-send";
+import { sendViaStalwartMailbox } from "@/lib/mail/outbound-smtp";
 
 /** Tokens admin acceptés (plusieurs valeurs possibles, séparées par des virgules). */
 function configuredTokens(): string[] {
@@ -47,10 +48,9 @@ export function allowAnyFromDomain(): boolean {
 }
 
 /**
- * Autorise l'expéditeur si son domaine appartient à la plateforme.
- * Par défaut le From est restreint aux domaines gérés (les relais TEM ne signent
- * SPF/DKIM que pour ces domaines : envoyer depuis un autre domaine finirait en spam).
- * `ADMIN_MAIL_ALLOW_ANY_DOMAIN=true` lève la restriction.
+ * Autorise l'expéditeur si son domaine appartient à la plateforme
+ * (`PLATFORM_DOMAINS`). `ADMIN_MAIL_ALLOW_ANY_DOMAIN=true` lève la restriction.
+ * Les domaines d'association passent par /api/v1/mail/send + SMTP Stalwart.
  */
 export function isFromAddressAllowed(from: string): boolean {
   const address = extractEmailAddress(from);
@@ -93,21 +93,34 @@ export type AdminSendMailResult =
   | { ok: true; via: string; messageId?: string }
   | { ok: false; code: "invalid_from" | "relay_error"; detail: string };
 
-/** Valide l'expéditeur puis envoie via le relais sortant. */
+/** Valide l'expéditeur puis envoie via le SMTP Stalwart (pas TEM Scaleway). */
 export async function sendAdminMail(
   input: AdminSendMailInput
 ): Promise<AdminSendMailResult> {
-  if (!isFromAddressAllowed(input.from)) {
+  const fromEmail = extractEmailAddress(input.from);
+  if (!fromEmail) {
+    return { ok: false, code: "invalid_from", detail: "Adresse expéditrice invalide." };
+  }
+
+  const smtpAuth = await findStalwartSmtpAuth(fromEmail);
+  if (!smtpAuth) {
+    if (!isFromAddressAllowed(input.from)) {
+      return {
+        ok: false,
+        code: "invalid_from",
+        detail: allowAnyFromDomain()
+          ? "Adresse expéditrice invalide."
+          : "Le domaine de l'expéditeur n'appartient pas à la plateforme.",
+      };
+    }
     return {
       ok: false,
-      code: "invalid_from",
-      detail: allowAnyFromDomain()
-        ? "Adresse expéditrice invalide."
-        : "Le domaine de l'expéditeur n'appartient pas à la plateforme.",
+      code: "relay_error",
+      detail: "Aucune boîte Stalwart avec identifiants pour cet expéditeur.",
     };
   }
 
-  const result: OutboundSendResult = await sendViaOutboundRelay({
+  const result = await sendViaStalwartMailbox(smtpAuth.address, smtpAuth.password, {
     from: input.from,
     to: input.to,
     subject: input.subject,
@@ -119,7 +132,7 @@ export async function sendAdminMail(
   });
 
   if (!result.ok) {
-    return { ok: false, code: "relay_error", detail: result.detail };
+    return { ok: false, code: "relay_error", detail: result.detail ?? result.code };
   }
   return { ok: true, via: result.via, messageId: result.messageId };
 }
