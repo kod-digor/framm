@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { isDnsVerifiedDomainStatus } from "@/lib/domain-status";
-import { sendOutboundMail } from "@/lib/mail/outbound-smtp";
+import {
+  decryptMailboxPassword,
+  sendOutboundMail,
+  sendViaStalwartMailbox,
+} from "@/lib/mail/outbound-smtp";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -74,14 +78,27 @@ export async function sendOrgMail(
   const domainError = await validateFromDomainForOrg(input.organizationId, fromEmail);
   if (domainError) return { ok: false, error: domainError };
 
-  const result = await sendOutboundMail({
+  const mailPayload = {
     from: input.from.trim(),
     to: normalizedTo,
     subject: input.subject.trim(),
     text: input.text,
     html: input.html,
     replyTo: input.replyTo,
+  };
+
+  const mailbox = await prisma.mailbox.findFirst({
+    where: { organizationId: input.organizationId, address: fromEmail },
+    select: { address: true, credentialsEnc: true },
   });
+  const mailboxPassword = mailbox?.credentialsEnc
+    ? decryptMailboxPassword(mailbox.credentialsEnc)
+    : null;
+
+  const result =
+    mailbox && mailboxPassword
+      ? await sendViaStalwartMailbox(mailbox.address, mailboxPassword, mailPayload)
+      : await sendOutboundMail(mailPayload);
 
   if (!result.ok) {
     return {
