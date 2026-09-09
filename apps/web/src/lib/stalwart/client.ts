@@ -1008,32 +1008,33 @@ export async function sendMailViaStalwartJmap(input: {
   let identityId = isStalwartFailure(identitiesRes)
     ? null
     : findSendIdentityIdByEmail(identitiesRes, fromEmail);
+  if (!identityId && !isStalwartFailure(identitiesRes)) {
+    identityId = extractSendIdentities(identitiesRes)[0]?.id ?? null;
+  }
   if (!identityId) {
     const created = await createAccountSendIdentity(input.accountId, fromEmail, fromName);
-    if (!isStalwartFailure(created)) {
+    identityId = extractStalwartCreatedId(created);
+    if (!identityId) {
       const again = await listAccountSendIdentities(input.accountId);
-      identityId = isStalwartFailure(again) ? null : findSendIdentityIdByEmail(again, fromEmail);
+      identityId = isStalwartFailure(again)
+        ? null
+        : findSendIdentityIdByEmail(again, fromEmail) ?? extractSendIdentities(again)[0]?.id ?? null;
     }
   }
-
   if (!identityId) {
-    return {
-      ok: false,
-      code: "send_failed",
-      detail: `Identité d'envoi introuvable pour ${fromEmail}`,
-    };
+    return { ok: false, code: "send_failed", detail: "Identité d'envoi Stalwart introuvable." };
   }
   if (!draftsId) {
     return { ok: false, code: "send_failed", detail: "Boîte Brouillons introuvable" };
   }
 
-  const draftKey = "draft";
+  const draftKey = "e1";
   const emailCreate: Record<string, unknown> = {
     mailboxIds: { [draftsId]: true },
     from: [{ ...(fromName ? { name: fromName } : {}), email: fromEmail }],
     to: to.map((email) => ({ email })),
     subject: input.subject,
-    keywords: { $draft: true },
+    keywords: { $seen: true, $draft: true },
   };
   const cc = emailsFromPayload(input.cc);
   const bcc = emailsFromPayload(input.bcc);
@@ -1063,6 +1064,10 @@ export async function sendMailViaStalwartJmap(input: {
             s1: {
               emailId: `#${draftKey}`,
               identityId,
+              envelope: {
+                mailFrom: { email: fromEmail },
+                rcptTo: [...to, ...cc, ...bcc].map((email) => ({ email })),
+              },
             },
           },
         },
