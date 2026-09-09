@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { isDnsVerifiedDomainStatus } from "@/lib/domain-status";
-import { decryptMailboxPassword, sendViaStalwartMailbox } from "@/lib/mail/outbound-smtp";
+import { decryptMailboxPassword } from "@/lib/mail/outbound-smtp";
+import { sendViaStalwartJmap } from "@/lib/mail/stalwart-jmap-send";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -145,12 +146,12 @@ export async function sendOrgMail(
     };
   }
 
-  const result = await sendViaStalwartMailbox(smtpAuth.address, smtpAuth.password, mailPayload);
+  const result = await sendViaStalwartJmap(smtpAuth.address, smtpAuth.password, mailPayload);
 
   if (!result.ok) {
     return {
       ok: false,
-      error: result.code,
+      error: "send_failed",
       detail: result.detail,
     };
   }
