@@ -958,6 +958,16 @@ function emailsFromPayload(value: string | string[] | undefined): string[] {
     .filter(Boolean);
 }
 
+function parseMailFrom(raw: string): { email: string; name?: string } {
+  const trimmed = raw.trim();
+  const angle = trimmed.match(/<([^>]+)>/);
+  const email = (angle?.[1] ?? trimmed).trim().toLowerCase();
+  const name = angle
+    ? trimmed.replace(/<[^>]+>/, "").trim().replace(/^"|"$/g, "") || undefined
+    : undefined;
+  return { email, name };
+}
+
 /** Envoi via JMAP HTTPS (seul port joignable depuis K8s). Pas de TEM Scaleway. */
 export async function sendMailViaStalwartJmap(input: {
   accountId: string;
@@ -976,9 +986,7 @@ export async function sendMailViaStalwartJmap(input: {
     return { ok: false, code: "smtp_not_configured", detail: "STALWART_API_KEY manquant" };
   }
 
-  const fromMatch = input.from.match(/^(?:"?([^"]*)"?\s*)?<?([^>]+@[^>]+)>?$/);
-  const fromEmail = (fromMatch?.[2] ?? input.from).trim().toLowerCase();
-  const fromName = fromMatch?.[1]?.trim() || undefined;
+  const { email: fromEmail, name: fromName } = parseMailFrom(input.from);
   const to = emailsFromPayload(input.to);
   if (!fromEmail || to.length === 0) {
     return { ok: false, code: "send_failed", detail: "From ou To invalide" };
