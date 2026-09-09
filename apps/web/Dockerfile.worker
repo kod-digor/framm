@@ -9,7 +9,6 @@ RUN apt-get update \
     ca-certificates wget procps \
     libauthen-ntlm-perl \
     libcrypt-openssl-rsa-perl \
-    libcrypt-openssl-pkcs12-perl \
     libdata-uniqid-perl \
     libencode-imaputf7-perl \
     libfile-copy-recursive-perl \

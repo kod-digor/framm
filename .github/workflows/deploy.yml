@@ -264,10 +264,11 @@ jobs:
   gitops-update:
     name: Update image tags (GitOps)
     if: >-
+      always() &&
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
-      needs.build-push-web.outputs.enabled == 'true' &&
-      (needs.build-push-worker.outputs.enabled == 'true' || needs.build-push-worker.result == 'failure')
+      needs.build-push-web.result == 'success' &&
+      needs.build-push-web.outputs.enabled == 'true'
     needs: [build-push-web, build-push-worker]
     runs-on: ubuntu-latest
     permissions:
