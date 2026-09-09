@@ -39,6 +39,20 @@ function extractDomain(email: string): string {
   return email.split("@")[1] ?? "";
 }
 
+/** Résout l'organisation propriétaire d'un From (domaine vérifié ou non). */
+export async function findOrganizationIdByFromAddress(
+  from: string
+): Promise<string | null> {
+  const fromEmail = parseEmailAddress(from);
+  if (!fromEmail) return null;
+  const domain = await prisma.domain.findFirst({
+    where: { fqdn: extractDomain(fromEmail) },
+    select: { organizationId: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return domain?.organizationId ?? null;
+}
+
 export async function validateFromDomainForOrg(
   organizationId: string,
   fromEmail: string

@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { hasScope, MAIL_SEND_SCOPE, verifyBearerApiKey } from "@/lib/api-keys";
-import { sendOrgMail } from "@/lib/mail/org-mail-send";
+import { sendAdminMail, verifyAdminMailToken } from "@/lib/mail/admin-send";
+import { findOrganizationIdByFromAddress, sendOrgMail } from "@/lib/mail/org-mail-send";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+function extractBearerToken(authorization: string | null): string | null {
+  if (!authorization?.toLowerCase().startsWith("bearer ")) return null;
+  return authorization.slice(7).trim();
+}
 
 const sendBodySchema = z.object({
   from: z.string().min(3).max(320),
@@ -29,12 +35,15 @@ const ERROR_STATUS: Record<string, number> = {
 };
 
 export async function POST(req: NextRequest) {
-  const apiKey = await verifyBearerApiKey(req.headers.get("authorization"));
-  if (!apiKey) {
+  const authorization = req.headers.get("authorization");
+  const isAdminToken = verifyAdminMailToken(extractBearerToken(authorization));
+  const apiKey = isAdminToken ? null : await verifyBearerApiKey(authorization);
+
+  if (!isAdminToken && !apiKey) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  if (!hasScope(apiKey.scopes, MAIL_SEND_SCOPE)) {
+  if (apiKey && !hasScope(apiKey.scopes, MAIL_SEND_SCOPE)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
@@ -50,32 +59,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
 
-  const result = await sendOrgMail({
-    organizationId: apiKey.organizationId,
-    ...parsed.data,
-  });
+  const organizationId =
+    apiKey?.organizationId ?? (await findOrganizationIdByFromAddress(parsed.data.from));
 
-  if (!result.ok) {
-    const status = ERROR_STATUS[result.error] ?? 400;
+  if (organizationId) {
+    const result = await sendOrgMail({
+      organizationId,
+      ...parsed.data,
+    });
+
+    if (!result.ok) {
+      const status = ERROR_STATUS[result.error] ?? 400;
+      return NextResponse.json(
+        { error: result.error, ...(result.detail ? { detail: result.detail } : {}) },
+        { status }
+      );
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        organizationId,
+        action: "api.mail.send",
+        target: parsed.data.from,
+        metadata: {
+          apiKeyId: apiKey?.id ?? "admin-mail-token",
+          to: parsed.data.to,
+          subject: parsed.data.subject,
+          messageId: result.messageId,
+        },
+      },
+    });
+
+    return NextResponse.json({ ok: true, messageId: result.messageId });
+  }
+
+  if (!isAdminToken) {
+    return NextResponse.json({ error: "domain_not_in_org" }, { status: 403 });
+  }
+
+  const adminResult = await sendAdminMail(parsed.data);
+  if (!adminResult.ok) {
+    const status = adminResult.code === "invalid_from" ? 422 : 502;
     return NextResponse.json(
-      { error: result.error, ...(result.detail ? { detail: result.detail } : {}) },
+      { error: adminResult.code, detail: adminResult.detail },
       { status }
     );
   }
 
-  await prisma.auditLog.create({
-    data: {
-      organizationId: apiKey.organizationId,
-      action: "api.mail.send",
-      target: parsed.data.from,
-      metadata: {
-        apiKeyId: apiKey.id,
-        to: parsed.data.to,
-        subject: parsed.data.subject,
-        messageId: result.messageId,
-      },
-    },
+  return NextResponse.json({
+    ok: true,
+    via: adminResult.via,
+    messageId: adminResult.messageId,
   });
-
-  return NextResponse.json({ ok: true, messageId: result.messageId });
 }
