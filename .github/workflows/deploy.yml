@@ -133,6 +133,7 @@ jobs:
           GOOGLE_MIGRATION_CLIENT_SECRET: ${{ secrets.GOOGLE_MIGRATION_CLIENT_SECRET }}
           MICROSOFT_MIGRATION_CLIENT_ID: ${{ secrets.MICROSOFT_MIGRATION_CLIENT_ID }}
           MICROSOFT_MIGRATION_CLIENT_SECRET: ${{ secrets.MICROSOFT_MIGRATION_CLIENT_SECRET }}
+          ADMIN_MAIL_TOKEN: ${{ secrets.ADMIN_MAIL_TOKEN }}
           DNS_ENABLED: "true"
           TEM_ENABLED: "true"
         run: ./deploy/scripts/ci-terraform-sync.sh
